@@ -5,6 +5,7 @@ const SECTIONS = [
   { id: 'pm',           label: 'PM',           sub: 'Jobs · Audit',          emoji: '📋', color: '#a855f7' },
   { id: 'production',   label: 'Production',   sub: 'Overview · Throughput', emoji: '🏭', color: '#f97316' },
   { id: 'installation', label: 'Installation', sub: 'Jobs · Crews',          emoji: '🔧', color: '#eab308' },
+  { id: 'marketing',    label: 'Marketing',    sub: 'GMB · Facebook · Web',  emoji: '📣', color: '#10b981' },
 ];
 
 export default function Sidebar({ active, onSelect }) {

@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Signs By G — Marketing Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f4f6fa;
+    color: #1a202c;
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; color: #0f172a; }
+  .header .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+  .filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .filter label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .filter select {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 9px 34px 9px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #0f172a;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    min-width: 180px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .filter select:hover { border-color: #94a3b8; }
+  .filter select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: #334155; }
+  .tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+  }
+  .tab.placeholder {
+    color: #cbd5e1;
+    font-style: italic;
+    cursor: not-allowed;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: white;
+    padding: 18px 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+  }
+  .kpi-card .label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .kpi-card .value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 6px;
+  }
+  .kpi-card .sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .kpi-card .trend-up { color: #059669; }
+  .kpi-card .trend-down { color: #dc2626; }
+
+  .chart-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+  }
+  .chart-card h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+  }
+  .chart-card .chart-sub {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 16px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 380px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.data th, table.data td {
+    text-align: right;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  table.data th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+  table.data th:first-child,
+  table.data td:first-child {
+    text-align: left;
+  }
+  table.data tr.flagged {
+    background: #fffbeb;
+  }
+  table.data tr.flagged td:first-child::after {
+    content: " ⚠";
+    color: #d97706;
+  }
+
+  .note {
+    background: #fffbeb;
+    border-left: 3px solid #d97706;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #78350f;
+    margin-bottom: 20px;
+  }
+  .note strong { font-weight: 700; }
+
+  .empty {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    padding: 40px 20px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Signs By G — Marketing Dashboard</h1>
+    <div class="subtitle">Monthly performance overview · Last updated Apr 17, 2026</div>
+  </div>
+  <div class="filter">
+    <label for="timeFilter">Time frame</label>
+    <select id="timeFilter">
+      <option value="all">All time</option>
+      <option value="last1">Last month</option>
+      <option value="last3">Last 3 months</option>
+      <option value="last6">Last 6 months</option>
+      <option value="last12">Last 12 months</option>
+      <option value="ytd2026">YTD 2026</option>
+      <option value="q1_2026">Q1 2026</option>
+      <option value="q4_2025">Q4 2025</option>
+      <option value="q3_2025">Q3 2025</option>
+      <option value="q2_2025">Q2 2025</option>
+      <option value="q1_2025">Q1 2025</option>
+    </select>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="gmb">Google My Business</button>
+  <button class="tab" data-tab="fb">Facebook Monthly</button>
+  <button class="tab" data-tab="fbw">Facebook Weekly</button>
+  <button class="tab" data-tab="web">Website Calls</button>
+  <button class="tab placeholder" disabled>+ Add tab</button>
+</div>
+
+<!-- Google My Business tab -->
+<div class="tab-panel active" id="panel-gmb">
+  <div class="note" id="gmbNote">
+    <strong>Heads up on the data:</strong> "November 2026" is a future month (today is April 17, 2026) — likely a typo. "October 2025" appears twice with different values. These rows are excluded from charts/KPIs but kept in the table below (flagged with ⚠) so you can verify.
+  </div>
+
+  <div class="kpi-grid" id="gmbKpi"></div>
+
+  <div class="chart-card">
+    <h2>Monthly performance — Unique GMB calls vs. Calls over 60 seconds</h2>
+    <div class="chart-sub">Grouped bars show raw call volume each month. The line overlays the conversion rate (% of calls over 60 seconds).</div>
+    <div class="chart-wrap"><canvas id="gmbMain"></canvas></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h2>Conversion rate by month</h2>
+      <div class="chart-sub">Percentage of unique GMB calls that lasted longer than 60 seconds.</div>
+      <div class="chart-wrap" style="height:320px;"><canvas id="gmbPct"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Data table</h2>
+      <div class="chart-sub">Flagged rows are future-dated or duplicates and are excluded from charts.</div>
+      <div style="max-height:320px; overflow:auto;">
+        <table class="data" id="gmbTable">
+          <thead>
+            <tr><th>Month</th><th>Unique GMB</th><th>&gt;60 sec</th><th>% &gt;60 sec</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Website Calls tab -->
+<div class="tab-panel" id="panel-web">
+  <div class="note" id="webNote">
+    <strong>Heads up on the data:</strong> The source listed "January / February / March / April" as column headers with week-of dates "1/1, 1/2, 1/8, 1/14" (all appearing as January dates). I'm treating the month header as the source of truth — weeks shown are <strong>Jan 1, Feb 2, Mar 8, Apr 14, 2026</strong>. The last row was labeled "CPL" but the values are the % of calls over 60 seconds, so it's labeled that way here. Let me know if either assumption is wrong.
+  </div>
+
+  <div class="kpi-grid" id="webKpi"></div>
+
+  <div class="chart-card">
+    <h2>Weekly performance — Unique website calls vs. Calls over 60 seconds</h2>
+    <div class="chart-sub">Grouped bars show raw call volume each week. Line overlays the % of calls over 60 seconds.</div>
+    <div class="chart-wrap"><canvas id="webMain"></canvas></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h2>% calls over 60 seconds by week</h2>
+      <div class="chart-sub">Higher is better — indicates more engaged call quality.</div>
+      <div class="chart-wrap" style="height:320px;"><canvas id="webPct"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Data table</h2>
+      <div class="chart-sub">Website calls · weekly snapshots.</div>
+      <div style="max-height:320px; overflow:auto;">
+        <table class="data" id="webTable">
+          <thead>
+            <tr><th>Week Of</th><th>Unique calls</th><th>&gt;60 sec</th><th>% &gt;60 sec</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Facebook Weekly tab -->
+<div class="tab-panel" id="panel-fbw">
+  <div class="note">
+    <strong>Note:</strong> Today is 4/27/26. The week of 4/27 (current) and 5/4 (upcoming) are flagged in the table — they're excluded from charts and KPIs until their data lands.
+  </div>
+
+  <div class="kpi-grid" id="fbwKpi"></div>
+
+  <div class="chart-card">
+    <h2>Weekly performance — Spend and Leads</h2>
+    <div class="chart-sub">Weekly Facebook ad spend (left axis) and leads generated (right axis).</div>
+    <div class="chart-wrap"><canvas id="fbwMain"></canvas></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h2>Cost Per Lead trend</h2>
+      <div class="chart-sub">Week-over-week CPL movement. Lower is better.</div>
+      <div class="chart-wrap" style="height:320px;"><canvas id="fbwCpl"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Data table</h2>
+      <div class="chart-sub">Facebook call campaign · weekly rollup. Flagged rows are pending weeks.</div>
+      <div style="max-height:320px; overflow:auto;">
+        <table class="data" id="fbwTable">
+          <thead>
+            <tr><th>Week Of</th><th>Spend</th><th>Leads</th><th>CPL</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Facebook Monthly tab -->
+<div class="tab-panel" id="panel-fb">
+  <div class="note">
+    <strong>Note:</strong> February and March 2026 aren't in the source data — the chart shows the gap between Jan '26 and Apr '26. April 2026 is a partial month (data through 4/27/26).
+  </div>
+
+  <div class="kpi-grid" id="fbKpi"></div>
+
+  <div class="chart-card">
+    <h2>Spend and FB Leads by month</h2>
+    <div class="chart-sub">Bars show monthly ad spend (left axis) and FB Leads generated (right axis).</div>
+    <div class="chart-wrap"><canvas id="fbMain"></canvas></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <h2>Cost Per Lead by month</h2>
+      <div class="chart-sub">Lower is better. Bars colored by quartile — green is the best CPL range.</div>
+      <div class="chart-wrap" style="height:320px;"><canvas id="fbCpl"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Data table</h2>
+      <div class="chart-sub">Facebook call campaign · monthly rollup.</div>
+      <div style="max-height:320px; overflow:auto;">
+        <table class="data" id="fbTable">
+          <thead>
+            <tr><th>Month</th><th>Spend</th><th>FB Leads</th><th>CPL</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+Chart.defaults.set('plugins.datalabels', { display: false });
+
+// ---- DATA -----------------------------------------------------------------
+function mk(year, month) { return year * 12 + (month - 1); } // month is 1-12
+
+// Google My Business — clean chronological series
+const gmbClean = [
+  { year: 2024, month: 11, unique: 56,  calls60: 28 },
+  { year: 2024, month: 12, unique: 63,  calls60: 23 },
+  { year: 2025, month: 1,  unique: 77,  calls60: 43 },
+  { year: 2025, month: 2,  unique: 116, calls60: 66 },
+  { year: 2025, month: 3,  unique: 142, calls60: 74 },
+  { year: 2025, month: 4,  unique: 112, calls60: 54 },
+  { year: 2025, month: 5,  unique: 52,  calls60: 32 },
+  { year: 2025, month: 6,  unique: 109, calls60: 71 },
+  { year: 2025, month: 7,  unique: 104, calls60: 59 },
+  { year: 2025, month: 8,  unique: 95,  calls60: 44 },
+  { year: 2025, month: 9,  unique: 105, calls60: 55 },
+  { year: 2025, month: 10, unique: 113, calls60: 72 },
+  { year: 2025, month: 11, unique: 94,  calls60: 60 },
+  { year: 2025, month: 12, unique: 82,  calls60: 50 },
+  { year: 2026, month: 1,  unique: 85,  calls60: 56 },
+  { year: 2026, month: 2,  unique: 72,  calls60: 45 },
+  { year: 2026, month: 3,  unique: 55,  calls60: 32 }
+].map(r => ({ ...r, monthKey: mk(r.year, r.month), label: monthLabel(r) }));
+
+// Flagged rows — shown in table but excluded from charts/filters
+const gmbFlagged = [
+  { rawMonth: "November 2026", unique: 33, calls60: 17, flag: "future-dated" },
+  { rawMonth: "October 2025",  unique: 0,  calls60: 0,  flag: "duplicate (0 value)" }
+];
+
+// Facebook Monthly — call campaign rollup
+const fbClean = [
+  { year: 2025, month: 5,  spend: 947,    leads: 52  },
+  { year: 2025, month: 6,  spend: 3689,   leads: 180 },
+  { year: 2025, month: 7,  spend: 3347,   leads: 168 },
+  { year: 2025, month: 8,  spend: 7230,   leads: 331 },
+  { year: 2025, month: 9,  spend: 9173,   leads: 500 },
+  { year: 2025, month: 10, spend: 7707,   leads: 287 },
+  { year: 2025, month: 11, spend: 5005,   leads: 205 },
+  { year: 2025, month: 12, spend: 6898,   leads: 339 },
+  { year: 2026, month: 1,  spend: 5611,   leads: 320 },
+  { year: 2026, month: 4,  spend: 1056,   leads: 53,  partial: true }
+].map(r => ({ ...r, monthKey: mk(r.year, r.month), cpl: r.spend / r.leads, label: monthLabel(r) }));
+
+// Website Calls — weekly snapshots, one per month
+const websiteRaw = [
+  { start: "2026-01-01", unique: 23, calls60: 9  },
+  { start: "2026-02-02", unique: 28, calls60: 14 },
+  { start: "2026-03-08", unique: 18, calls60: 10 },
+  { start: "2026-04-14", unique: 14, calls60: 12 }
+];
+const website = websiteRaw.map(r => {
+  const d = new Date(r.start + "T00:00:00");
+  return {
+    ...r,
+    date: d,
+    year: d.getFullYear(),
+    month: d.getMonth() + 1,
+    weekKey: Math.floor(d.getTime() / (1000 * 60 * 60 * 24 * 7)),
+    pct: r.unique ? (r.calls60 / r.unique) * 100 : null,
+    label: weekLabel(d),
+    fullLabel: weekFullLabel(d)
+  };
+});
+
+// Facebook Weekly — 2026, spend/leads/CPL by week start date
+const fbWeeklyRaw = [
+  { start: "2026-04-13", spend: 310, leads: 15, flag: null },
+  { start: "2026-04-20", spend: 695, leads: 35, flag: null },
+  { start: "2026-04-27", spend: null, leads: null, flag: "in-progress" },
+  { start: "2026-05-04", spend: null, leads: null, flag: "upcoming" }
+];
+const fbWeekly = fbWeeklyRaw.map(r => {
+  const d = new Date(r.start + "T00:00:00");
+  return {
+    ...r,
+    date: d,
+    year: d.getFullYear(),
+    month: d.getMonth() + 1,
+    weekKey: Math.floor(d.getTime() / (1000 * 60 * 60 * 24 * 7)),
+    cpl: (r.leads && r.spend != null) ? r.spend / r.leads : null,
+    label: weekLabel(d),
+    fullLabel: weekFullLabel(d)
+  };
+});
+const fbWeeklyClean = fbWeekly.filter(r => !r.flag);
+
+function weekLabel(d) {
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+function weekFullLabel(d) {
+  const names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `Week of ${names[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function monthLabel(r) {
+  const names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${names[r.month - 1]} '${String(r.year).slice(2)}`;
+}
+function fullMonthLabel(r) {
+  const names = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${names[r.month - 1]} ${r.year}`;
+}
+
+// ---- FILTER ---------------------------------------------------------------
+function filterRows(rows, selection) {
+  if (!rows.length) return [];
+  const maxKey = Math.max(...rows.map(r => r.monthKey));
+
+  switch (selection) {
+    case "all":     return rows;
+    case "last1":   return rows.filter(r => r.monthKey === maxKey);
+    case "last3":   return rows.filter(r => r.monthKey > maxKey - 3);
+    case "last6":   return rows.filter(r => r.monthKey > maxKey - 6);
+    case "last12":  return rows.filter(r => r.monthKey > maxKey - 12);
+    case "ytd2026": return rows.filter(r => r.year === 2026);
+    case "q1_2026": return rows.filter(r => r.year === 2026 && r.month <= 3);
+    case "q4_2025": return rows.filter(r => r.year === 2025 && r.month >= 10);
+    case "q3_2025": return rows.filter(r => r.year === 2025 && r.month >= 7 && r.month <= 9);
+    case "q2_2025": return rows.filter(r => r.year === 2025 && r.month >= 4 && r.month <= 6);
+    case "q1_2025": return rows.filter(r => r.year === 2025 && r.month <= 3);
+    default: return rows;
+  }
+}
+
+// Weekly filter — mirrors the monthly filter but uses the week's start date
+function filterWeeks(rows, selection) {
+  if (!rows.length) return [];
+  const maxDate = new Date(Math.max(...rows.map(r => r.date.getTime())));
+  const minusWeeks = n => {
+    const d = new Date(maxDate);
+    d.setDate(d.getDate() - n * 7 + 1);
+    return d;
+  };
+  const minusMonths = n => {
+    const d = new Date(maxDate);
+    d.setMonth(d.getMonth() - n);
+    return d;
+  };
+  switch (selection) {
+    case "all":     return rows;
+    case "last1":   return rows.filter(r => r.date.getTime() === maxDate.getTime());
+    case "last3":   return rows.filter(r => r.date >= minusWeeks(3));
+    case "last6":   return rows.filter(r => r.date >= minusWeeks(6));
+    case "last12":  return rows.filter(r => r.date >= minusWeeks(12));
+    case "ytd2026": return rows.filter(r => r.year === 2026);
+    case "q1_2026": return rows.filter(r => r.year === 2026 && r.month <= 3);
+    case "q4_2025": return rows.filter(r => r.year === 2025 && r.month >= 10);
+    case "q3_2025": return rows.filter(r => r.year === 2025 && r.month >= 7 && r.month <= 9);
+    case "q2_2025": return rows.filter(r => r.year === 2025 && r.month >= 4 && r.month <= 6);
+    case "q1_2025": return rows.filter(r => r.year === 2025 && r.month <= 3);
+    default: return rows;
+  }
+}
+
+// ---- UTILITIES ------------------------------------------------------------
+const sum = a => a.reduce((s,x) => s+x, 0);
+const avg = a => a.length ? sum(a) / a.length : 0;
+const fmtMoney = v => "$" + Math.round(v).toLocaleString();
+const fmtMoney2 = v => "$" + v.toFixed(2);
+
+function kpiCard(label, value, sub, dir) {
+  const trendClass = dir === "up" ? "trend-up" : dir === "down" ? "trend-down" : "";
+  return `<div class="kpi-card">
+    <div class="label">${label}</div>
+    <div class="value">${value}</div>
+    <div class="sub ${trendClass}">${sub ?? ""}</div>
+  </div>`;
+}
+
+// ---- CHART INSTANCES ------------------------------------------------------
+let gmbMainChart, gmbPctChart, fbMainChart, fbCplChart, fbwMainChart, fbwCplChart, webMainChart, webPctChart;
+
+function emptyDataMessage(canvas, msg) {
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  canvas.parentElement.innerHTML = `<div class="empty">${msg}</div>`;
+}
+
+// ---- RENDER: GMB ----------------------------------------------------------
+function renderGMB(selection) {
+  const data = filterRows(gmbClean, selection);
+  const labels   = data.map(r => r.label);
+  const uniques  = data.map(r => r.unique);
+  const over60   = data.map(r => r.calls60);
+  const pcts     = data.map(r => r.unique ? (r.calls60 / r.unique) * 100 : null);
+
+  // KPIs
+  const totalUnique = sum(uniques);
+  const totalOver   = sum(over60);
+  const avgPct      = data.length ? pcts.reduce((s,x) => s + (x ?? 0), 0) / data.length : 0;
+  const latest      = data[data.length - 1];
+  const prev        = data[data.length - 2];
+  const latestPct   = latest ? (latest.calls60 / latest.unique) * 100 : 0;
+  const prevPct     = prev   ? (prev.calls60 / prev.unique) * 100   : null;
+  const pctDelta    = (prevPct != null) ? latestPct - prevPct : null;
+
+  document.getElementById("gmbKpi").innerHTML = data.length === 0
+    ? kpiCard("No data", "—", "Try a different time frame")
+    : [
+        kpiCard(`Latest month (${latest.label})`, latest.unique.toLocaleString(),
+                `${latest.calls60} calls >60s · ${latestPct.toFixed(1)}%`),
+        kpiCard("Total unique calls", totalUnique.toLocaleString(),
+                `${data.length} month${data.length>1?"s":""} in range`),
+        kpiCard("Avg conversion rate", avgPct.toFixed(1) + "%",
+                `Total >60s: ${totalOver.toLocaleString()}`),
+        kpiCard("MoM change (conversion)",
+                pctDelta == null ? "—" : (pctDelta >= 0 ? "+" : "") + pctDelta.toFixed(1) + " pts",
+                pctDelta == null ? "Need ≥2 months" : `vs prior (${prevPct.toFixed(1)}%)`,
+                pctDelta == null ? null : (pctDelta >= 0 ? "up" : "down"))
+      ].join("");
+
+  // Main grouped bar + line overlay
+  const mainConfig = {
+    data: {
+      labels,
+      datasets: [
+        { type:"bar", label:"Unique GMB calls", data:uniques, backgroundColor:"#3b82f6", borderRadius:4, yAxisID:"y",
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]>0, anchor:"end", align:"end", color:"#1e3a8a",
+                       font:{size:10,weight:"600"}, formatter:v=>v } },
+        { type:"bar", label:"Calls > 60 seconds", data:over60, backgroundColor:"#10b981", borderRadius:4, yAxisID:"y",
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]>0, anchor:"end", align:"end", color:"#065f46",
+                       font:{size:10,weight:"600"}, formatter:v=>v } },
+        { type:"line", label:"% > 60 seconds", data:pcts, borderColor:"#f59e0b", backgroundColor:"#f59e0b",
+          borderWidth:2, tension:0.25, pointRadius:3, yAxisID:"y1", spanGaps:true,
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]!=null, align:"top", offset:6, color:"#b45309",
+                       font:{size:10,weight:"700"}, formatter:v=>v.toFixed(0)+"%",
+                       backgroundColor:"rgba(255,255,255,0.85)", borderRadius:3, padding:{top:2,bottom:2,left:4,right:4} } }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position:"bottom", labels:{ boxWidth:12, font:{size:12} } },
+        tooltip: { callbacks: { label: c => c.dataset.label === "% > 60 seconds"
+              ? `${c.dataset.label}: ${c.raw == null ? "n/a" : c.raw.toFixed(1) + "%"}`
+              : `${c.dataset.label}: ${c.raw}` } }
+      },
+      scales: {
+        x:  { grid: { display:false }, ticks: { font:{size:11} } },
+        y:  { beginAtZero:true, grace:"15%", title:{display:true,text:"Call count"}, grid:{color:"#eef2f7"} },
+        y1: { beginAtZero:true, max:100, position:"right", title:{display:true,text:"% > 60 sec"},
+              grid:{drawOnChartArea:false}, ticks:{callback:v=>v+"%"} }
+      }
+    }
+  };
+
+  if (gmbMainChart) gmbMainChart.destroy();
+  gmbMainChart = new Chart(document.getElementById("gmbMain"), mainConfig);
+
+  // % conversion bar
+  const pctConfig = {
+    type: "bar",
+    data: { labels, datasets: [{
+      label: "% calls > 60 seconds",
+      data: pcts,
+      backgroundColor: pcts.map(v => v == null ? "#e2e8f0" : v >= 60 ? "#059669" : v >= 50 ? "#3b82f6" : "#ef4444"),
+      borderRadius: 4,
+      datalabels: { display: c => c.dataset.data[c.dataIndex] != null, anchor:"end", align:"end",
+                    color:"#0f172a", font:{size:10,weight:"700"}, formatter:v=>v.toFixed(1)+"%" }
+    }]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { display:false },
+                 tooltip: { callbacks: { label: c => c.raw == null ? "n/a" : c.raw.toFixed(2) + "%" } } },
+      scales: { x:{grid:{display:false}, ticks:{font:{size:11}}},
+                y:{beginAtZero:true, max:85, ticks:{callback:v=>v+"%"}, grid:{color:"#eef2f7"}} }
+    }
+  };
+  if (gmbPctChart) gmbPctChart.destroy();
+  gmbPctChart = new Chart(document.getElementById("gmbPct"), pctConfig);
+
+  // Table (always shows full data + flagged rows)
+  const allTableRows = [
+    ...gmbClean.map(r => ({ label: fullMonthLabel(r), unique: r.unique, calls60: r.calls60, flag: null })),
+    ...gmbFlagged.map(r => ({ label: r.rawMonth, unique: r.unique, calls60: r.calls60, flag: r.flag }))
+  ];
+  document.querySelector("#gmbTable tbody").innerHTML = allTableRows.map(r => {
+    const p = r.unique === 0 ? null : (r.calls60 / r.unique) * 100;
+    return `<tr class="${r.flag ? 'flagged' : ''}">
+      <td>${r.label}</td><td>${r.unique}</td><td>${r.calls60}</td>
+      <td>${p == null ? "—" : p.toFixed(2) + "%"}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ---- RENDER: Facebook Monthly --------------------------------------------
+function renderFB(selection) {
+  const data = filterRows(fbClean, selection);
+  const labels = data.map(r => r.label);
+  const spend  = data.map(r => r.spend);
+  const leads  = data.map(r => r.leads);
+  const cpls   = data.map(r => r.cpl);
+
+  const totalSpend = sum(spend);
+  const totalLeads = sum(leads);
+  const blendedCpl = totalLeads ? totalSpend / totalLeads : 0;
+  const latest     = data[data.length - 1];
+  const prev       = data[data.length - 2];
+  const cplDelta   = (latest && prev) ? latest.cpl - prev.cpl : null;
+
+  document.getElementById("fbKpi").innerHTML = data.length === 0
+    ? kpiCard("No data", "—", "Try a different time frame")
+    : [
+        kpiCard(`Latest month (${latest.label})`, fmtMoney(latest.spend),
+                `${latest.leads} leads · ${fmtMoney2(latest.cpl)} CPL`),
+        kpiCard("Total spend", fmtMoney(totalSpend),
+                `${data.length} month${data.length>1?"s":""} in range`),
+        kpiCard("Total leads", totalLeads.toLocaleString(),
+                `Blended CPL: ${fmtMoney2(blendedCpl)}`),
+        kpiCard("MoM change (CPL)",
+                cplDelta == null ? "—" : (cplDelta >= 0 ? "+" : "") + fmtMoney2(cplDelta),
+                cplDelta == null ? "Need ≥2 months" : `vs prior (${fmtMoney2(prev.cpl)})`,
+                // For CPL, lower is better, so flip direction
+                cplDelta == null ? null : (cplDelta <= 0 ? "up" : "down"))
+      ].join("");
+
+  // Main chart — spend (bar, left) + leads (bar, right) + CPL (line, right-2)
+  const mainConfig = {
+    data: {
+      labels,
+      datasets: [
+        { type:"bar", label:"Spend", data:spend, backgroundColor:"#6366f1", borderRadius:4, yAxisID:"y",
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]>0, anchor:"end", align:"end", color:"#312e81",
+                       font:{size:10,weight:"600"}, formatter:v=>"$"+Math.round(v).toLocaleString() } },
+        { type:"bar", label:"FB Leads", data:leads, backgroundColor:"#ec4899", borderRadius:4, yAxisID:"y1",
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]>0, anchor:"end", align:"end", color:"#9d174d",
+                       font:{size:10,weight:"600"}, formatter:v=>v } }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins: {
+        legend:{ position:"bottom", labels:{boxWidth:12, font:{size:12}} },
+        tooltip:{ callbacks:{ label: c => c.dataset.label === "Spend"
+              ? `Spend: $${c.raw.toLocaleString()}`
+              : `${c.dataset.label}: ${c.raw}` } }
+      },
+      scales: {
+        x:  { grid:{display:false}, ticks:{font:{size:11}} },
+        y:  { beginAtZero:true, grace:"15%", title:{display:true,text:"Spend ($)"},
+              ticks:{ callback:v=>"$"+v.toLocaleString() }, grid:{color:"#eef2f7"} },
+        y1: { beginAtZero:true, grace:"15%", position:"right", title:{display:true,text:"Leads"},
+              grid:{drawOnChartArea:false} }
+      }
+    }
+  };
+  if (fbMainChart) fbMainChart.destroy();
+  fbMainChart = new Chart(document.getElementById("fbMain"), mainConfig);
+
+  // CPL bar chart
+  const sortedCpls = [...cpls].filter(v => v != null).sort((a,b) => a - b);
+  const q1 = sortedCpls[Math.floor(sortedCpls.length * 0.33)];
+  const q2 = sortedCpls[Math.floor(sortedCpls.length * 0.67)];
+  const cplColors = cpls.map(v =>
+    v == null ? "#e2e8f0" :
+    v <= q1   ? "#059669" :   // best CPL = green
+    v <= q2   ? "#3b82f6" :
+                "#ef4444"     // worst CPL = red
+  );
+
+  const cplConfig = {
+    type: "bar",
+    data: { labels, datasets: [{
+      label: "Cost Per Lead",
+      data: cpls,
+      backgroundColor: cplColors,
+      borderRadius: 4,
+      datalabels: { display: c => c.dataset.data[c.dataIndex] != null, anchor:"end", align:"end",
+                    color:"#0f172a", font:{size:10,weight:"700"}, formatter:v=>"$"+v.toFixed(2) }
+    }]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{ display:false },
+                 tooltip:{ callbacks:{ label: c => "CPL: $" + c.raw.toFixed(2) } } },
+      scales: { x:{grid:{display:false}, ticks:{font:{size:11}}},
+                y:{beginAtZero:true, grace:"15%",
+                   ticks:{ callback:v=>"$"+v }, grid:{color:"#eef2f7"}} }
+    }
+  };
+  if (fbCplChart) fbCplChart.destroy();
+  fbCplChart = new Chart(document.getElementById("fbCpl"), cplConfig);
+
+  // Table
+  document.querySelector("#fbTable tbody").innerHTML = fbClean.map(r => `
+    <tr>
+      <td>${fullMonthLabel(r)}${r.partial ? ' <span style="color:#d97706;font-size:11px;font-weight:600">(partial)</span>' : ''}</td>
+      <td>${fmtMoney(r.spend)}</td>
+      <td>${r.leads}</td>
+      <td>${fmtMoney2(r.cpl)}</td>
+    </tr>`).join("");
+}
+
+// ---- RENDER: Facebook Weekly ---------------------------------------------
+function renderFBWeekly(selection) {
+  const data = filterWeeks(fbWeeklyClean, selection);
+  const labels = data.map(r => r.label);
+  const spend  = data.map(r => r.spend);
+  const leads  = data.map(r => r.leads);
+  const cpls   = data.map(r => r.cpl);
+
+  const totalSpend = sum(spend);
+  const totalLeads = sum(leads);
+  const blendedCpl = totalLeads ? totalSpend / totalLeads : 0;
+  const latest     = data[data.length - 1];
+  const prev       = data[data.length - 2];
+  const cplDelta   = (latest && prev) ? latest.cpl - prev.cpl : null;
+
+  document.getElementById("fbwKpi").innerHTML = data.length === 0
+    ? kpiCard("No data", "—", "Try a different time frame")
+    : [
+        kpiCard(`Latest week (${latest.label})`, fmtMoney(latest.spend),
+                `${latest.leads} leads · ${fmtMoney2(latest.cpl)} CPL`),
+        kpiCard("Total spend", fmtMoney(totalSpend),
+                `${data.length} week${data.length>1?"s":""} in range`),
+        kpiCard("Total leads", totalLeads.toLocaleString(),
+                `Blended CPL: ${fmtMoney2(blendedCpl)}`),
+        kpiCard("WoW change (CPL)",
+                cplDelta == null ? "—" : (cplDelta >= 0 ? "+" : "") + fmtMoney2(cplDelta),
+                cplDelta == null ? "Need ≥2 weeks" : `vs prior (${fmtMoney2(prev.cpl)})`,
+                cplDelta == null ? null : (cplDelta <= 0 ? "up" : "down"))
+      ].join("");
+
+  // Main chart — spend + leads
+  const mainConfig = {
+    data: {
+      labels,
+      datasets: [
+        { type:"bar", label:"Spend", data:spend, backgroundColor:"#6366f1", borderRadius:4, yAxisID:"y",
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]>0, anchor:"end", align:"end", color:"#312e81",
+                       font:{size:11,weight:"600"}, formatter:v=>"$"+Math.round(v).toLocaleString() } },
+        { type:"bar", label:"Leads", data:leads, backgroundColor:"#ec4899", borderRadius:4, yAxisID:"y1",
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]>0, anchor:"end", align:"end", color:"#9d174d",
+                       font:{size:11,weight:"600"}, formatter:v=>v } }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins: {
+        legend:{ position:"bottom", labels:{boxWidth:12, font:{size:12}} },
+        tooltip:{ callbacks:{ label: c => c.dataset.label === "Spend"
+              ? `Spend: $${c.raw.toLocaleString()}`
+              : `${c.dataset.label}: ${c.raw}` } }
+      },
+      scales: {
+        x:  { grid:{display:false}, ticks:{font:{size:11}} },
+        y:  { beginAtZero:true, grace:"20%", title:{display:true,text:"Spend ($)"},
+              ticks:{ callback:v=>"$"+v.toLocaleString() }, grid:{color:"#eef2f7"} },
+        y1: { beginAtZero:true, grace:"20%", position:"right", title:{display:true,text:"Leads"},
+              grid:{drawOnChartArea:false} }
+      }
+    }
+  };
+  if (fbwMainChart) fbwMainChart.destroy();
+  fbwMainChart = new Chart(document.getElementById("fbwMain"), mainConfig);
+
+  // CPL line chart
+  const cplConfig = {
+    type: "line",
+    data: { labels, datasets: [{
+      label: "Cost Per Lead",
+      data: cpls,
+      borderColor: "#059669",
+      backgroundColor: "rgba(5,150,105,0.12)",
+      borderWidth: 3,
+      tension: 0.3,
+      pointRadius: 6,
+      pointHoverRadius: 8,
+      pointBackgroundColor: "#059669",
+      pointBorderColor: "white",
+      pointBorderWidth: 2,
+      fill: true,
+      spanGaps: true,
+      datalabels: {
+        display: c => c.dataset.data[c.dataIndex] != null,
+        align: "top",
+        offset: 8,
+        color: "#064e3b",
+        font: { size: 11, weight: "700" },
+        formatter: v => "$" + v.toFixed(2),
+        backgroundColor: "rgba(255,255,255,0.9)",
+        borderRadius: 3,
+        padding: { top: 2, bottom: 2, left: 5, right: 5 }
+      }
+    }]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{ display:false },
+                 tooltip:{ callbacks:{ label: c => "CPL: $" + c.raw.toFixed(2) } } },
+      scales: { x:{grid:{display:false}, ticks:{font:{size:11}}},
+                y:{beginAtZero:true, grace:"25%",
+                   ticks:{ callback:v=>"$"+v }, grid:{color:"#eef2f7"}} }
+    }
+  };
+  if (fbwCplChart) fbwCplChart.destroy();
+  fbwCplChart = new Chart(document.getElementById("fbwCpl"), cplConfig);
+
+  // Table — always full list including flagged rows
+  document.querySelector("#fbwTable tbody").innerHTML = fbWeekly.map(r => {
+    const spendCell = r.spend == null ? "—" : fmtMoney(r.spend);
+    const leadsCell = r.leads == null ? "—" : r.leads;
+    const cplCell   = r.cpl   == null ? "—" : fmtMoney2(r.cpl);
+    return `<tr class="${r.flag ? 'flagged' : ''}">
+      <td>${r.fullLabel}</td><td>${spendCell}</td><td>${leadsCell}</td><td>${cplCell}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ---- RENDER: Website Calls -----------------------------------------------
+function renderWebsite(selection) {
+  const data = filterWeeks(website, selection);
+  const labels  = data.map(r => r.label);
+  const uniques = data.map(r => r.unique);
+  const over60  = data.map(r => r.calls60);
+  const pcts    = data.map(r => r.pct);
+
+  const totalUnique = sum(uniques);
+  const totalOver   = sum(over60);
+  const avgPct      = data.length ? pcts.reduce((s,x) => s + (x ?? 0), 0) / data.length : 0;
+  const latest      = data[data.length - 1];
+  const prev        = data[data.length - 2];
+  const latestPct   = latest ? latest.pct : 0;
+  const prevPct     = prev   ? prev.pct   : null;
+  const pctDelta    = (prevPct != null && latest) ? latestPct - prevPct : null;
+
+  document.getElementById("webKpi").innerHTML = data.length === 0
+    ? kpiCard("No data", "—", "Try a different time frame")
+    : [
+        kpiCard(`Latest week (${latest.label})`, latest.unique.toLocaleString(),
+                `${latest.calls60} calls >60s · ${latestPct.toFixed(1)}%`),
+        kpiCard("Total unique calls", totalUnique.toLocaleString(),
+                `${data.length} week${data.length>1?"s":""} in range`),
+        kpiCard("Avg % over 60s", avgPct.toFixed(1) + "%",
+                `Total >60s: ${totalOver.toLocaleString()}`),
+        kpiCard("WoW change (% >60s)",
+                pctDelta == null ? "—" : (pctDelta >= 0 ? "+" : "") + pctDelta.toFixed(1) + " pts",
+                pctDelta == null ? "Need ≥2 weeks" : `vs prior (${prevPct.toFixed(1)}%)`,
+                pctDelta == null ? null : (pctDelta >= 0 ? "up" : "down"))
+      ].join("");
+
+  // Main grouped bar + line overlay
+  const mainConfig = {
+    data: {
+      labels,
+      datasets: [
+        { type:"bar", label:"Unique website calls", data:uniques, backgroundColor:"#0ea5e9", borderRadius:4, yAxisID:"y",
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]>0, anchor:"end", align:"end", color:"#075985",
+                       font:{size:11,weight:"600"}, formatter:v=>v } },
+        { type:"bar", label:"Calls > 60 seconds", data:over60, backgroundColor:"#14b8a6", borderRadius:4, yAxisID:"y",
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]>0, anchor:"end", align:"end", color:"#115e59",
+                       font:{size:11,weight:"600"}, formatter:v=>v } },
+        { type:"line", label:"% > 60 seconds", data:pcts, borderColor:"#f59e0b", backgroundColor:"#f59e0b",
+          borderWidth:2, tension:0.25, pointRadius:4, yAxisID:"y1", spanGaps:true,
+          datalabels:{ display:c=>c.dataset.data[c.dataIndex]!=null, align:"top", offset:6, color:"#b45309",
+                       font:{size:11,weight:"700"}, formatter:v=>v.toFixed(0)+"%",
+                       backgroundColor:"rgba(255,255,255,0.85)", borderRadius:3, padding:{top:2,bottom:2,left:4,right:4} } }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins: {
+        legend:{ position:"bottom", labels:{boxWidth:12, font:{size:12}} },
+        tooltip:{ callbacks:{ label: c => c.dataset.label === "% > 60 seconds"
+              ? `${c.dataset.label}: ${c.raw == null ? "n/a" : c.raw.toFixed(1) + "%"}`
+              : `${c.dataset.label}: ${c.raw}` } }
+      },
+      scales: {
+        x:  { grid:{display:false}, ticks:{font:{size:11}} },
+        y:  { beginAtZero:true, grace:"20%", title:{display:true,text:"Call count"}, grid:{color:"#eef2f7"} },
+        y1: { beginAtZero:true, max:100, position:"right", title:{display:true,text:"% > 60 sec"},
+              grid:{drawOnChartArea:false}, ticks:{callback:v=>v+"%"} }
+      }
+    }
+  };
+  if (webMainChart) webMainChart.destroy();
+  webMainChart = new Chart(document.getElementById("webMain"), mainConfig);
+
+  // % bar chart
+  const pctConfig = {
+    type: "bar",
+    data: { labels, datasets: [{
+      label: "% calls > 60 seconds",
+      data: pcts,
+      backgroundColor: pcts.map(v => v == null ? "#e2e8f0" : v >= 60 ? "#059669" : v >= 50 ? "#3b82f6" : "#ef4444"),
+      borderRadius: 4,
+      datalabels: { display: c => c.dataset.data[c.dataIndex] != null, anchor:"end", align:"end",
+                    color:"#0f172a", font:{size:11,weight:"700"}, formatter:v=>v.toFixed(1)+"%" }
+    }]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{ display:false },
+                 tooltip:{ callbacks:{ label: c => c.raw == null ? "n/a" : c.raw.toFixed(2) + "%" } } },
+      scales: { x:{grid:{display:false}, ticks:{font:{size:11}}},
+                y:{beginAtZero:true, max:100, ticks:{callback:v=>v+"%"}, grid:{color:"#eef2f7"}} }
+    }
+  };
+  if (webPctChart) webPctChart.destroy();
+  webPctChart = new Chart(document.getElementById("webPct"), pctConfig);
+
+  // Table
+  document.querySelector("#webTable tbody").innerHTML = website.map(r => `
+    <tr>
+      <td>${r.fullLabel}</td>
+      <td>${r.unique}</td>
+      <td>${r.calls60}</td>
+      <td>${r.pct == null ? "—" : r.pct.toFixed(2) + "%"}</td>
+    </tr>`).join("");
+}
+
+// ---- ORCHESTRATION --------------------------------------------------------
+function renderAll() {
+  const selection = document.getElementById("timeFilter").value;
+  renderGMB(selection);
+  renderFB(selection);
+  renderFBWeekly(selection);
+  renderWebsite(selection);
+}
+
+// Tab switching
+document.querySelectorAll(".tab:not(.placeholder)").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+    // Re-render the newly active charts so they size correctly
+    renderAll();
+  });
+});
+
+// Filter change
+document.getElementById("timeFilter").addEventListener("change", renderAll);
+
+// Initial render
+renderAll();
+</script>
+
+</body>
+</html>
