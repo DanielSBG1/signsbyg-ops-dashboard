@@ -7,7 +7,10 @@ export function useThroughput() {
 
   useEffect(() => {
     fetch('/api/production-throughput')
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(json => {
         if (!json.ok) throw new Error(json.error ?? 'API error');
         setData(json.data);
