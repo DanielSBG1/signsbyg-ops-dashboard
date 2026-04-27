@@ -68,6 +68,16 @@ export function buildPipelineHealth(openDeals, ownerMap, constants, nowMs = Date
       ? Math.round((nowMs - Date.parse(props.hs_v2_date_entered_current_stage)) / 86400000)
       : 0;
 
+    // Derive next SOP stage label from PIPELINE_STAGES order
+    let nextStageLabel = null;
+    if (constants.PIPELINE_STAGES && constants.PIPELINE_STAGES[pipelineKey]) {
+      const stages = constants.PIPELINE_STAGES[pipelineKey];
+      const idx = stages.findIndex((s) => s.id === props.dealstage);
+      if (idx !== -1 && idx < stages.length - 1) {
+        nextStageLabel = stages[idx + 1].label;
+      }
+    }
+
     const dealEntry = {
       id: rawDeal.id,
       name: props.dealname || 'Untitled',
@@ -81,6 +91,12 @@ export function buildPipelineHealth(openDeals, ownerMap, constants, nowMs = Date
       reason: result.reason,
       priority: result.priority || null,
       createdate: props.createdate || null,
+      lastContacted: props.notes_last_contacted || null,
+      pipelineKey,
+      nextStageLabel,
+      hubspotUrl: constants.portalId
+        ? `https://app.hubspot.com/contacts/${constants.portalId}/deal/${rawDeal.id}`
+        : null,
     };
 
     const bucket = byPipeline[pipelineKey].buckets[result.status];

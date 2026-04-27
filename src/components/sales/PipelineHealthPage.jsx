@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import PipelineHealthPipelineCard from './PipelineHealthPipelineCard';
 import PipelineHealthDealList, { REASON_LABELS, formatMoney } from './PipelineHealthDealList';
 import StageConversion from './StageConversion';
+import DealDrawer from './DealDrawer';
 
 const NEW_DEALS_PERIODS = [
   { value: 7, label: 'Last 7 days' },
@@ -23,6 +24,7 @@ const NEW_DEALS_PERIODS = [
  */
 export default function PipelineHealthPage({ pipelineHealth }) {
   const [newDealsPeriod, setNewDealsPeriod] = useState(30);
+  const [selectedDeal, setSelectedDeal] = useState(null);
 
   // Build per-pipeline groupings — must be called unconditionally before any early return
   const hotByPipeline = useMemo(() => makeGrouping(pipelineHealth?.byPipeline, 'hot'), [pipelineHealth]);
@@ -75,7 +77,8 @@ export default function PipelineHealthPage({ pipelineHealth }) {
   );
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -132,6 +135,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
             { key: 'stageAgeDays', label: 'Stage age', render: (d) => `${d.stageAgeDays}d` },
           ]}
           emptyMessage="No hot deals right now."
+          onDealClick={setSelectedDeal}
         />
       </Section>
 
@@ -154,6 +158,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
             },
           ]}
           emptyMessage="No aging deals."
+          onDealClick={setSelectedDeal}
         />
         <p className="text-white/30 text-[10px] mt-2">
           * "Days" = days in current stage for stuck/decayed reasons; total deal age for age-based.
@@ -172,6 +177,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
             { key: 'ageDays', label: 'Days old', render: (d) => `${d.ageDays}d` },
           ]}
           emptyMessage="No cold deals."
+          onDealClick={setSelectedDeal}
         />
       </Section>
 
@@ -201,9 +207,12 @@ export default function PipelineHealthPage({ pipelineHealth }) {
             { key: 'amount', label: 'Amount', render: (d) => formatMoney(d.amount) },
           ]}
           emptyMessage="No new deals in this window."
+          onDealClick={setSelectedDeal}
         />
       </Section>
-    </div>
+      </div>
+      <DealDrawer deal={selectedDeal} onClose={() => setSelectedDeal(null)} />
+    </>
   );
 }
 

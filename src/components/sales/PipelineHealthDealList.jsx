@@ -28,7 +28,7 @@ function formatMoney(amount) {
  *     render(deal) returns the cell content; if omitted, uses deal[key]
  *   emptyMessage: string shown if ALL pipelines have 0 deals
  */
-export default function PipelineHealthDealList({ pipelines, columns, emptyMessage }) {
+export default function PipelineHealthDealList({ pipelines, columns, emptyMessage, onDealClick }) {
   // null = use the default order from the API (no client-side sort)
   const [sort, setSort] = useState(null); // { key, dir }
 
@@ -110,7 +110,8 @@ export default function PipelineHealthDealList({ pipelines, columns, emptyMessag
                     return (
                       <tr
                         key={deal.id}
-                        className={`border-t border-white/5 ${
+                        onClick={() => onDealClick?.(deal)}
+                        className={`border-t border-white/5 ${onDealClick ? 'cursor-pointer' : ''} ${
                           isStaleHot
                             ? 'bg-red-500/20 hover:bg-red-500/30 border-red-500/40'
                             : 'hover:bg-white/[0.02]'

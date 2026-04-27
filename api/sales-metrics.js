@@ -608,6 +608,7 @@ export default async function handler(req, res) {
       PIPELINE_STAGES,
       CLOSED_WON_STAGES,
       CLOSED_LOST_STAGES,
+      portalId: process.env.HUBSPOT_PORTAL_ID || null,
     };
     const pipelineHealth = buildPipelineHealth(allDeals.results, ownerMap, pipelineHealthConstants);
 
