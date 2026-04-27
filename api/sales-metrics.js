@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     // 60-second response cache. Keyed by period+range so different views don't
     // collide. Only caches successful 200 responses (errors fall through).
     // v12 = show contacts for lastweek (decouple leadsOmitted from skipOpenPhonePoll)
-    const cacheKey = `metricsv12:${period}:${customStart || ''}:${customEnd || ''}`;
+    const cacheKey = `metricsv13:${period}:${customStart || ''}:${customEnd || ''}`;
     // CDN cache header — Vercel's edge network will serve this response in
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
     // s-maxage=120: CDN freshness window (matches cron interval).
@@ -858,6 +858,17 @@ export default async function handler(req, res) {
       slaTotal++;
       const nowMs = Date.now();
 
+      // Deal / won signals for close-rate hypothesis tracking
+      const slaNumDeals = parseInt(c.properties.num_associated_deals) || 0;
+      let slaHasWon = (c.properties.lifecyclestage || '').toLowerCase() === 'customer';
+      if (!slaHasWon && slaNumDeals > 0 && typeof __assocMap !== 'undefined' && typeof __dealRecordById !== 'undefined') {
+        const dealIds = __assocMap.get(c.id) || [];
+        slaHasWon = dealIds.some((did) => {
+          const deal = __dealRecordById.get(did);
+          return deal && CLOSED_WON_STAGES.includes(deal.properties.dealstage);
+        });
+      }
+
       // Build a minimal lead-info object once, used by all SLA buckets
       const leadInfo = {
         id: c.id,
@@ -868,6 +879,8 @@ export default async function handler(req, res) {
         rep: ownerMap[c.properties.hubspot_owner_id] || 'Unassigned',
         repId: c.properties.hubspot_owner_id || '',
         createdAt: c.properties.createdate || '',
+        numDeals: slaNumDeals,
+        hasWon: slaHasWon,
       };
 
       if (candidates.length === 0) {
@@ -887,6 +900,8 @@ export default async function handler(req, res) {
             rep: ownerMap[c.properties.hubspot_owner_id] || 'Unassigned',
             repId: c.properties.hubspot_owner_id || '',
             createdAt: c.properties.createdate || '',
+            numDeals: slaNumDeals,
+            hasWon: slaHasWon,
             ageMinutes: Math.round(ageMs / 60000),
             // Diagnostic flags so the user can audit why this is breaching
             diagnostic: {
@@ -954,11 +969,19 @@ export default async function handler(req, res) {
       safe: slaSafe,
       compliancePct: slaCompliancePct,
       medianResponseMinutes,
-      breachingLeads: breachingLeads.slice(0, 50),
+      breachingLeads: breachingLeads.slice(0, 75).map(({ diagnostic: _d, ...l }) => l),
       breachingTotal: breachingLeads.length,
-      withinLeads: slaWithinLeads.slice(0, 50),
-      overLeads: slaOverLeads.slice(0, 50),
-      safeLeads: slaSafeLeads.slice(0, 50),
+      breachingDeals: breachingLeads.filter((l) => l.numDeals > 0).length,
+      breachingWon: breachingLeads.filter((l) => l.hasWon).length,
+      withinLeads: slaWithinLeads.slice(0, 75),
+      withinDeals: slaWithinLeads.filter((l) => l.numDeals > 0).length,
+      withinWon: slaWithinLeads.filter((l) => l.hasWon).length,
+      overLeads: slaOverLeads.slice(0, 75),
+      overDeals: slaOverLeads.filter((l) => l.numDeals > 0).length,
+      overWon: slaOverLeads.filter((l) => l.hasWon).length,
+      safeLeads: slaSafeLeads.slice(0, 75),
+      safeDeals: slaSafeLeads.filter((l) => l.numDeals > 0).length,
+      safeWon: slaSafeLeads.filter((l) => l.hasWon).length,
     };
 
     // --- Cohort deals (deals belonging to in-period contacts) ---

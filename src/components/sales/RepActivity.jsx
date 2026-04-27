@@ -44,12 +44,12 @@ export default function RepActivity({ reps, data }) {
   let activeReps;
   if (Object.keys(ownerNames).length > 0) {
     activeReps = [...ACTIVE_SALES_REP_IDS]
-      .filter((id) => ownerNames[id])
+      .filter((id) => ownerNames[id] && byOwner[id])
       .map((id) => ({ id, name: ownerNames[id] }))
       .sort((a, b) => a.name.localeCompare(b.name));
   } else {
     // Fallback: filter metrics reps to active sales reps with data
-    activeReps = (reps || []).filter((rep) => rep.id && ACTIVE_SALES_REP_IDS.has(rep.id));
+    activeReps = (reps || []).filter((rep) => rep.id && ACTIVE_SALES_REP_IDS.has(rep.id) && byOwner[rep.id]);
   }
 
   const headerLabel = mode === 'current'

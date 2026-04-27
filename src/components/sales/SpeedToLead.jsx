@@ -45,6 +45,8 @@ export default function SpeedToLead({ sla }) {
     within: {
       list: sla.withinLeads || [],
       total: sla.within,
+      deals: sla.withinDeals ?? null,
+      won: sla.withinWon ?? null,
       title: '✓ Within SLA — contacted in time',
       headerColor: 'text-success',
       bgClass: 'bg-success/5 border-success/20',
@@ -56,6 +58,8 @@ export default function SpeedToLead({ sla }) {
     over: {
       list: sla.overLeads || [],
       total: sla.over,
+      deals: sla.overDeals ?? null,
+      won: sla.overWon ?? null,
       title: '⚠ Over SLA — contacted late',
       headerColor: 'text-yellow-400',
       bgClass: 'bg-yellow-400/5 border-yellow-400/20',
@@ -67,6 +71,8 @@ export default function SpeedToLead({ sla }) {
     breaching: {
       list: sla.breachingLeads || [],
       total: sla.breachingTotal,
+      deals: sla.breachingDeals ?? null,
+      won: sla.breachingWon ?? null,
       title: '🚨 Breaching SLA — call these now',
       headerColor: 'text-danger',
       bgClass: 'bg-danger/5 border-danger/20',
@@ -78,6 +84,8 @@ export default function SpeedToLead({ sla }) {
     safe: {
       list: sla.safeLeads || [],
       total: sla.safe,
+      deals: sla.safeDeals ?? null,
+      won: sla.safeWon ?? null,
       title: '🕒 Within window — uncontacted but new',
       headerColor: 'text-blue-300',
       bgClass: 'bg-blue-300/5 border-blue-300/20',
@@ -115,10 +123,10 @@ export default function SpeedToLead({ sla }) {
           <p className={`text-4xl font-bold tabular-nums ${status.color}`}>{compliance}%</p>
           <p className="text-white/40 text-xs mt-1">{sla.within} of {sla.total} within {sla.thresholdMinutes}m</p>
         </div>
-        <ClickStat label="✓ Within SLA" value={sla.within} colorClass="text-success" subtext="contacted in time" active={bucket === 'within'} onClick={() => setBucket('within')} />
-        <ClickStat label="⚠ Over SLA" value={sla.over} colorClass="text-yellow-400" subtext="contacted late" active={bucket === 'over'} onClick={() => setBucket('over')} />
-        <ClickStat label="🚨 Breaching" value={sla.breaching} colorClass="text-danger" subtext="never contacted" active={bucket === 'breaching'} onClick={() => setBucket('breaching')} />
-        <ClickStat label="🕒 In Window" value={sla.safe} colorClass="text-blue-300" subtext={`new, < ${sla.thresholdMinutes}m`} active={bucket === 'safe'} onClick={() => setBucket('safe')} />
+        <ClickStat label="✓ Within SLA" value={sla.within} colorClass="text-success" subtext="contacted in time" deals={sla.withinDeals} won={sla.withinWon} active={bucket === 'within'} onClick={() => setBucket('within')} />
+        <ClickStat label="⚠ Over SLA" value={sla.over} colorClass="text-yellow-400" subtext="contacted late" deals={sla.overDeals} won={sla.overWon} active={bucket === 'over'} onClick={() => setBucket('over')} />
+        <ClickStat label="🚨 Breaching" value={sla.breaching} colorClass="text-danger" subtext="never contacted" deals={sla.breachingDeals} won={sla.breachingWon} active={bucket === 'breaching'} onClick={() => setBucket('breaching')} />
+        <ClickStat label="🕒 In Window" value={sla.safe} colorClass="text-blue-300" subtext={`new, < ${sla.thresholdMinutes}m`} deals={sla.safeDeals} won={sla.safeWon} active={bucket === 'safe'} onClick={() => setBucket('safe')} />
         <Stat label="Median Response" value={formatResponseTime(sla.medianResponseMinutes)} valueClass="text-2xl" />
       </div>
 
@@ -126,11 +134,25 @@ export default function SpeedToLead({ sla }) {
       <div className="border-t border-white/5 pt-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className={`text-sm font-semibold ${cfg.headerColor}`}>{cfg.title}</h3>
-          {cfg.total > cfg.list.length && (
-            <span className="text-white/40 text-xs">
-              Showing first {cfg.list.length} of {cfg.total}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {cfg.deals != null && (
+              <span className="text-xs text-white/50">
+                <span className="text-green-400 font-semibold">{cfg.deals}</span>
+                <span className="text-white/30"> / {cfg.total} have deals</span>
+              </span>
+            )}
+            {cfg.won != null && cfg.won > 0 && (
+              <span className="text-xs text-white/50">
+                <span className="text-amber-400 font-semibold">{cfg.won}</span>
+                <span className="text-white/30"> won</span>
+              </span>
+            )}
+            {cfg.total > cfg.list.length && (
+              <span className="text-white/40 text-xs">
+                Showing first {cfg.list.length} of {cfg.total}
+              </span>
+            )}
+          </div>
         </div>
         {cfg.list.length === 0 ? (
           <p className="text-white/40 text-sm py-4">
@@ -146,6 +168,8 @@ export default function SpeedToLead({ sla }) {
                     <th className="px-3 py-2 text-left font-medium">Email</th>
                     <th className="px-3 py-2 text-left font-medium">Source</th>
                     <th className="px-3 py-2 text-left font-medium">Owner</th>
+                    <th className="px-3 py-2 text-center font-medium">Deal</th>
+                    <th className="px-3 py-2 text-center font-medium">Won</th>
                     <th className="px-3 py-2 text-right font-medium">{cfg.timeCol.label}</th>
                   </tr>
                 </thead>
@@ -170,6 +194,16 @@ export default function SpeedToLead({ sla }) {
                         <td className="px-3 py-2 text-white/60">{lead.source}</td>
                         <td className={`px-3 py-2 ${lead.rep === 'Unassigned' ? 'text-danger font-semibold' : 'text-white/80'}`}>
                           {lead.rep}
+                        </td>
+                        <td className="px-3 py-2 text-center tabular-nums">
+                          {lead.numDeals > 0
+                            ? <span className="text-green-400 font-semibold">{lead.numDeals}</span>
+                            : <span className="text-white/20">—</span>}
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          {lead.hasWon
+                            ? <span className="text-amber-400 font-bold">✓</span>
+                            : <span className="text-white/20">—</span>}
                         </td>
                         <td className={`px-3 py-2 text-right font-semibold tabular-nums ${cfg.headerColor}`}>
                           {cfg.timeCol.accessor(lead)}
@@ -205,7 +239,7 @@ function Stat({ label, value, colorClass = 'text-white', valueClass = 'text-2xl'
   );
 }
 
-function ClickStat({ label, value, colorClass = 'text-white', subtext, active, onClick }) {
+function ClickStat({ label, value, colorClass = 'text-white', subtext, deals, won, active, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -216,6 +250,11 @@ function ClickStat({ label, value, colorClass = 'text-white', subtext, active, o
       <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`font-bold tabular-nums text-2xl ${colorClass}`}>{value}</p>
       {subtext && <p className="text-white/40 text-xs mt-1">{subtext}</p>}
+      {deals != null && (
+        <p className="text-white/30 text-[10px] mt-1.5 tabular-nums">
+          {deals} deals{won > 0 ? ` · ${won} won` : ''}
+        </p>
+      )}
     </button>
   );
 }

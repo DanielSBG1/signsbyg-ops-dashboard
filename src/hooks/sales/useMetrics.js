@@ -5,7 +5,7 @@ const STALE_MAX_MS = 2 * 60 * 60 * 1000; // 2 hours — show stale rather than s
 
 // --- localStorage helpers ---
 function lsKey(period, start, end) {
-  return `sbg_m_${period}_${start || ''}_${end || ''}`;
+  return `sbg_m2_${period}_${start || ''}_${end || ''}`;
 }
 function lsRead(key) {
   try {
