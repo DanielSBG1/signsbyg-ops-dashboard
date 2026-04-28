@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useMetrics } from '../hooks/sales/useMetrics';
 import { useHandoffs } from '../hooks/sales/useHandoffs';
 import { useCalls } from '../hooks/sales/useCalls';
@@ -32,6 +32,13 @@ export default function SalesSection() {
   const [filterRep, setFilterRep] = useState(null);
   const [filterRepStatusHint, setFilterRepStatusHint] = useState(null);
   const [funnelFilter, setFunnelFilter] = useState(null);
+  const detailRef = useRef(null);
+
+  useEffect(() => {
+    if ((funnelFilter || filterRep) && detailRef.current) {
+      setTimeout(() => detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+    }
+  }, [funnelFilter, filterRep]);
   const [visitedTabs, setVisitedTabs] = useState({ sales: true, pipeline: true });
 
   function handleTabChange(t) {
@@ -106,25 +113,27 @@ export default function SalesSection() {
                   onCellClick={setFunnelFilter}
                   activeCell={funnelFilter}
                 />
-                {funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided') ? (
-                  <DealDetail
-                    cohortDeals={metrics.data.cohortDeals}
-                    periodDeals={metrics.data.periodDeals}
-                    funnelFilter={funnelFilter}
-                    onClearFunnelFilter={() => setFunnelFilter(null)}
-                  />
-                ) : (
-                  <LeadDetail
-                    leads={metrics.data.leads}
-                    leadCounts={metrics.data.leadCounts}
-                    leadsOmitted={metrics.data.leadsOmitted}
-                    filterRep={filterRep}
-                    statusHint={filterRepStatusHint}
-                    onClearFilter={() => { setFilterRep(null); setFilterRepStatusHint(null); }}
-                    funnelFilter={funnelFilter}
-                    onClearFunnelFilter={() => setFunnelFilter(null)}
-                  />
-                )}
+                <div ref={detailRef}>
+                  {funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided') ? (
+                    <DealDetail
+                      cohortDeals={metrics.data.cohortDeals}
+                      periodDeals={metrics.data.periodDeals}
+                      funnelFilter={funnelFilter}
+                      onClearFunnelFilter={() => setFunnelFilter(null)}
+                    />
+                  ) : (
+                    <LeadDetail
+                      leads={metrics.data.leads}
+                      leadCounts={metrics.data.leadCounts}
+                      leadsOmitted={metrics.data.leadsOmitted}
+                      filterRep={filterRep}
+                      statusHint={filterRepStatusHint}
+                      onClearFilter={() => { setFilterRep(null); setFilterRepStatusHint(null); }}
+                      funnelFilter={funnelFilter}
+                      onClearFunnelFilter={() => setFunnelFilter(null)}
+                    />
+                  )}
+                </div>
                 <PipelineHealth />
                 <SourceBreakdown />
               </>

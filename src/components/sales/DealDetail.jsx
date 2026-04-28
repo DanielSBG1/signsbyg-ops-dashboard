@@ -25,20 +25,24 @@ export default function DealDetail({ cohortDeals, periodDeals, funnelFilter, onC
   // Pick the right dataset based on the view that triggered the click:
   // - 'rep_activity' / 'source_activity': uses periodDeals (period-based)
   // - 'rep_funnel' / 'source': uses cohortDeals (cohort-based)
+  // - cohortFallback: cohortDeals is empty (month+ period skips contact fetches),
+  //   so fall back to periodDeals and use ownerId/source instead of contactRepId/contactSource
   const isActivity = funnelFilter.view === 'rep_activity' || funnelFilter.view === 'source_activity';
-  const source = isActivity ? (periodDeals || []) : (cohortDeals || []);
+  const cohortFallback = !isActivity && (cohortDeals || []).length === 0 && (periodDeals || []).length > 0;
+  const useActivityLogic = isActivity || cohortFallback;
+  const source = useActivityLogic ? (periodDeals || []) : (cohortDeals || []);
 
   let filtered = source;
   // type='total' = no source/rep filter (show all)
   if (funnelFilter.type === 'source') {
-    // For source_activity use the deal's own source, not the contact's
-    if (isActivity) {
+    // For activity views or cohort fallback: use deal's own source field
+    if (useActivityLogic) {
       filtered = filtered.filter((d) => (d.source || d.contactSource) === funnelFilter.key);
     } else {
       filtered = filtered.filter((d) => d.contactSource === funnelFilter.key);
     }
   } else if (funnelFilter.type === 'rep') {
-    if (isActivity) {
+    if (useActivityLogic) {
       filtered = filtered.filter((d) => d.ownerId === funnelFilter.key);
     } else {
       filtered = filtered.filter((d) => d.contactRepId === funnelFilter.key);
@@ -47,14 +51,14 @@ export default function DealDetail({ cohortDeals, periodDeals, funnelFilter, onC
   // Row filters
   if (funnelFilter.row === 'won') {
     filtered = filtered.filter((d) => d.status === 'won');
-    if (isActivity) filtered = filtered.filter((d) => d.closedInPeriod);
+    if (useActivityLogic) filtered = filtered.filter((d) => d.closedInPeriod);
   } else if (funnelFilter.row === 'decided') {
     filtered = filtered.filter((d) => d.status === 'won' || d.status === 'lost');
-    if (isActivity) filtered = filtered.filter((d) => d.closedInPeriod);
-  } else if (funnelFilter.row === 'deals' && isActivity) {
+    if (useActivityLogic) filtered = filtered.filter((d) => d.closedInPeriod);
+  } else if (funnelFilter.row === 'deals' && useActivityLogic) {
     filtered = filtered.filter((d) => d.createdInPeriod);
   }
-  // For source/rep_funnel + row === 'deals', show all (open, won, lost) from cohort
+  // For rep_funnel + row === 'deals' (cohort mode): show all statuses from cohort
 
   const sorted = [...filtered].sort((a, b) => {
     const av = a[sortKey] ?? '';
@@ -71,9 +75,14 @@ export default function DealDetail({ cohortDeals, periodDeals, funnelFilter, onC
   return (
     <div className="bg-slate-card border border-white/5 rounded-2xl p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-lg font-semibold">Deal Details</h2>
           <span className="text-white/40 text-sm">{filtered.length} showing</span>
+          {cohortFallback && (
+            <span className="text-yellow-400/70 text-xs bg-yellow-400/10 border border-yellow-400/20 rounded-full px-2 py-0.5">
+              ⚠ Contact attribution not available for this period — filtered by deal owner/source
+            </span>
+          )}
         </div>
         {funnelFilter && (
           <button
