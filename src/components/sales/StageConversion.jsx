@@ -58,7 +58,7 @@ const SOURCE_LABELS = {
   other: 'Other',
 };
 
-function DealModal({ title, deals, onClose }) {
+function DealModal({ title, deals, onClose, onDealClick }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -74,19 +74,36 @@ function DealModal({ title, deals, onClose }) {
           {deals.length === 0 ? (
             <p className="text-white/20 text-sm text-center py-8">No deals</p>
           ) : deals.map((deal) => (
-            <div key={deal.id} className="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
+            <div
+              key={deal.id}
+              className={`bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4 ${onDealClick ? 'cursor-pointer hover:bg-white/10 transition-colors' : ''}`}
+              onClick={onDealClick ? () => onDealClick(deal) : undefined}
+            >
               <div className="flex items-center gap-2 min-w-0">
                 {deal.source && SOURCE_COLORS[deal.source] && (
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: SOURCE_COLORS[deal.source] }} />
                 )}
-                <span className="font-medium text-sm truncate">{deal.name}</span>
+                <div className="min-w-0">
+                  <div className="font-medium text-sm truncate">{deal.name}</div>
+                  {onDealClick && (
+                    <div className="text-white/40 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
+                  )}
+                </div>
               </div>
-              {deal.amount > 0 && (
-                <span className="text-accent font-semibold text-xs shrink-0">${deal.amount.toLocaleString()}</span>
-              )}
+              <div className="shrink-0 text-right">
+                {deal.amount > 0 && (
+                  <div className="text-accent font-semibold text-xs">${deal.amount.toLocaleString()}</div>
+                )}
+                {onDealClick && deal.stageAgeDays != null && (
+                  <div className="text-white/30 text-[10px]">{deal.stageAgeDays}d in stage</div>
+                )}
+              </div>
             </div>
           ))}
         </div>
+        {onDealClick && deals.length > 0 && (
+          <p className="text-white/25 text-[10px] mt-3 text-center">Click a deal to see full details</p>
+        )}
       </div>
     </div>
   );
@@ -104,7 +121,7 @@ function getSourceSegments(deals) {
     .map(([source, count]) => ({ source, count }));
 }
 
-function PipelineFunnel({ pKey, stages, onStageClick }) {
+function PipelineFunnel({ pKey, stages, onStageClick, onSegmentHover }) {
   const label = PIPELINE_LABELS[pKey] || pKey;
   const maxReached = Math.max(...stages.map((s) => s.reached), 1);
 
@@ -145,15 +162,24 @@ function PipelineFunnel({ pKey, stages, onStageClick }) {
                           backgroundColor: SOURCE_COLORS[source] || '#64748b',
                           opacity: 0.7,
                         }}
-                        title={`${SOURCE_LABELS[source] || source}: ${count}`}
+                        onMouseEnter={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          onSegmentHover({
+                            source,
+                            count,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top,
+                          });
+                        }}
+                        onMouseLeave={() => onSegmentHover(null)}
                       />
                     ))}
                   </div>
-                  <span className="absolute inset-0 flex items-center justify-start pl-2 text-xs text-white font-medium">
+                  <span className="absolute inset-0 flex items-center justify-start pl-2 text-xs text-white font-medium pointer-events-none">
                     {s.reached}
                   </span>
                   {stageValue > 0 && (
-                    <span className="absolute inset-0 flex items-center justify-end pr-2 text-[10px] text-white/50">
+                    <span className="absolute inset-0 flex items-center justify-end pr-2 text-[10px] text-white/50 pointer-events-none">
                       ${stageValue.toLocaleString()}
                     </span>
                   )}
@@ -196,9 +222,10 @@ function SourceLegend({ entries }) {
   );
 }
 
-export default function StageConversion() {
+export default function StageConversion({ onDealClick }) {
   const { data, loading, error, period, setPeriod, mode, setMode, customRange, setCustomRange } = useStageConversion();
   const [modal, setModal] = useState(null);
+  const [tooltip, setTooltip] = useState(null); // { source, count, x, y }
 
   const entries = data
     ? Object.entries(data.conversion).filter(([, stages]) => stages && stages.length > 0)
@@ -220,6 +247,11 @@ export default function StageConversion() {
       .sort((a, b) => b[1] - a[1])
       .map(([source, count]) => ({ source, count }));
   })();
+
+  function handleDealClick(deal) {
+    setModal(null);
+    onDealClick?.(deal);
+  }
 
   return (
     <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
@@ -308,6 +340,7 @@ export default function StageConversion() {
                 pKey={pKey}
                 stages={stages}
                 onStageClick={(title, deals) => setModal({ title, deals })}
+                onSegmentHover={setTooltip}
               />
             ))}
           </div>
@@ -317,11 +350,33 @@ export default function StageConversion() {
         <p className="text-white/20 text-sm text-center py-12">No deals in this period</p>
       ) : null}
 
+      {/* Hover tooltip for color segments */}
+      {tooltip && (
+        <div
+          className="fixed z-[60] pointer-events-none px-3 py-2 rounded-lg bg-[#1a1a2e] border border-white/20 shadow-xl"
+          style={{ left: tooltip.x, top: tooltip.y - 8, transform: 'translate(-50%, -100%)' }}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="w-2.5 h-2.5 rounded-sm shrink-0"
+              style={{ backgroundColor: SOURCE_COLORS[tooltip.source] || '#64748b' }}
+            />
+            <span className="text-xs font-semibold text-white whitespace-nowrap">
+              {SOURCE_LABELS[tooltip.source] || tooltip.source}
+            </span>
+          </div>
+          <div className="text-[11px] text-white/50 mt-0.5 pl-[18px]">
+            {tooltip.count} deal{tooltip.count !== 1 ? 's' : ''}
+          </div>
+        </div>
+      )}
+
       {modal && (
         <DealModal
           title={modal.title}
           deals={modal.deals}
           onClose={() => setModal(null)}
+          onDealClick={onDealClick ? handleDealClick : undefined}
         />
       )}
     </div>

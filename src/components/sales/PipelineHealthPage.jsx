@@ -25,6 +25,7 @@ const NEW_DEALS_PERIODS = [
 export default function PipelineHealthPage({ pipelineHealth }) {
   const [newDealsPeriod, setNewDealsPeriod] = useState(30);
   const [selectedDeal, setSelectedDeal] = useState(null);
+  const [bucketModal, setBucketModal] = useState(null); // { title, deals }
 
   // Build per-pipeline groupings — must be called unconditionally before any early return
   const hotByPipeline = useMemo(() => makeGrouping(pipelineHealth?.byPipeline, 'hot'), [pipelineHealth]);
@@ -115,12 +116,17 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       {/* Per-pipeline 2x2 grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {Object.entries(byPipeline).map(([key, p]) => (
-          <PipelineHealthPipelineCard key={key} pipeline={p} generatedAt={pipelineHealth.generatedAt} />
+          <PipelineHealthPipelineCard
+            key={key}
+            pipeline={p}
+            generatedAt={pipelineHealth.generatedAt}
+            onBucketClick={(title, deals) => setBucketModal({ title, deals })}
+          />
         ))}
       </div>
 
       {/* Stage-to-stage conversion (leading indicator) */}
-      <StageConversion />
+      <StageConversion onDealClick={setSelectedDeal} />
 
       {/* HOT section */}
       <Section title="🔥 HOT DEALS — Close these now" subtitle={`${totals.hot} deals · ${formatMoney(totals.hotValue)}`}>
@@ -212,7 +218,57 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       </Section>
       </div>
       <DealDrawer deal={selectedDeal} onClose={() => setSelectedDeal(null)} />
+      {bucketModal && (
+        <BucketDealListModal
+          title={bucketModal.title}
+          deals={bucketModal.deals}
+          onClose={() => setBucketModal(null)}
+          onDealClick={(deal) => { setBucketModal(null); setSelectedDeal(deal); }}
+        />
+      )}
     </>
+  );
+}
+
+function BucketDealListModal({ title, deals, onClose, onDealClick }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative bg-slate-card border border-white/10 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-base">{title}</h3>
+          <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">&times;</button>
+        </div>
+        <div className="overflow-y-auto flex-1 flex flex-col gap-2">
+          {deals.length === 0 ? (
+            <p className="text-white/20 text-sm text-center py-8">No deals</p>
+          ) : deals.map((deal) => (
+            <div
+              key={deal.id}
+              className="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4 cursor-pointer hover:bg-white/10 transition-colors"
+              onClick={() => onDealClick(deal)}
+            >
+              <div className="min-w-0">
+                <div className="font-medium text-sm truncate">{deal.name}</div>
+                <div className="text-white/40 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
+              </div>
+              <div className="shrink-0 text-right">
+                {deal.amount > 0 && (
+                  <div className="text-accent font-semibold text-xs">${deal.amount.toLocaleString()}</div>
+                )}
+                {deal.stageAgeDays != null && (
+                  <div className="text-white/30 text-[10px]">{deal.stageAgeDays}d in stage</div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-white/25 text-[10px] mt-3 text-center">Click a deal to see full details</p>
+      </div>
+    </div>
   );
 }
 
