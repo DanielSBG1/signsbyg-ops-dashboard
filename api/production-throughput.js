@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
   try {
     const data = await cached('prod:throughput', CACHE_TTL, buildThroughput);
-    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
     res.json({ ok: true, data });
   } catch (err) {
     console.error('[production-throughput]', err.message);

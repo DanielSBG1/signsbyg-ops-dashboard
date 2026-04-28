@@ -1,5 +1,9 @@
 import { getTasksInProject } from './_lib/installation/asana.js';
 import { INSTALL_PROJECT_GID, FIELDS, SECTIONS, CREWS, METROS } from './_lib/installation/constants.js';
+import { getCached, setCached } from './_lib/cache.js';
+
+const CACHE_KEY = 'installation:metrics:v1';
+const CACHE_TTL = 120; // seconds — matches cron cadence (cron writes, users read)
 
 function getField(task, fieldGid) {
   return task.custom_fields?.find((f) => f.gid === fieldGid);
@@ -91,6 +95,15 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+
+  const cached = await getCached(CACHE_KEY);
+  if (cached) {
+    console.log(`[Cache HIT] ${CACHE_KEY}`);
+    return res.status(200).json(cached);
+  }
+  console.log(`[Cache MISS] ${CACHE_KEY}`);
 
   try {
     const tasks = await getTasksInProject(INSTALL_PROJECT_GID);
@@ -220,7 +233,7 @@ export default async function handler(req, res) {
       monthToDate,
     };
 
-    return res.status(200).json({
+    const result = {
       summary,
       bySection,
       byCrew,
@@ -228,7 +241,9 @@ export default async function handler(req, res) {
       schedule,
       jobs,
       refreshedAt: new Date().toISOString(),
-    });
+    };
+    await setCached(CACHE_KEY, result, CACHE_TTL);
+    return res.status(200).json(result);
   } catch (err) {
     console.error('Installation metrics error:', err);
     return res.status(500).json({ error: err.message });

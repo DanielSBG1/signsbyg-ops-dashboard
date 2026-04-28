@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
   try {
     const data = await cached('prod:metrics', CACHE_TTL, buildProductionMetrics);
-    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
     res.json({ ok: true, data });
   } catch (err) {
     console.error('[production-metrics]', err.message);

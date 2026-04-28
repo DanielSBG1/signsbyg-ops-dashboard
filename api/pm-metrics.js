@@ -13,7 +13,8 @@ export default async function handler(req, res) {
     const data = bust
       ? await buildPmMetrics()
       : await cached('pm:metrics', CACHE_TTL, buildPmMetrics);
-    res.setHeader('Cache-Control', 'no-store');
+    // bust=1 bypasses KV for manual refresh — don't let CDN cache that response
+    res.setHeader('Cache-Control', bust ? 'no-store' : 'public, s-maxage=120, stale-while-revalidate=600');
     res.json({ ok: true, data });
   } catch (err) {
     console.error('[pm-metrics]', err.message);

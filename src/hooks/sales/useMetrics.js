@@ -82,24 +82,21 @@ export function useMetrics(enabled = true) {
     return () => clearInterval(intervalRef.current);
   }, [fetchMetrics, enabled]);
 
-  // Pre-warm the server KV cache AND populate localStorage so that switching
-  // to any period is instant — even on first visit.
-  // Wave 1 (500ms): today/week/month — most-used
-  // Wave 2 (3s): quarterly periods — warmed before the user clicks them
+  // Pre-warm localStorage for the current quarter only.
+  // The server cron already keeps today/week/month/lastweek warm in KV — no
+  // need to re-fetch those from the client and compete with the initial load.
+  // Only the current quarter benefits from client-side priming (cron runs it
+  // every 10 min, so there's a window where it's cold on first visit).
   useEffect(() => {
     if (!enabled || !data) return;
-    // Pre-warm ALL periods on initial load only — don't re-fire on period
-    // changes or it blasts 8+ concurrent cold Lambdas every click.
-    const allPeriods = ['today', 'week', 'lastweek', 'month', 'quarter', 'q1', 'q2', 'q3', 'q4'];
-    function warmPeriod(p) {
-      fetch(`/api/sales-metrics?period=${p}`)
+    const currentQuarter = `q${Math.floor(new Date().getMonth() / 3) + 1}`;
+    const t = setTimeout(() => {
+      fetch(`/api/sales-metrics?period=${currentQuarter}`)
         .then((r) => (r.ok ? r.json() : null))
-        .then((json) => { if (json) lsWrite(lsKey(p, '', ''), json); })
+        .then((json) => { if (json) lsWrite(lsKey(currentQuarter, '', ''), json); })
         .catch(() => {});
-    }
-    const t1 = setTimeout(() => { for (const p of allPeriods.slice(0, 4)) warmPeriod(p); }, 500);
-    const t2 = setTimeout(() => { for (const p of allPeriods.slice(4)) warmPeriod(p); }, 3000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    }, 3000);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, data ? 'has-data' : 'no-data']);
 
