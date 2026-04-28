@@ -93,9 +93,9 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       {/* KPI strip */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <KpiCard label="Total Open" big={formatMoney(totals.openValue)} sub={`${totals.open} deals`} />
-        <KpiCard label="🔥 Hot" big={String(totals.hot)} sub={formatMoney(totals.hotValue)} colorClass="text-orange-400" />
-        <KpiCard label="⚠️ Aging" big={String(totals.aging)} sub={formatMoney(totals.agingValue)} colorClass="text-yellow-400" />
-        <KpiCard label="🥶 Cold" big={String(totals.cold)} sub={formatMoney(totals.coldValue)} colorClass="text-blue-300" />
+        <KpiCard label="🔥 Hot" big={String(totals.hot)} sub={formatMoney(totals.hotValue)} colorClass="text-orange-400" onClick={() => document.getElementById('section-hot')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+        <KpiCard label="⚠️ Aging" big={String(totals.aging)} sub={formatMoney(totals.agingValue)} colorClass="text-yellow-400" onClick={() => document.getElementById('section-aging')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+        <KpiCard label="🥶 Cold" big={String(totals.cold)} sub={formatMoney(totals.coldValue)} colorClass="text-blue-300" onClick={() => document.getElementById('section-cold')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
       </div>
 
       {/* Pipeline Coverage Ratio (leading indicator) */}
@@ -129,7 +129,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       <StageConversion onDealClick={setSelectedDeal} />
 
       {/* HOT section */}
-      <Section title="🔥 HOT DEALS — Close these now" subtitle={`${totals.hot} deals · ${formatMoney(totals.hotValue)}`}>
+      <Section id="section-hot" title="🔥 HOT DEALS — Close these now" subtitle={`${totals.hot} deals · ${formatMoney(totals.hotValue)}`}>
         <PipelineHealthDealList
           pipelines={hotByPipeline}
           columns={[
@@ -146,7 +146,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       </Section>
 
       {/* AGING section */}
-      <Section title="⚠️ AGING DEALS — Need attention" subtitle={`${totals.aging} deals · ${formatMoney(totals.agingValue)}`}>
+      <Section id="section-aging" title="⚠️ AGING DEALS — Need attention" subtitle={`${totals.aging} deals · ${formatMoney(totals.agingValue)}`}>
         <PipelineHealthDealList
           pipelines={agingByPipeline}
           columns={[
@@ -172,7 +172,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       </Section>
 
       {/* COLD section */}
-      <Section title="🥶 COLD DEALS — Save or kill" subtitle={`${totals.cold} deals · ${formatMoney(totals.coldValue)}`}>
+      <Section id="section-cold" title="🥶 COLD DEALS — Save or kill" subtitle={`${totals.cold} deals · ${formatMoney(totals.coldValue)}`}>
         <PipelineHealthDealList
           pipelines={coldByPipeline}
           columns={[
@@ -307,19 +307,24 @@ function CoverageCard({ label, coverage, target }) {
   );
 }
 
-function KpiCard({ label, big, sub, colorClass = 'text-white' }) {
+function KpiCard({ label, big, sub, colorClass = 'text-white', onClick }) {
   return (
-    <div className="bg-slate-card border border-white/5 rounded-xl p-4">
+    <div
+      className={`bg-slate-card border border-white/5 rounded-xl p-4 transition-colors ${onClick ? 'cursor-pointer hover:border-white/20 hover:bg-white/[0.06]' : ''}`}
+      onClick={onClick}
+      title={onClick ? `Jump to ${label} section` : undefined}
+    >
       <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold ${colorClass}`}>{big}</p>
       <p className="text-white/50 text-xs mt-1">{sub}</p>
+      {onClick && <p className="text-white/20 text-[9px] mt-1.5">↓ click to jump</p>}
     </div>
   );
 }
 
-function Section({ title, subtitle, rightSlot, children }) {
+function Section({ id, title, subtitle, rightSlot, children }) {
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div id={id} className="bg-slate-card border border-white/5 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-lg font-semibold">{title}</h2>
