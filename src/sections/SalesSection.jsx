@@ -147,6 +147,7 @@ export default function SalesSection() {
                       funnelFilter={funnelFilter}
                       repFilter={filterRepStatusHint === 'qualified' && !funnelFilter ? filterRep : null}
                       repName={filterRep ? metrics.data.reps?.find((r) => r.id === filterRep)?.name : null}
+                      leaderboardSortKey={leaderboardSortKey}
                       onClearFunnelFilter={() => setFunnelFilter(null)}
                       onClearRepFilter={() => { setFilterRep(null); setFilterRepStatusHint(null); }}
                     />

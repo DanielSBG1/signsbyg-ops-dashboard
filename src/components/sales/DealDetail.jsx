@@ -16,7 +16,7 @@ const STATUS_STYLES = {
  * Shown when the user clicks a Deals or Won count in the funnel.
  * Lists the actual deals belonging to the cohort, with stage info.
  */
-export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, funnelFilter, repFilter, repName, onClearFunnelFilter, onClearRepFilter }) {
+export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, funnelFilter, repFilter, repName, leaderboardSortKey, onClearFunnelFilter, onClearRepFilter }) {
   const [sortKey, setSortKey] = useState('createdate');
   const [sortDir, setSortDir] = useState('desc');
 
@@ -82,8 +82,9 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, fu
   let filtered = source;
 
   if (isRepFilterMode) {
-    // Rep-filter mode: show all deals owned by this rep (deal owner, not contact owner)
-    filtered = filtered.filter((d) => d.ownerId === repFilter);
+    // Revenue/Won/Conversion sort → show won deals closed in the period (matches leaderboard numbers)
+    // All three of these sort keys are derived from closed-won revenue, so won+closedInPeriod is correct.
+    filtered = filtered.filter((d) => d.ownerId === repFilter && d.status === 'won' && d.closedInPeriod);
   } else {
     // Funnel-filter mode (original logic)
     if (funnelFilter.type === 'source') {
@@ -140,7 +141,7 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, fu
             onClick={onClearRepFilter}
             className="px-3 py-1 text-xs rounded-full bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
           >
-            {repName || 'Rep'} · deals &times;
+            {repName || 'Rep'} · won deals &times;
           </button>
         ) : funnelFilter ? (
           <button
