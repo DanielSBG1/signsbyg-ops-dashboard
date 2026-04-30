@@ -227,7 +227,9 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
             </div>
 
             <div className="mt-3 pt-3 border-t border-white/8 text-[10px] text-white/25 text-center">
-              Click to filter leads ↓
+              {sortKey === 'leadsAssigned' || sortKey === 'avgResponseMinutes'
+                ? 'Click to see contacts ↓'
+                : 'Click to see deals ↓'}
             </div>
           </div>
         </div>

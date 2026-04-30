@@ -3,6 +3,8 @@ import { useMetrics } from '../hooks/sales/useMetrics';
 import { useHandoffs } from '../hooks/sales/useHandoffs';
 import { useCalls } from '../hooks/sales/useCalls';
 import { useRepActivity } from '../hooks/sales/useRepActivity';
+import { useCohortDeals } from '../hooks/sales/useCohortDeals';
+import { useRepLeads } from '../hooks/sales/useRepLeads';
 import TopBar from '../components/sales/TopBar';
 import MetricCards from '../components/sales/MetricCards';
 import Funnel from '../components/sales/Funnel';
@@ -31,6 +33,7 @@ export default function SalesSection() {
   const [tab, setTab] = useState('sales');
   const [filterRep, setFilterRep] = useState(null);
   const [filterRepStatusHint, setFilterRepStatusHint] = useState(null);
+  const [leaderboardSortKey, setLeaderboardSortKey] = useState('revenueClosed');
   const [funnelFilter, setFunnelFilter] = useState(null);
   const detailRef = useRef(null);
 
@@ -54,6 +57,27 @@ export default function SalesSection() {
   const handoffs    = useHandoffs(handoffsEnabled);
   const callsData   = useCalls(callsEnabled);
   const repActivity = useRepActivity(metricsEnabled, metrics.period, metrics.customRange);
+  // Cohort deals for wide periods (month+) — fetched in parallel, never blocks render
+  const cohortDealsHook = useCohortDeals(metricsEnabled, metrics.period, metrics.customRange);
+  const cohortDeals = cohortDealsHook.data ?? metrics.data?.cohortDeals ?? [];
+
+  // Rep-scoped contact fetch — only fires for wide periods (month+) when a rep is
+  // selected and the leaderboard is in leads-sort mode (narrow periods already have
+  // all contacts in the main metrics payload).
+  const leadsMode = filterRepStatusHint === 'new_lead' || filterRepStatusHint === null;
+  const repLeadsHook = useRepLeads(
+    metricsEnabled && leadsMode,
+    filterRep,
+    metrics.period,
+    metrics.customRange,
+  );
+
+  // Determine which detail panel to show:
+  // - deals sort (revenue/won/conversion) + rep selected → DealDetail
+  // - funnel deals/won/decided row clicked → DealDetail
+  // - everything else → LeadDetail
+  const dealsRow = funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided');
+  const showDealDetail = dealsRow || (filterRep && filterRepStatusHint === 'qualified');
 
   const active = tab === 'handoffs' ? handoffs : tab === 'calls' ? callsData : metrics;
 
@@ -94,6 +118,7 @@ export default function SalesSection() {
                   reps={metrics.data.reps}
                   selectedRep={filterRep}
                   onRepClick={(repId, sortKey) => {
+                    setLeaderboardSortKey(sortKey);
                     setFilterRep(repId);
                     if (!repId) { setFilterRepStatusHint(null); return; }
                     const hint = (sortKey === 'leadsAssigned' || sortKey === 'avgResponseMinutes')
@@ -114,18 +139,24 @@ export default function SalesSection() {
                   activeCell={funnelFilter}
                 />
                 <div ref={detailRef}>
-                  {funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided') ? (
+                  {showDealDetail ? (
                     <DealDetail
-                      cohortDeals={metrics.data.cohortDeals}
+                      cohortDeals={cohortDeals}
+                      cohortLoading={cohortDealsHook.loading}
                       periodDeals={metrics.data.periodDeals}
                       funnelFilter={funnelFilter}
+                      repFilter={filterRepStatusHint === 'qualified' && !funnelFilter ? filterRep : null}
+                      repName={filterRep ? metrics.data.reps?.find((r) => r.id === filterRep)?.name : null}
                       onClearFunnelFilter={() => setFunnelFilter(null)}
+                      onClearRepFilter={() => { setFilterRep(null); setFilterRepStatusHint(null); }}
                     />
                   ) : (
                     <LeadDetail
                       leads={metrics.data.leads}
                       leadCounts={metrics.data.leadCounts}
                       leadsOmitted={metrics.data.leadsOmitted}
+                      repLeads={repLeadsHook.data}
+                      repLeadsLoading={repLeadsHook.loading}
                       filterRep={filterRep}
                       statusHint={filterRepStatusHint}
                       onClearFilter={() => { setFilterRep(null); setFilterRepStatusHint(null); }}

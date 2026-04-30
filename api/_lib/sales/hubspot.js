@@ -135,6 +135,42 @@ export async function getContactsInRange(startISO, endISO) {
   return { results: allResults, total: allResults.length };
 }
 
+export async function getContactsForRepInRange(repId, startISO, endISO) {
+  const properties = [
+    'firstname', 'lastname', 'email',
+    'hs_analytics_source', 'hs_analytics_source_data_1',
+    'hubspot_owner_id', 'createdate', 'lifecyclestage',
+    'num_associated_deals', 'recent_conversion_date', 'num_conversion_events',
+    'notes_last_contacted', 'hs_sa_first_engagement_date',
+    'hs_lifecyclestage_salesqualifiedlead_date',
+    'hs_lifecyclestage_opportunity_date',
+    'hs_lifecyclestage_customer_date',
+  ];
+  const allResults = [];
+  const seen = new Set();
+  for (const dateProp of ['createdate', 'recent_conversion_date']) {
+    let after = undefined;
+    while (true) {
+      const page = await searchCRM('contacts', {
+        filters: [
+          { propertyName: dateProp, operator: 'GTE', value: startISO },
+          { propertyName: dateProp, operator: 'LTE', value: endISO },
+          { propertyName: 'hubspot_owner_id', operator: 'EQ', value: repId },
+        ],
+        properties,
+        sorts: [{ propertyName: dateProp, direction: 'DESCENDING' }],
+        after,
+      });
+      for (const r of page.results) {
+        if (!seen.has(r.id)) { seen.add(r.id); allResults.push(r); }
+      }
+      if (!page.paging?.next?.after) break;
+      after = page.paging.next.after;
+    }
+  }
+  return { results: allResults, total: allResults.length };
+}
+
 export async function getDealsInRange(startISO, endISO) {
   return searchAllCRM('deals', {
     filters: [

@@ -16,47 +16,98 @@ const STATUS_STYLES = {
  * Shown when the user clicks a Deals or Won count in the funnel.
  * Lists the actual deals belonging to the cohort, with stage info.
  */
-export default function DealDetail({ cohortDeals, periodDeals, funnelFilter, onClearFunnelFilter }) {
+export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, funnelFilter, repFilter, repName, onClearFunnelFilter, onClearRepFilter }) {
   const [sortKey, setSortKey] = useState('createdate');
   const [sortDir, setSortDir] = useState('desc');
 
-  if (!funnelFilter) return null;
+  if (!funnelFilter && !repFilter) return null;
 
   // Pick the right dataset based on the view that triggered the click:
   // - 'rep_activity' / 'source_activity': uses periodDeals (period-based)
   // - 'rep_funnel' / 'source': uses cohortDeals (cohort-based)
   // - cohortFallback: cohortDeals is empty (month+ period skips contact fetches),
-  //   so fall back to periodDeals and use ownerId/source instead of contactRepId/contactSource
-  const isActivity = funnelFilter.view === 'rep_activity' || funnelFilter.view === 'source_activity';
-  const cohortFallback = !isActivity && (cohortDeals || []).length === 0 && (periodDeals || []).length > 0;
+  //   so fall back to periodDeals with deal-level source filter (source view only).
+  //   NOTE: rep_funnel view cannot fall back because cohortWon tracks contacts→customers
+  //   (requires association map), which is different from deals closed in the period.
+  // Rep-filter mode (clicked leaderboard rep in deals-sort) — no funnelFilter active
+  const isRepFilterMode = !!repFilter && !funnelFilter;
+
+  const isActivity = !isRepFilterMode && (funnelFilter.view === 'rep_activity' || funnelFilter.view === 'source_activity');
+  const cohortDealsEmpty = (cohortDeals || []).length === 0;
+  const repCohortUnavailable = !isRepFilterMode && !isActivity && funnelFilter.view === 'rep_funnel' && cohortDealsEmpty;
+  const cohortFallback = !isRepFilterMode && !isActivity && !repCohortUnavailable && cohortDealsEmpty && (periodDeals || []).length > 0;
   const useActivityLogic = isActivity || cohortFallback;
-  const source = useActivityLogic ? (periodDeals || []) : (cohortDeals || []);
+
+  // In rep-filter mode: prefer cohortDeals (has contactRepId) for wide periods,
+  // fall back to periodDeals (has ownerId) for narrow periods or while loading.
+  const source = isRepFilterMode
+    ? (cohortDealsEmpty ? (periodDeals || []) : (cohortDeals || []))
+    : useActivityLogic ? (periodDeals || []) : (cohortDeals || []);
+
+  // Rep-cohort data arrives via a parallel /api/sales-cohort-deals fetch.
+  // While it's loading show a skeleton; if it fails/isn't available show guidance.
+  if (repCohortUnavailable) {
+    return (
+      <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+          <h2 className="text-lg font-semibold">Deal Details</h2>
+          {funnelFilter && (
+            <button onClick={onClearFunnelFilter} className="px-3 py-1 text-xs rounded-full bg-accent/20 text-accent hover:bg-accent/30 transition-colors">
+              {funnelFilter.label} · {funnelFilter.row} &times;
+            </button>
+          )}
+        </div>
+        {cohortLoading ? (
+          <div className="space-y-2 animate-pulse">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-10 bg-white/5 rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 space-y-2">
+            <p className="text-white/60 text-sm">
+              Contact-level deal attribution isn't available for periods longer than 2 weeks.
+            </p>
+            <p className="text-white/40 text-xs">
+              Switch to <span className="text-accent">By Rep — Activity</span> view to see individual deals for this period.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   let filtered = source;
-  // type='total' = no source/rep filter (show all)
-  if (funnelFilter.type === 'source') {
-    // For activity views or cohort fallback: use deal's own source field
-    if (useActivityLogic) {
-      filtered = filtered.filter((d) => (d.source || d.contactSource) === funnelFilter.key);
-    } else {
-      filtered = filtered.filter((d) => d.contactSource === funnelFilter.key);
+
+  if (isRepFilterMode) {
+    // Rep-filter mode: show all deals for this rep regardless of status
+    filtered = filtered.filter((d) =>
+      d.contactRepId === repFilter || d.ownerId === repFilter
+    );
+  } else {
+    // Funnel-filter mode (original logic)
+    if (funnelFilter.type === 'source') {
+      if (useActivityLogic) {
+        filtered = filtered.filter((d) => (d.source || d.contactSource) === funnelFilter.key);
+      } else {
+        filtered = filtered.filter((d) => d.contactSource === funnelFilter.key);
+      }
+    } else if (funnelFilter.type === 'rep') {
+      if (useActivityLogic) {
+        filtered = filtered.filter((d) => d.ownerId === funnelFilter.key);
+      } else {
+        filtered = filtered.filter((d) => d.contactRepId === funnelFilter.key);
+      }
     }
-  } else if (funnelFilter.type === 'rep') {
-    if (useActivityLogic) {
-      filtered = filtered.filter((d) => d.ownerId === funnelFilter.key);
-    } else {
-      filtered = filtered.filter((d) => d.contactRepId === funnelFilter.key);
+    if (funnelFilter.row === 'won') {
+      filtered = filtered.filter((d) => d.status === 'won');
+      if (useActivityLogic) filtered = filtered.filter((d) => d.closedInPeriod);
+    } else if (funnelFilter.row === 'decided') {
+      filtered = filtered.filter((d) => d.status === 'won' || d.status === 'lost');
+      if (useActivityLogic) filtered = filtered.filter((d) => d.closedInPeriod);
+    } else if (funnelFilter.row === 'deals' && useActivityLogic) {
+      filtered = filtered.filter((d) => d.createdInPeriod);
     }
-  }
-  // Row filters
-  if (funnelFilter.row === 'won') {
-    filtered = filtered.filter((d) => d.status === 'won');
-    if (useActivityLogic) filtered = filtered.filter((d) => d.closedInPeriod);
-  } else if (funnelFilter.row === 'decided') {
-    filtered = filtered.filter((d) => d.status === 'won' || d.status === 'lost');
-    if (useActivityLogic) filtered = filtered.filter((d) => d.closedInPeriod);
-  } else if (funnelFilter.row === 'deals' && useActivityLogic) {
-    filtered = filtered.filter((d) => d.createdInPeriod);
   }
   // For rep_funnel + row === 'deals' (cohort mode): show all statuses from cohort
 
@@ -83,15 +134,25 @@ export default function DealDetail({ cohortDeals, periodDeals, funnelFilter, onC
               ⚠ Contact attribution not available for this period — filtered by deal owner/source
             </span>
           )}
+          {isRepFilterMode && cohortLoading && (
+            <span className="text-white/30 text-xs animate-pulse">Loading cohort deals…</span>
+          )}
         </div>
-        {funnelFilter && (
+        {isRepFilterMode ? (
+          <button
+            onClick={onClearRepFilter}
+            className="px-3 py-1 text-xs rounded-full bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
+          >
+            {repName || 'Rep'} · deals &times;
+          </button>
+        ) : funnelFilter ? (
           <button
             onClick={onClearFunnelFilter}
             className="px-3 py-1 text-xs rounded-full bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
           >
             {funnelFilter.label} · {funnelFilter.row} &times;
           </button>
-        )}
+        ) : null}
       </div>
 
       {sorted.length === 0 ? (
@@ -109,6 +170,7 @@ export default function DealDetail({ cohortDeals, periodDeals, funnelFilter, onC
                   { key: 'amount', label: 'Amount', align: 'right' },
                   { key: 'ownerName', label: 'Owner' },
                   { key: 'createdate', label: 'Created', align: 'right' },
+                  { key: 'hubspotUrl', label: '', align: 'center' },
                 ].map((col) => (
                   <th
                     key={col.key}
@@ -138,6 +200,20 @@ export default function DealDetail({ cohortDeals, periodDeals, funnelFilter, onC
                   <td className="py-3 px-3 text-left text-white/80">{d.ownerName}</td>
                   <td className="py-3 px-3 text-right tabular-nums text-white/60 text-xs">
                     {d.createdate ? new Date(d.createdate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+                  </td>
+                  <td className="py-3 px-2 text-center">
+                    {d.hubspotUrl && (
+                      <a
+                        href={d.hubspotUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/30 hover:text-accent transition-colors text-sm"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Open in HubSpot"
+                      >
+                        ↗
+                      </a>
+                    )}
                   </td>
                 </tr>
               ))}

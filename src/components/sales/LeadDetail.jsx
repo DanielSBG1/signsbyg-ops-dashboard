@@ -40,7 +40,7 @@ const STATUS_COLORS = {
   internal: 'bg-red-500/20 text-red-300 border-red-500/30',
 };
 
-export default function LeadDetail({ leads, leadCounts, leadsOmitted, filterRep, statusHint, onClearFilter, funnelFilter, onClearFunnelFilter }) {
+export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, repLeadsLoading, filterRep, statusHint, onClearFilter, funnelFilter, onClearFunnelFilter }) {
   const [sortKey, setSortKey] = useState('createdAt');
   const [sortDir, setSortDir] = useState('desc');
   const [sourceFilter, setSourceFilter] = useState('all');
@@ -54,12 +54,19 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, filterRep,
     else if (!filterRep) setStatusFilter('all');
   }, [filterRep, statusHint]);
 
-  if (!leadsOmitted && (!leads || leads.length === 0)) return null;
+  // For wide periods with a rep selected, use repLeads from the dedicated endpoint.
+  // repLeads are already scoped to the rep — no client-side rep filter needed.
+  const isRepLeadsMode = leadsOmitted && !!filterRep;
+  const activeLeads = isRepLeadsMode ? (repLeads || []) : (leads || []);
+  const showTable = !leadsOmitted || isRepLeadsMode;
 
-  let filtered = filterRep ? leads.filter((l) => l.repId === filterRep) : leads;
+  if (!leadsOmitted && (!leads || leads.length === 0)) return null;
+  if (leadsOmitted && !filterRep && !funnelFilter) return null;
+
+  let filtered = isRepLeadsMode ? activeLeads : (filterRep ? activeLeads.filter((l) => l.repId === filterRep) : activeLeads);
   if (sourceFilter !== 'all') filtered = filtered.filter((l) => l.source === sourceFilter);
   if (statusFilter !== 'all') filtered = filtered.filter((l) => l.status === statusFilter);
-  if (funnelFilter) {
+  if (funnelFilter && !isRepLeadsMode) {
     if (funnelFilter.type === 'source') {
       filtered = filtered.filter((l) => l.source === funnelFilter.key);
     } else if (funnelFilter.type === 'rep') {
@@ -88,8 +95,10 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, filterRep,
     else { setSortKey(key); setSortDir('desc'); }
   };
 
-  const sources = [...new Set((leads || []).map((l) => l.source))];
-  const filterRepName = filterRep ? (leads || []).find((l) => l.repId === filterRep)?.rep : null;
+  const sources = [...new Set(activeLeads.map((l) => l.source))];
+  const filterRepName = filterRep
+    ? (isRepLeadsMode ? repLeads?.find((l) => l.repId === filterRep)?.rep : leads?.find((l) => l.repId === filterRep)?.rep)
+    : null;
 
   const totalCount = leadsOmitted && leadCounts
     ? (leadCounts.qualified || 0) + (leadCounts.newLead || 0) + (leadCounts.manualEntry || 0) + (leadCounts.unqualified || 0) + (leadCounts.internal || 0)
@@ -97,8 +106,8 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, filterRep,
 
   return (
     <div className="bg-slate-card border border-white/5 rounded-2xl p-6 space-y-4">
-      {/* Status summary pills */}
-      {leadCounts && (
+      {/* Status summary pills — only for narrow periods with full lead list */}
+      {leadCounts && !isRepLeadsMode && (
         <div className="flex flex-wrap gap-3">
           {[
             { key: 'all', label: 'All Contacts', count: totalCount, color: 'bg-white/10 text-white/70' },
@@ -121,10 +130,17 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, filterRep,
         </div>
       )}
 
-      {leadsOmitted ? (
+      {!showTable ? (
         <div className="text-center text-white/40 text-sm py-10">
           Contact list is not shown for monthly or longer periods.<br />
-          Switch to <span className="text-white/60">Today</span> or <span className="text-white/60">This Week</span> to see individual contacts.
+          Switch to <span className="text-white/60">Today</span> or <span className="text-white/60">This Week</span> to see individual contacts,<br />
+          or click a rep in the leaderboard to see their contacts.
+        </div>
+      ) : repLeadsLoading && isRepLeadsMode ? (
+        <div className="space-y-2 animate-pulse py-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-10 bg-white/5 rounded-lg" />
+          ))}
         </div>
       ) : (
         <>
@@ -175,6 +191,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, filterRep,
                     { key: 'numDeals', label: 'Deals', align: 'center' },
                     { key: 'rep', label: 'Assigned To', align: 'left' },
                     { key: 'createdAt', label: 'Created', align: 'right' },
+                    { key: 'hubspotUrl', label: '', align: 'center' },
                   ].map((col) => (
                     <th
                       key={col.key}
@@ -236,6 +253,20 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, filterRep,
                     <td className="py-3 px-3 text-left text-white/80">{lead.rep}</td>
                     <td className="py-3 px-3 text-right tabular-nums text-white/60 text-xs">
                       {new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    </td>
+                    <td className="py-3 px-2 text-center">
+                      {lead.hubspotUrl && (
+                        <a
+                          href={lead.hubspotUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white/30 hover:text-accent transition-colors text-sm"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Open in HubSpot"
+                        >
+                          ↗
+                        </a>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -583,6 +583,9 @@ export default async function handler(req, res) {
         lifecycleStage: c.properties.lifecyclestage || '',
         numDeals: parseInt(c.properties.num_associated_deals) || 0,
         status,
+        hubspotUrl: process.env.HUBSPOT_PORTAL_ID
+          ? `https://app.hubspot.com/contacts/${process.env.HUBSPOT_PORTAL_ID}/contact/${c.id}`
+          : '',
       };
     });
 
@@ -751,6 +754,9 @@ export default async function handler(req, res) {
         closedInPeriod,
         source: dealSource,
         leadSourceRaw: props.lead_source || '',
+        hubspotUrl: process.env.HUBSPOT_PORTAL_ID
+          ? `https://app.hubspot.com/contacts/${process.env.HUBSPOT_PORTAL_ID}/deal/${d.id}`
+          : '',
       });
     }
     for (const d of deals.results) addPeriodDeal(d, { createdInPeriod: true, closedInPeriod: false });
@@ -1027,6 +1033,9 @@ export default async function handler(req, res) {
             contactId,
             contactSource,
             contactRepId,
+            hubspotUrl: process.env.HUBSPOT_PORTAL_ID
+              ? `https://app.hubspot.com/contacts/${process.env.HUBSPOT_PORTAL_ID}/deal/${d.id}`
+              : '',
           });
         }
       }
