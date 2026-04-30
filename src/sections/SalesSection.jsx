@@ -16,6 +16,7 @@ import LeadDetail from '../components/sales/LeadDetail';
 import DealDetail from '../components/sales/DealDetail';
 import SpeedToLead from '../components/sales/SpeedToLead';
 import RepActivity from '../components/sales/RepActivity';
+import StageConversion from '../components/sales/StageConversion';
 
 const PipelineHealthPage = lazy(() => import('../components/sales/PipelineHealthPage'));
 const CallsPage          = lazy(() => import('../components/sales/CallsPage'));
@@ -166,11 +167,9 @@ export default function SalesSection() {
                     />
                   )}
                 </div>
+                <StageConversion />
                 <PipelineHealth />
                 <SourceBreakdown />
-                <Suspense fallback={<TabFallback />}>
-                  <PipelineHealthPage pipelineHealth={metrics.data.pipelineHealth} />
-                </Suspense>
               </>
             ) : null}
           </>
