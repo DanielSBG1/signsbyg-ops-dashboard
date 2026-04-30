@@ -16,7 +16,7 @@ const STATUS_STYLES = {
  * Shown when the user clicks a Deals or Won count in the funnel.
  * Lists the actual deals belonging to the cohort, with stage info.
  */
-export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, funnelFilter, repFilter, repName, leaderboardSortKey, onClearFunnelFilter, onClearRepFilter }) {
+export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, dealsSentDeals, funnelFilter, repFilter, repName, leaderboardSortKey, onClearFunnelFilter, onClearRepFilter }) {
   const [sortKey, setSortKey] = useState('createdate');
   const [sortDir, setSortDir] = useState('desc');
 
@@ -31,20 +31,26 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, fu
   //   (requires association map), which is different from deals closed in the period.
   // Rep-filter mode (clicked leaderboard rep in deals-sort) — no funnelFilter active
   const isRepFilterMode = !!repFilter && !funnelFilter;
+  // Metric card click mode — always use period-level data (no cohort needed)
+  const isMetricMode = !isRepFilterMode && funnelFilter?.type === 'metric';
 
-  const isActivity = !isRepFilterMode && (funnelFilter.view === 'rep_activity' || funnelFilter.view === 'source_activity');
+  const isActivity = !isRepFilterMode && !isMetricMode && (funnelFilter.view === 'rep_activity' || funnelFilter.view === 'source_activity');
   const cohortDealsEmpty = (cohortDeals || []).length === 0;
-  const repCohortUnavailable = !isRepFilterMode && !isActivity && funnelFilter.view === 'rep_funnel' && cohortDealsEmpty;
-  const cohortFallback = !isRepFilterMode && !isActivity && !repCohortUnavailable && cohortDealsEmpty && (periodDeals || []).length > 0;
+  const repCohortUnavailable = !isRepFilterMode && !isMetricMode && !isActivity && funnelFilter.view === 'rep_funnel' && cohortDealsEmpty;
+  const cohortFallback = !isRepFilterMode && !isMetricMode && !isActivity && !repCohortUnavailable && cohortDealsEmpty && (periodDeals || []).length > 0;
   const useActivityLogic = isActivity || cohortFallback;
 
-  // In rep-filter mode: always use periodDeals filtered by deal ownerId.
-  // cohortDeals tracks contact ownership (contactRepId), not deal ownership,
-  // so it can return wrong deals (e.g. contact owned by rep A, deal owned by rep B).
-  // The leaderboard revenue/won numbers come from deal ownership, so periodDeals matches.
+  // Source selection:
+  // - rep-filter mode: always periodDeals (deal ownership)
+  // - metric mode 'dealsSent': dedicated dealsSentDeals array (deals that entered proposal in period)
+  // - metric mode others: periodDeals
+  // - activity / cohort fallback: periodDeals
+  // - default: cohortDeals
   const source = isRepFilterMode
     ? (periodDeals || [])
-    : useActivityLogic ? (periodDeals || []) : (cohortDeals || []);
+    : isMetricMode
+      ? (funnelFilter.key === 'dealsSent' ? (dealsSentDeals || []) : (periodDeals || []))
+      : useActivityLogic ? (periodDeals || []) : (cohortDeals || []);
 
   // Rep-cohort data arrives via a parallel /api/sales-cohort-deals fetch.
   // While it's loading show a skeleton; if it fails/isn't available show guidance.
@@ -85,6 +91,14 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, fu
     // Revenue/Won/Conversion sort → show won deals closed in the period (matches leaderboard numbers)
     // All three of these sort keys are derived from closed-won revenue, so won+closedInPeriod is correct.
     filtered = filtered.filter((d) => d.ownerId === repFilter && d.status === 'won' && d.closedInPeriod);
+  } else if (isMetricMode) {
+    // Metric card click — source already scoped correctly (see source selection above)
+    if (funnelFilter.key === 'dealsWon' || funnelFilter.key === 'revenueClosed') {
+      filtered = filtered.filter((d) => d.status === 'won' && d.closedInPeriod);
+    } else if (funnelFilter.key === 'dealsCreated') {
+      filtered = filtered.filter((d) => d.createdInPeriod);
+    }
+    // 'dealsSent': source is already dealsSentDeals — no further filter needed
   } else {
     // Funnel-filter mode (original logic)
     if (funnelFilter.type === 'source') {
@@ -148,7 +162,7 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, fu
             onClick={onClearFunnelFilter}
             className="px-3 py-1 text-xs rounded-full bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
           >
-            {funnelFilter.label} · {funnelFilter.row} &times;
+            {funnelFilter.type === 'metric' ? funnelFilter.label : `${funnelFilter.label} · ${funnelFilter.row}`} &times;
           </button>
         ) : null}
       </div>

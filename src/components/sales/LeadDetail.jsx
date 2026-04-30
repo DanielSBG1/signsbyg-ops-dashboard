@@ -71,8 +71,16 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
       filtered = filtered.filter((l) => l.source === funnelFilter.key);
     } else if (funnelFilter.type === 'rep') {
       filtered = filtered.filter((l) => l.repId === funnelFilter.key);
+    } else if (funnelFilter.type === 'metric') {
+      // Metric card clicks — filter by specific source groupings
+      if (funnelFilter.key === 'facebookLeads') {
+        filtered = filtered.filter((l) => l.source === 'facebook' || l.source === 'paid_social_other');
+      } else if (funnelFilter.key === 'coldOutreach') {
+        filtered = filtered.filter((l) => l.source === 'email_extension' || l.source === 'cold_outreach');
+      }
+      // 'totalLeads': no filter — show all contacts in period
     }
-    // type === 'total' = no source/rep filter (all leads in period)
+    // type === 'total' or 'metric' with no source sub-filter = all leads in period
     if (funnelFilter.row === 'deals') {
       filtered = filtered.filter((l) => {
         const lc = (l.lifecycleStage || '').toLowerCase();
@@ -155,7 +163,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
                   onClick={onClearFunnelFilter}
                   className="px-3 py-1 text-xs rounded-full bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
                 >
-                  {funnelFilter.label} · {funnelFilter.row} &times;
+                  {funnelFilter.type === 'metric' ? funnelFilter.label : `${funnelFilter.label} · ${funnelFilter.row}`} &times;
                 </button>
               )}
               {filterRep && (

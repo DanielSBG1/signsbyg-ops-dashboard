@@ -30,7 +30,7 @@ function TrendBadge({ value, compareLabel, tooltip }) {
   );
 }
 
-function Card({ label, value, trend, format, compareLabel, tooltip }) {
+function Card({ label, value, trend, format, compareLabel, tooltip, onClick, isActive }) {
   let displayValue = value;
   if (format === 'currency') {
     displayValue = `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -41,39 +41,50 @@ function Card({ label, value, trend, format, compareLabel, tooltip }) {
   }
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-5 flex flex-col gap-2">
+    <button
+      onClick={onClick}
+      className={`bg-slate-card border rounded-2xl p-5 flex flex-col gap-2 text-left w-full transition-all ${
+        isActive
+          ? 'border-accent/50 ring-1 ring-accent/30 bg-accent/5'
+          : 'border-white/5 hover:border-white/15 hover:bg-white/3'
+      }`}
+    >
       <span className="text-xs uppercase tracking-wider text-white/40 font-medium" title={tooltip}>{label}</span>
       <span className="text-3xl font-bold tracking-tight">{displayValue}</span>
       <TrendBadge value={trend} compareLabel={compareLabel} tooltip={tooltip} />
-    </div>
+    </button>
   );
 }
 
-export default function MetricCards({ summary, period }) {
+// Maps each card's filterKey to the funnelFilter row (determines DealDetail vs LeadDetail)
+const CARD_FILTERS = [
+  { filterKey: 'totalLeads',    row: 'leads', label: 'Total Leads',    value: (s) => s.totalLeads,                         trend: (s) => s.trends.totalLeads,      tooltip: 'All contacts created in this period (any lifecycle stage)' },
+  { filterKey: 'facebookLeads', row: 'leads', label: 'FB Leads',       value: (s) => s.facebookLeads,                      trend: (s) => s.trends.facebookLeads,   tooltip: 'Contacts with original source = Facebook/Paid Social' },
+  { filterKey: 'coldOutreach',  row: 'leads', label: 'Cold Outreach',  value: (s) => s.coldOutreachLeads ?? s.otherLeads,  trend: (s) => s.trends.coldOutreachLeads ?? s.trends.otherLeads, tooltip: 'Contacts sourced via email prospecting or cold outreach' },
+  { filterKey: 'dealsWon',      row: 'won',   label: 'Deals Won',      value: (s) => s.dealsWon,                           trend: (s) => s.trends.dealsWon,        tooltip: 'Deals closed-won in this period' },
+  { filterKey: 'dealsSent',     row: 'sent',  label: 'Deals Sent',     value: (s) => s.dealsSent ?? '—',                  trend: (s) => s.trends.dealsSent ?? 0,  tooltip: 'Deals that entered Proposal Sent & Awaiting Response in this period' },
+  { filterKey: 'dealsCreated',  row: 'deals', label: 'Deals Created',  value: (s) => s.dealsCreated ?? '—',               trend: (s) => s.trends.dealsCreated ?? 0, tooltip: 'New deals opened in this period' },
+  { filterKey: 'revenueClosed', row: 'won',   label: 'Revenue Closed', value: (s) => s.revenueClosed,                     trend: (s) => s.trends.revenueClosed,   format: 'currency', tooltip: 'Sum of amounts on deals closed-won in this period' },
+];
+
+export default function MetricCards({ summary, period, onCardClick, activeCard }) {
   if (!summary) return null;
   const compareLabel = COMPARE_LABELS[period] || 'vs prior period';
 
-  const cards = [
-    { label: 'Total Leads', value: summary.totalLeads, trend: summary.trends.totalLeads,
-      tooltip: 'All contacts created in this period (any lifecycle stage)' },
-    { label: 'FB Leads', value: summary.facebookLeads, trend: summary.trends.facebookLeads,
-      tooltip: 'Contacts with original source = Facebook/Paid Social' },
-    { label: 'Cold Outreach', value: summary.coldOutreachLeads ?? summary.otherLeads, trend: summary.trends.coldOutreachLeads ?? summary.trends.otherLeads,
-      tooltip: 'Contacts sourced via email prospecting or cold outreach' },
-    { label: 'Deals Won', value: summary.dealsWon, trend: summary.trends.dealsWon,
-      tooltip: 'Deals closed-won in this period' },
-    { label: 'Deals Sent', value: summary.dealsSent ?? '—', trend: summary.trends.dealsSent ?? 0,
-      tooltip: 'Deals created this period currently in Proposal Sent & Awaiting Response stage' },
-    { label: 'Deals Created', value: summary.dealsCreated ?? '—', trend: summary.trends.dealsCreated ?? 0,
-      tooltip: 'New deals opened in this period' },
-    { label: 'Revenue Closed', value: summary.revenueClosed, trend: summary.trends.revenueClosed, format: 'currency',
-      tooltip: 'Sum of amounts on deals closed-won in this period' },
-  ].map((c) => ({ ...c, compareLabel }));
-
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-      {cards.map((c) => (
-        <Card key={c.label} {...c} />
+      {CARD_FILTERS.map((c) => (
+        <Card
+          key={c.filterKey}
+          label={c.label}
+          value={c.value(summary)}
+          trend={c.trend(summary)}
+          format={c.format}
+          compareLabel={compareLabel}
+          tooltip={c.tooltip}
+          isActive={activeCard === c.filterKey}
+          onClick={() => onCardClick?.({ type: 'metric', key: c.filterKey, row: c.row, label: c.label })}
+        />
       ))}
     </div>
   );

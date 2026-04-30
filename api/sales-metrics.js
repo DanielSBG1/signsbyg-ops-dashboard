@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     // 60-second response cache. Keyed by period+range so different views don't
     // collide. Only caches successful 200 responses (errors fall through).
     // v12 = show contacts for lastweek (decouple leadsOmitted from skipOpenPhonePoll)
-    const cacheKey = `metricsv13:${period}:${customStart || ''}:${customEnd || ''}`;
+    const cacheKey = `metricsv14:${period}:${customStart || ''}:${customEnd || ''}`;
     // CDN cache header — Vercel's edge network will serve this response in
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
     // s-maxage=120: CDN freshness window (matches cron interval).
@@ -769,7 +769,14 @@ export default async function handler(req, res) {
     }
     for (const d of deals.results) addPeriodDeal(d, { createdInPeriod: true, closedInPeriod: false });
     for (const d of closedDeals.results) addPeriodDeal(d, { createdInPeriod: false, closedInPeriod: true });
-    const periodDeals = [...periodDealsMap.values()];
+    // Enrich dealsSent deals so they can be drilled into from the metric card.
+    // These are deals that ENTERED the proposal stage in the period — they may have
+    // been created in a prior period, so they live outside the normal periodDeals set.
+    const dealsSentIds = new Set((dealsSentRaw.results || []).map((d) => d.id));
+    for (const d of dealsSentRaw.results || []) addPeriodDeal(d, { createdInPeriod: false, closedInPeriod: false });
+    const allPeriodDealsValues = [...periodDealsMap.values()];
+    const periodDeals = allPeriodDealsValues.filter((d) => d.createdInPeriod || d.closedInPeriod);
+    const dealsSentDeals = allPeriodDealsValues.filter((d) => dealsSentIds.has(d.id));
 
     // --- Speed-to-Lead SLA ---
     // For each contact in the period, find the earliest activity timestamp.
@@ -1229,6 +1236,7 @@ export default async function handler(req, res) {
       leadCounts,
       cohortDeals,
       periodDeals,
+      dealsSentDeals,
       sla,
     };
     // Wide periods (Q1-Q4, year) are cached 30 min so the cron (every 10 min) always

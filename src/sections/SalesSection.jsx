@@ -76,8 +76,9 @@ export default function SalesSection() {
   // Determine which detail panel to show:
   // - deals sort (revenue/won/conversion) + rep selected → DealDetail
   // - funnel deals/won/decided row clicked → DealDetail
+  // - metric card: deals-type cards → DealDetail; leads-type cards → LeadDetail
   // - everything else → LeadDetail
-  const dealsRow = funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided');
+  const dealsRow = funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided' || funnelFilter.row === 'sent');
   const showDealDetail = dealsRow || (filterRep && filterRepStatusHint === 'qualified');
 
   const active = tab === 'handoffs' ? handoffs : tab === 'calls' ? callsData : metrics;
@@ -113,7 +114,16 @@ export default function SalesSection() {
               </div>
             ) : metrics.data ? (
               <>
-                <MetricCards summary={metrics.data.summary} period={metrics.period} />
+                <MetricCards
+                  summary={metrics.data.summary}
+                  period={metrics.period}
+                  activeCard={funnelFilter?.type === 'metric' ? funnelFilter.key : null}
+                  onCardClick={(filter) => {
+                    setFilterRep(null);
+                    setFilterRepStatusHint(null);
+                    setFunnelFilter((prev) => (prev?.type === 'metric' && prev?.key === filter.key ? null : filter));
+                  }}
+                />
                 <SpeedToLead sla={metrics.data.sla} />
                 <Leaderboard
                   reps={metrics.data.reps}
@@ -146,6 +156,7 @@ export default function SalesSection() {
                       cohortDeals={cohortDeals}
                       cohortLoading={cohortDealsHook.loading}
                       periodDeals={metrics.data.periodDeals}
+                      dealsSentDeals={metrics.data.dealsSentDeals}
                       funnelFilter={funnelFilter}
                       repFilter={filterRepStatusHint === 'qualified' && !funnelFilter ? filterRep : null}
                       repName={filterRep ? metrics.data.reps?.find((r) => r.id === filterRep)?.name : null}
