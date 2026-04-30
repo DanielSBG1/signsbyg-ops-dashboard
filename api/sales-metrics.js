@@ -277,32 +277,40 @@ export default async function handler(req, res) {
     const prevFbContacts = prevContacts.results.filter(
       (c) => effectiveSource(c) === 'facebook'
     );
+    const coldContacts = contacts.results.filter(
+      (c) => ['email_extension', 'cold_outreach'].includes(effectiveSource(c))
+    );
+    const prevColdContacts = prevContacts.results.filter(
+      (c) => ['email_extension', 'cold_outreach'].includes(effectiveSource(c))
+    );
     const wonDeals = closedDeals.results.filter((d) => CLOSED_WON_STAGES.includes(d.properties.dealstage));
     const prevWonDeals = prevClosedDeals.results.filter((d) => CLOSED_WON_STAGES.includes(d.properties.dealstage));
     const revenue = wonDeals.reduce((sum, d) => sum + (parseFloat(d.properties.amount) || 0), 0);
     const prevRevenue = prevWonDeals.reduce((sum, d) => sum + (parseFloat(d.properties.amount) || 0), 0);
+    const PROPOSAL_SENT_STAGE = 'decisionmakerboughtin';
+    const dealsSentCount = deals.results.filter((d) => d.properties.dealstage === PROPOSAL_SENT_STAGE).length;
+    const prevDealsSentCount = prevDeals.results.filter((d) => d.properties.dealstage === PROPOSAL_SENT_STAGE).length;
 
     function trendPct(current, previous) {
       if (previous === 0) return current > 0 ? 100 : 0;
       return Math.round(((current - previous) / previous) * 100);
     }
 
-    const currentConvRate = contacts.total > 0 ? Math.round((deals.total / contacts.total) * 100) : 0;
-    const prevConvRate = prevContacts.total > 0 ? Math.round((prevDeals.total / prevContacts.total) * 100) : 0;
-
     const summary = {
       totalLeads: contacts.total,
       facebookLeads: fbContacts.length,
-      otherLeads: contacts.total - fbContacts.length,
-      conversionRate: currentConvRate,
+      coldOutreachLeads: coldContacts.length,
       dealsWon: wonDeals.length,
+      dealsSent: dealsSentCount,
+      dealsCreated: deals.results.length,
       revenueClosed: revenue,
       trends: {
         totalLeads: trendPct(contacts.total, prevContacts.total),
         facebookLeads: trendPct(fbContacts.length, prevFbContacts.length),
-        otherLeads: trendPct(contacts.total - fbContacts.length, prevContacts.total - prevFbContacts.length),
-        conversionRate: trendPct(currentConvRate, prevConvRate),
+        coldOutreachLeads: trendPct(coldContacts.length, prevColdContacts.length),
         dealsWon: trendPct(wonDeals.length, prevWonDeals.length),
+        dealsSent: trendPct(dealsSentCount, prevDealsSentCount),
+        dealsCreated: trendPct(deals.results.length, prevDeals.results.length),
         revenueClosed: trendPct(revenue, prevRevenue),
       },
     };

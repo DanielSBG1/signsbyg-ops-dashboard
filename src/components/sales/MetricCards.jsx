@@ -54,22 +54,24 @@ export default function MetricCards({ summary, period }) {
   const compareLabel = COMPARE_LABELS[period] || 'vs prior period';
 
   const cards = [
-    { label: 'Total New Leads', value: summary.totalLeads, trend: summary.trends.totalLeads,
-      tooltip: 'All contacts created in this period (any lifecycle stage, including qualified)' },
-    { label: 'Facebook Leads', value: summary.facebookLeads, trend: summary.trends.facebookLeads,
+    { label: 'Total Leads', value: summary.totalLeads, trend: summary.trends.totalLeads,
+      tooltip: 'All contacts created in this period (any lifecycle stage)' },
+    { label: 'FB Leads', value: summary.facebookLeads, trend: summary.trends.facebookLeads,
       tooltip: 'Contacts with original source = Facebook/Paid Social' },
-    { label: 'Other Sources', value: summary.otherLeads, trend: summary.trends.otherLeads,
-      tooltip: 'All non-Facebook contacts in this period' },
-    { label: 'Deal Activity', value: summary.conversionRate, trend: summary.trends.conversionRate, format: 'percent',
-      tooltip: 'Throughput ratio: deals created in period ÷ contacts created in period. Measures pipeline velocity, NOT cohort conversion (deals can come from contacts outside this period). For true lead-to-deal trace, see the Conversion Funnel below.' },
+    { label: 'Cold Outreach', value: summary.coldOutreachLeads ?? summary.otherLeads, trend: summary.trends.coldOutreachLeads ?? summary.trends.otherLeads,
+      tooltip: 'Contacts sourced via email prospecting or cold outreach' },
     { label: 'Deals Won', value: summary.dealsWon, trend: summary.trends.dealsWon,
-      tooltip: 'Deals with closedate in this period and stage = closed-won' },
+      tooltip: 'Deals closed-won in this period' },
+    { label: 'Deals Sent', value: summary.dealsSent ?? '—', trend: summary.trends.dealsSent ?? 0,
+      tooltip: 'Deals created this period currently in Proposal Sent & Awaiting Response stage' },
+    { label: 'Deals Created', value: summary.dealsCreated ?? '—', trend: summary.trends.dealsCreated ?? 0,
+      tooltip: 'New deals opened in this period' },
     { label: 'Revenue Closed', value: summary.revenueClosed, trend: summary.trends.revenueClosed, format: 'currency',
       tooltip: 'Sum of amounts on deals closed-won in this period' },
   ].map((c) => ({ ...c, compareLabel }));
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
       {cards.map((c) => (
         <Card key={c.label} {...c} />
       ))}
