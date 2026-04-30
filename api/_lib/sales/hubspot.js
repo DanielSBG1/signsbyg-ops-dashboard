@@ -230,6 +230,18 @@ export async function getDealsClosedInRange(startISO, endISO) {
   });
 }
 
+export async function getDealsEnteredStageInRange(stageId, startISO, endISO) {
+  const dateProp = `hs_date_entered_${stageId}`;
+  return searchAllCRM('deals', {
+    filters: [
+      { propertyName: dateProp, operator: 'GTE', value: startISO },
+      { propertyName: dateProp, operator: 'LTE', value: endISO },
+    ],
+    properties: ['dealname', 'dealstage', 'pipeline', 'amount', 'hubspot_owner_id', 'createdate', dateProp],
+    sorts: [{ propertyName: dateProp, direction: 'DESCENDING' }],
+  });
+}
+
 // WARNING: no filters — returns ALL deals via searchAllCRM pagination.
 // HubSpot's search API has a hard 10 000-record cap per query (after=cursor stops
 // at offset 10 000). If total deals exceed 10k this will silently truncate.

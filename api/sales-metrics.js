@@ -1,4 +1,4 @@
-import { getContactsInRange, getDealsInRange, getDealsClosedInRange, getAllOpenDeals, getOwners, getContactDealAssociationsBatch, getDealsByIds } from './_lib/sales/hubspot.js';
+import { getContactsInRange, getDealsInRange, getDealsClosedInRange, getDealsEnteredStageInRange, getAllOpenDeals, getOwners, getContactDealAssociationsBatch, getDealsByIds } from './_lib/sales/hubspot.js';
 import { normalizePhone } from './_lib/sales/openphone.js';
 import { getEarliestOutboundForPhone } from './_lib/sales/callsStore.js';
 import { buildGmailActivityMap, GMAIL_ENABLED } from './_lib/sales/gmail.js';
@@ -110,6 +110,8 @@ export default async function handler(req, res) {
       prevContacts,
       prevDeals,
       prevClosedDeals,
+      dealsSentRaw,
+      prevDealsSentRaw,
     ] = await Promise.all([
       getContactsInRange(range.start, range.end).catch((e) => { console.error('[metrics] contacts error:', e.message); return EMPTY_PAGE; }),
       getDealsInRange(range.start, range.end).catch((e) => { console.error('[metrics] deals error:', e.message); return EMPTY_PAGE; }),
@@ -118,6 +120,8 @@ export default async function handler(req, res) {
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getContactsInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsClosedInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
+      getDealsEnteredStageInRange('decisionmakerboughtin', range.start, range.end).catch(() => EMPTY_PAGE),
+      skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsEnteredStageInRange('decisionmakerboughtin', range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
     ]);
 
     // --- Source override from associated deals ---
@@ -287,10 +291,6 @@ export default async function handler(req, res) {
     const prevWonDeals = prevClosedDeals.results.filter((d) => CLOSED_WON_STAGES.includes(d.properties.dealstage));
     const revenue = wonDeals.reduce((sum, d) => sum + (parseFloat(d.properties.amount) || 0), 0);
     const prevRevenue = prevWonDeals.reduce((sum, d) => sum + (parseFloat(d.properties.amount) || 0), 0);
-    const PROPOSAL_SENT_STAGE = 'decisionmakerboughtin';
-    const dealsSentCount = deals.results.filter((d) => d.properties.dealstage === PROPOSAL_SENT_STAGE).length;
-    const prevDealsSentCount = prevDeals.results.filter((d) => d.properties.dealstage === PROPOSAL_SENT_STAGE).length;
-
     function trendPct(current, previous) {
       if (previous === 0) return current > 0 ? 100 : 0;
       return Math.round(((current - previous) / previous) * 100);
@@ -301,7 +301,7 @@ export default async function handler(req, res) {
       facebookLeads: fbContacts.length,
       coldOutreachLeads: coldContacts.length,
       dealsWon: wonDeals.length,
-      dealsSent: dealsSentCount,
+      dealsSent: dealsSentRaw.results.length,
       dealsCreated: deals.results.length,
       revenueClosed: revenue,
       trends: {
@@ -309,7 +309,7 @@ export default async function handler(req, res) {
         facebookLeads: trendPct(fbContacts.length, prevFbContacts.length),
         coldOutreachLeads: trendPct(coldContacts.length, prevColdContacts.length),
         dealsWon: trendPct(wonDeals.length, prevWonDeals.length),
-        dealsSent: trendPct(dealsSentCount, prevDealsSentCount),
+        dealsSent: trendPct(dealsSentRaw.results.length, prevDealsSentRaw.results.length),
         dealsCreated: trendPct(deals.results.length, prevDeals.results.length),
         revenueClosed: trendPct(revenue, prevRevenue),
       },
