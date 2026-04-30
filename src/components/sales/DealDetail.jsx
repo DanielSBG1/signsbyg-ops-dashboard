@@ -38,10 +38,12 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, fu
   const cohortFallback = !isRepFilterMode && !isActivity && !repCohortUnavailable && cohortDealsEmpty && (periodDeals || []).length > 0;
   const useActivityLogic = isActivity || cohortFallback;
 
-  // In rep-filter mode: prefer cohortDeals (has contactRepId) for wide periods,
-  // fall back to periodDeals (has ownerId) for narrow periods or while loading.
+  // In rep-filter mode: always use periodDeals filtered by deal ownerId.
+  // cohortDeals tracks contact ownership (contactRepId), not deal ownership,
+  // so it can return wrong deals (e.g. contact owned by rep A, deal owned by rep B).
+  // The leaderboard revenue/won numbers come from deal ownership, so periodDeals matches.
   const source = isRepFilterMode
-    ? (cohortDealsEmpty ? (periodDeals || []) : (cohortDeals || []))
+    ? (periodDeals || [])
     : useActivityLogic ? (periodDeals || []) : (cohortDeals || []);
 
   // Rep-cohort data arrives via a parallel /api/sales-cohort-deals fetch.
@@ -80,10 +82,8 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, fu
   let filtered = source;
 
   if (isRepFilterMode) {
-    // Rep-filter mode: show all deals for this rep regardless of status
-    filtered = filtered.filter((d) =>
-      d.contactRepId === repFilter || d.ownerId === repFilter
-    );
+    // Rep-filter mode: show all deals owned by this rep (deal owner, not contact owner)
+    filtered = filtered.filter((d) => d.ownerId === repFilter);
   } else {
     // Funnel-filter mode (original logic)
     if (funnelFilter.type === 'source') {
@@ -133,9 +133,6 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, fu
             <span className="text-yellow-400/70 text-xs bg-yellow-400/10 border border-yellow-400/20 rounded-full px-2 py-0.5">
               ⚠ Contact attribution not available for this period — filtered by deal owner/source
             </span>
-          )}
-          {isRepFilterMode && cohortLoading && (
-            <span className="text-white/30 text-xs animate-pulse">Loading cohort deals…</span>
           )}
         </div>
         {isRepFilterMode ? (
