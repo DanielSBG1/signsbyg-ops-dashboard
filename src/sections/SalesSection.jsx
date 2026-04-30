@@ -167,6 +167,9 @@ export default function SalesSection() {
                 </div>
                 <PipelineHealth />
                 <SourceBreakdown />
+                <Suspense fallback={<TabFallback />}>
+                  <PipelineHealthPage pipelineHealth={metrics.data.pipelineHealth} />
+                </Suspense>
               </>
             ) : null}
           </>
