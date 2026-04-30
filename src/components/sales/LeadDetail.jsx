@@ -50,8 +50,8 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
   // (e.g. Revenue/Won sort → "qualified"; Leads/Resp Time sort → "new_lead").
   // When rep is deselected, reset to all.
   useEffect(() => {
-    if (filterRep && statusHint) setStatusFilter(statusHint);
-    else if (!filterRep) setStatusFilter('all');
+    if (filterRep) setStatusFilter(statusHint || 'all');
+    else setStatusFilter('all');
   }, [filterRep, statusHint]);
 
   // For wide periods with a rep selected, use repLeads from the dedicated endpoint.

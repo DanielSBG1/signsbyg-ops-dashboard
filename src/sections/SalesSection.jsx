@@ -122,8 +122,9 @@ export default function SalesSection() {
                     setLeaderboardSortKey(sortKey);
                     setFilterRep(repId);
                     if (!repId) { setFilterRepStatusHint(null); return; }
+                    // null = show all statuses (leadsAssigned counts all, not just new_lead)
                     const hint = (sortKey === 'leadsAssigned' || sortKey === 'avgResponseMinutes')
-                      ? 'new_lead' : 'qualified';
+                      ? null : 'qualified';
                     setFilterRepStatusHint(hint);
                   }}
                 />
