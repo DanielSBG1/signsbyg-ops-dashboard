@@ -138,13 +138,15 @@ function MultiDayBar({ bar, color, updating, onDragStart }) {
           paddingLeft: 6,
           paddingRight: 4,
           overflow: 'hidden',
-          backgroundColor: effectiveColor + '22',
-          border: `1px solid ${effectiveColor}50`,
-          borderLeft: bar.isStart ? `3px solid ${effectiveColor}` : `1px solid ${effectiveColor}30`,
-          borderRight: bar.isEnd ? `1px solid ${effectiveColor}50` : 'none',
+          backgroundColor: effectiveColor + '40',
+          border: `1px solid ${effectiveColor}90`,
+          borderLeft: bar.isStart ? `3px solid ${effectiveColor}` : `1px solid ${effectiveColor}50`,
+          borderRight: bar.isEnd ? `1px solid ${effectiveColor}90` : 'none',
           borderRadius: radius,
-          color: effectiveColor,
+          color: '#fff',
           fontSize: 11,
+          fontWeight: 600,
+          textShadow: `0 0 8px ${effectiveColor}`,
           whiteSpace: 'nowrap',
         }}
       >
@@ -181,14 +183,14 @@ function JobChip({ job, crewColor, updating, onDragStart }) {
   const isRescheduled = (job.rescheduleCount ?? 0) > 0;
 
   // Determine colors
-  let bg, border, text;
+  let bg, border, text, shadow;
   if (isDone) {
-    bg = 'rgba(34,197,94,0.12)'; border = '#22c55e'; text = 'rgba(134,239,172,0.85)';
+    bg = 'rgba(34,197,94,0.25)'; border = '#22c55e'; text = '#86efac'; shadow = '#22c55e';
   } else if (isOverdue) {
-    bg = 'rgba(239,68,68,0.12)'; border = '#ef4444'; text = 'rgba(252,165,165,0.85)';
+    bg = 'rgba(239,68,68,0.28)'; border = '#ef4444'; text = '#fca5a5'; shadow = '#ef4444';
   } else {
     const c = crewColor || '#4b5563';
-    bg = c + '22'; border = c; text = null; // null = use default white
+    bg = c + '40'; border = c; text = '#fff'; shadow = c;
   }
 
   return (
@@ -204,7 +206,9 @@ function JobChip({ job, crewColor, updating, onDragStart }) {
       style={{
         backgroundColor: bg,
         borderLeft: `2.5px solid ${border}`,
-        color: text || 'rgba(255,255,255,0.82)',
+        color: text,
+        textShadow: shadow ? `0 0 6px ${shadow}80` : undefined,
+        fontWeight: 600,
       }}
     >
       {updating && (
