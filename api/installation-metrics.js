@@ -122,7 +122,14 @@ function addDays(dateStr, n) {
 }
 
 function buildScheduleStats(jobs, range, today) {
-  const inRange = jobs.filter((j) => j.installDate && j.installDate >= range.start && j.installDate <= range.end);
+  // Use overlap: job is "in range" if its date span intersects [range.start, range.end].
+  // For single-day jobs (no startDate): installDate must be within range.
+  // For multi-day jobs (startDate set): the span [startDate, installDate] must overlap the range.
+  const inRange = jobs.filter((j) => {
+    if (!j.installDate) return false;
+    const spanStart = j.startDate || j.installDate;
+    return spanStart <= range.end && j.installDate >= range.start;
+  });
   const completed = inRange.filter((j) => j.completed);
   const open = inRange.filter((j) => !j.completed);
   const onTime = completed.filter((j) => j.status === 'early' || j.status === 'on_time').length;
