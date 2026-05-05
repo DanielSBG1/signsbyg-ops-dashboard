@@ -85,7 +85,8 @@ function jobColors(crewColor, depositPaid) {
 
 const BAR_H = 20;
 const BAR_GAP = 2;
-const DATE_HEADER_H = 20; // height of the date-number row in each day cell
+const DATE_HEADER_H = 20; // height of the date-number row in month-view day cells
+const WEEK_HEADER_H = 44; // height of the day-label+date header in week-view columns
 
 function getBarsForWeek(weekDays, multiDayJobs) {
   const weekStart = weekDays[0].iso;
@@ -291,7 +292,7 @@ function Row({ label, value }) {
 
 // ─── Multi-day spanning bar ───────────────────────────────────
 
-function MultiDayBar({ bar, crewColor, updating, onDragStart, onJobClick }) {
+function MultiDayBar({ bar, crewColor, updating, onDragStart, onJobClick, headerH = DATE_HEADER_H }) {
   const job = bar.job;
   const isDone = job.completed;
   const colors = isDone
@@ -312,7 +313,7 @@ function MultiDayBar({ bar, crewColor, updating, onDragStart, onJobClick }) {
       title={`${job.name}\n${job.crews?.join(', ') || 'Unassigned'}\n${job.startDate} → ${job.installDate}`}
       style={{
         position: 'absolute',
-        top: DATE_HEADER_H + bar.lane * (BAR_H + 2) + BAR_GAP,
+        top: headerH + bar.lane * (BAR_H + 2) + BAR_GAP,
         left: `calc(${bar.colStart} * 100% / 7 + 2px)`,
         width: `calc(${bar.numCols} * 100% / 7 - 4px)`,
         height: BAR_H,
@@ -547,24 +548,22 @@ function WeekView({ weekDays, multiDayJobs, singleDayJobs, crewColorMap, updatin
 
   return (
     <div>
-      {/* Spanning bars row — positioned below day-column headers via DATE_HEADER_H offset */}
-      {numLanes > 0 && (
-        <div className="relative grid grid-cols-7 gap-1 mb-1" style={{ height: barAreaH + DATE_HEADER_H }}>
-          {bars.map(bar => (
-            <MultiDayBar
-              key={bar.job.id}
-              bar={bar}
-              crewColor={crewColorMap.get(bar.job.crews?.[0])}
-              updating={updatingSet.has(bar.job.id)}
-              onDragStart={onDragStart}
-              onJobClick={onJobClick}
-            />
-          ))}
-        </div>
-      )}
+      {/* Single relative grid — bars absolutely positioned below headers, inside columns */}
+      <div className="relative grid grid-cols-7 gap-1">
+        {/* Spanning bars: top offset = WEEK_HEADER_H so they appear below the date header */}
+        {bars.map(bar => (
+          <MultiDayBar
+            key={bar.job.id}
+            bar={bar}
+            crewColor={crewColorMap.get(bar.job.crews?.[0])}
+            updating={updatingSet.has(bar.job.id)}
+            onDragStart={onDragStart}
+            onJobClick={onJobClick}
+            headerH={WEEK_HEADER_H}
+          />
+        ))}
 
-      {/* Day columns */}
-      <div className="grid grid-cols-7 gap-1">
+        {/* Day columns */}
         {weekDays.map((day) => (
           <div
             key={day.iso}
@@ -576,8 +575,11 @@ function WeekView({ weekDays, multiDayJobs, singleDayJobs, crewColorMap, updatin
             onDragLeave={onDragLeave}
             onDrop={(e) => onDrop(e, day.iso)}
           >
-            {/* Column header */}
-            <div className={`px-3 py-2 border-b ${day.isToday ? 'border-blue-500/30' : 'border-white/[0.05]'}`}>
+            {/* Column header — fixed height matches WEEK_HEADER_H so bars align correctly */}
+            <div
+              className={`px-3 border-b flex items-center shrink-0 ${day.isToday ? 'border-blue-500/30' : 'border-white/[0.05]'}`}
+              style={{ height: WEEK_HEADER_H }}
+            >
               <span className={`text-[10px] font-semibold uppercase tracking-wider ${day.isToday ? 'text-blue-400' : 'text-white/35'}`}>
                 {day.dayLabel}
               </span>
@@ -589,7 +591,10 @@ function WeekView({ weekDays, multiDayJobs, singleDayJobs, crewColorMap, updatin
               </span>
             </div>
 
-            {/* Jobs */}
+            {/* Spacer matching the bar area so job cards start below bars */}
+            <div style={{ height: barAreaH, flexShrink: 0 }} />
+
+            {/* Single-day job cards */}
             <div className="flex-1 p-1.5 flex flex-col gap-1.5 overflow-y-auto">
               {(jobsByDate[day.iso] || []).map(job => (
                 <WeekJobCard
