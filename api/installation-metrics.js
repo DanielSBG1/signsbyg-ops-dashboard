@@ -202,7 +202,10 @@ export default async function handler(req, res) {
         pm: getEnumField(t, FIELDS.PM),
         address: getTextField(t, FIELDS.STREET_ADDRESS),
         contactName: getTextField(t, FIELDS.CONTACT_NAME),
+        contactPhone: getTextField(t, FIELDS.CONTACT_PHONE),
+        contactEmail: getTextField(t, FIELDS.CONTACT_EMAIL),
         surveyRequired: getEnumField(t, FIELDS.SURVEY_REQUIRED),
+        depositPaid: FIELDS.DEPOSIT_PAID ? getEnumField(t, FIELDS.DEPOSIT_PAID) : null,
         rescheduleCount: 0,
         status: 'pending', // will be set after reschedule counts are known
       };
@@ -305,6 +308,10 @@ export default async function handler(req, res) {
       pm: t.pm,
       address: t.address,
       contactName: t.contactName,
+      contactPhone: t.contactPhone,
+      contactEmail: t.contactEmail,
+      surveyRequired: t.surveyRequired,
+      depositPaid: t.depositPaid,
       completedAt: t.completedAt,
       rescheduleCount: t.rescheduleCount,
       url: t.url,

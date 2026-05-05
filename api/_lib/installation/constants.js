@@ -3,6 +3,9 @@ export const INSTALL_PROJECT_GID = '1204877952044284';
 
 // Custom field GIDs on Installation tasks
 export const FIELDS = {
+  // Set DEPOSIT_PAID to your Asana enum field GID once you create it.
+  // Expected enum values: 'Yes' / 'No'  (or 'Paid' / 'Unpaid')
+  DEPOSIT_PAID:      null,
   INSTALL_DATE:      '1209324069252516',
   SURVEY_DATE:       '1211736230172866',
   SERVICE_DATE:      '1213228593899115',
