@@ -85,6 +85,7 @@ function jobColors(crewColor, depositPaid) {
 
 const BAR_H = 20;
 const BAR_GAP = 2;
+const DATE_HEADER_H = 20; // height of the date-number row in each day cell
 
 function getBarsForWeek(weekDays, multiDayJobs) {
   const weekStart = weekDays[0].iso;
@@ -311,7 +312,7 @@ function MultiDayBar({ bar, crewColor, updating, onDragStart, onJobClick }) {
       title={`${job.name}\n${job.crews?.join(', ') || 'Unassigned'}\n${job.startDate} → ${job.installDate}`}
       style={{
         position: 'absolute',
-        top: bar.lane * (BAR_H + 2) + BAR_GAP,
+        top: DATE_HEADER_H + bar.lane * (BAR_H + 2) + BAR_GAP,
         left: `calc(${bar.colStart} * 100% / 7 + 2px)`,
         width: `calc(${bar.numCols} * 100% / 7 - 4px)`,
         height: BAR_H,
@@ -471,14 +472,14 @@ function WeekJobCard({ job, crewColor, updating, onDragStart, onJobClick }) {
 
 // ─── Day cell (month view) ────────────────────────────────────
 
-function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, topOffset, onDragStart, onDragOver, onDragLeave, onDrop, onToggleExpand, onJobClick }) {
+function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, barAreaH, onDragStart, onDragOver, onDragLeave, onDrop, onToggleExpand, onJobClick }) {
   const MAX_VISIBLE = 3;
   const visible  = expanded ? jobs : jobs.slice(0, MAX_VISIBLE);
   const overflow = jobs.length - MAX_VISIBLE;
 
   return (
     <div
-      className={`rounded-lg flex flex-col gap-0.5 border transition-colors min-h-[88px]
+      className={`rounded-lg flex flex-col border transition-colors min-h-[88px]
         ${day.isToday ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/[0.04]'}
         ${!day.inMonth ? 'opacity-40' : ''}
         ${dragOver ? 'border-blue-400/60 bg-blue-500/10' : ''}
@@ -487,12 +488,17 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, top
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
-      <div style={{ height: topOffset }} />
-      <div className="px-1.5 pb-1 flex flex-col gap-0.5">
-        <span className={`text-[11px] font-semibold leading-none mb-0.5
+      {/* Date number always on top */}
+      <div className="px-1.5 pt-1 flex items-center" style={{ height: DATE_HEADER_H }}>
+        <span className={`text-[11px] font-semibold leading-none
           ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-white/60' : 'text-white/25'}`}>
           {day.num}
         </span>
+      </div>
+      {/* Space reserved for spanning bars positioned absolutely */}
+      <div style={{ height: barAreaH }} />
+      {/* Single-day chips */}
+      <div className="px-1.5 pb-1 flex flex-col gap-0.5">
         {visible.map(job => (
           <JobChip
             key={job.id}
@@ -530,12 +536,20 @@ function WeekView({ weekDays, multiDayJobs, singleDayJobs, crewColorMap, updatin
     if (!jobsByDate[d]) jobsByDate[d] = [];
     jobsByDate[d].push(j);
   }
+  // Group same-crew jobs together within each day
+  for (const d of Object.keys(jobsByDate)) {
+    jobsByDate[d].sort((a, b) => {
+      const ca = a.crews?.[0] || '\uffff';
+      const cb = b.crews?.[0] || '\uffff';
+      return ca < cb ? -1 : ca > cb ? 1 : 0;
+    });
+  }
 
   return (
     <div>
-      {/* Spanning bars row */}
+      {/* Spanning bars row — positioned below day-column headers via DATE_HEADER_H offset */}
       {numLanes > 0 && (
-        <div className="relative grid grid-cols-7 gap-1 mb-1" style={{ height: barAreaH }}>
+        <div className="relative grid grid-cols-7 gap-1 mb-1" style={{ height: barAreaH + DATE_HEADER_H }}>
           {bars.map(bar => (
             <MultiDayBar
               key={bar.job.id}
@@ -648,6 +662,14 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
       const d = dateKey.slice(0, 10);
       if (!map[d]) map[d] = [];
       map[d].push(j);
+    }
+    // Group same-crew jobs together within each day
+    for (const d of Object.keys(map)) {
+      map[d].sort((a, b) => {
+        const ca = a.crews?.[0] || '\uffff';
+        const cb = b.crews?.[0] || '\uffff';
+        return ca < cb ? -1 : ca > cb ? 1 : 0;
+      });
     }
     return map;
   }, [singleDayJobs]);
@@ -819,7 +841,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
               {weeks.map((week, wi) => {
                 const bars     = getBarsForWeek(week, multiDayJobs);
                 const numLanes = bars.length > 0 ? Math.max(...bars.map(b => b.lane)) + 1 : 0;
-                const topOffset = numLanes > 0 ? numLanes * (BAR_H + 2) + BAR_GAP + 4 : 4;
+                const barAreaH = numLanes > 0 ? numLanes * (BAR_H + 2) + BAR_GAP + 2 : 0;
                 return (
                   <div key={wi} className="relative grid grid-cols-7 gap-1">
                     {bars.map(bar => (
@@ -841,7 +863,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
                         updatingSet={updating}
                         dragOver={dragOverDate === day.iso}
                         expanded={expandedDay === day.iso}
-                        topOffset={topOffset}
+                        barAreaH={barAreaH}
                         onDragStart={handleDragStart}
                         onDragOver={(e) => handleDragOver(e, day.iso)}
                         onDragLeave={handleDragLeave}
