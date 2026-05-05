@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 // ─── Date helpers ─────────────────────────────────────────────
 
@@ -132,12 +133,20 @@ function DayModal({ dateISO, jobs, crewColorMap, onClose }) {
   });
   const today = todayISO();
 
-  return (
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  // Portal into body so the modal is never inside a stacking/compositing context
+  // that would break pointer events on the calendar after closing.
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
         className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md max-h-[70vh] flex flex-col"
         onClick={e => e.stopPropagation()}
@@ -210,7 +219,8 @@ function DayModal({ dateISO, jobs, crewColorMap, onClose }) {
           })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
