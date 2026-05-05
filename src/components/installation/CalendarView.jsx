@@ -292,13 +292,23 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
     return m;
   }, [byCrew]);
 
-  // Apply local overrides on top of server data
+  // Apply local overrides on top of server data.
+  // Use the later of installDate (custom field) and nativeDueOn (Asana due_on) as the
+  // bar's right boundary — handles jobs where the custom Install Date is set to the
+  // start of the span while native due_on is the actual end date.
   const effectiveJobs = useMemo(() => {
-    return jobs.map(j => ({
-      ...j,
-      installDate: overrides[j.id] ?? j.installDate,
-      startDate:   overrides[`${j.id}_start`] ?? j.startDate,
-    }));
+    return jobs.map(j => {
+      const cfEnd = j.installDate ?? null;
+      const nativeEnd = j.nativeDueOn ?? null;
+      const mergedEnd = cfEnd && nativeEnd
+        ? (cfEnd >= nativeEnd ? cfEnd : nativeEnd)
+        : (cfEnd || nativeEnd);
+      return {
+        ...j,
+        installDate: overrides[j.id] ?? mergedEnd,
+        startDate:   overrides[`${j.id}_start`] ?? j.startDate,
+      };
+    });
   }, [jobs, overrides]);
 
   // Split into multi-day (spanning bar) and single-day (chip)
@@ -311,12 +321,13 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
     };
   }, [effectiveJobs]);
 
-  // Group single-day jobs by install date
+  // Group single-day jobs by their effective date
   const jobsByDate = useMemo(() => {
     const map = {};
     for (const j of singleDayJobs) {
-      if (!j.installDate) continue;
-      const d = j.installDate.slice(0, 10);
+      const dateKey = j.installDate || j.nativeDueOn;
+      if (!dateKey) continue;
+      const d = dateKey.slice(0, 10);
       if (!map[d]) map[d] = [];
       map[d].push(j);
     }
