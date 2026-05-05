@@ -12,6 +12,7 @@ export default function CrewScorecard({ byCrew }) {
             <th className="text-left pb-3 px-3">Crew</th>
             <th className="text-right pb-3 px-3">Open</th>
             <th className="text-right pb-3 px-3">Completed</th>
+            <th className="text-right pb-3 px-3">Rescheduled</th>
             <th className="text-right pb-3 px-3">On-Time</th>
             <th className="text-right pb-3 px-3">On-Time %</th>
           </tr>
@@ -25,6 +26,11 @@ export default function CrewScorecard({ byCrew }) {
               </td>
               <td className="py-3 px-3 text-right tabular-nums">{c.open}</td>
               <td className="py-3 px-3 text-right tabular-nums text-white/60">{c.completed}</td>
+              <td className="py-3 px-3 text-right tabular-nums">
+                {c.rescheduled > 0
+                  ? <span className="text-warning font-medium">{c.rescheduled}</span>
+                  : <span className="text-white/30">—</span>}
+              </td>
               <td className="py-3 px-3 text-right tabular-nums text-white/60">{c.onTime}</td>
               <td className="py-3 px-3 text-right tabular-nums">
                 <span className={`font-semibold ${

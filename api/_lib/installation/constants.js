@@ -33,17 +33,22 @@ export const SECTIONS = [
   { gid: '1213516547461691', name: 'Completed, Pending Information to Close out' },
 ];
 
-// Active crews (from Team custom field)
+// Active crews (from Team/Crew custom field — enabled options only, plus Unassigned for legacy tasks)
 export const CREWS = [
-  { gid: '1212710121596390', name: 'Roberth & Jorge',  color: '#ef4444' },
-  { gid: '1212710121596391', name: 'Yandy & Cesar',    color: '#06b6d4' },
-  { gid: '1212710121596392', name: 'Poli & Midiel',    color: '#22c55e' },
-  { gid: '1212710121596393', name: 'Manuel',           color: '#64748b' },
-  { gid: '1212738527863234', name: 'Subcontractor',    color: '#f59e0b' },
-  { gid: '1213452625607077', name: 'PM',               color: '#06d6a0' },
-  { gid: '1213234538570401', name: 'Ed',               color: '#eab308' },
-  { gid: '1213234538570402', name: 'Staff',            color: '#a3e635' },
-  { gid: '1212738527863233', name: 'Unassigned',       color: '#6b7280' },
+  // Crew pairs
+  { gid: '1212710121596390', name: 'Roberth & Jorge', color: '#ef4444' },
+  { gid: '1212710121596391', name: 'Yandy & Cesar',   color: '#06b6d4' },
+  { gid: '1212710121596392', name: 'Poli & Midiel',   color: '#22c55e' },
+  { gid: '1212710121596393', name: 'Manuel',          color: '#64748b' },
+  // Individual crew members (added 2025)
+  { gid: '1214471773268033', name: 'Roberth',         color: '#f87171' },
+  { gid: '1214471773268035', name: 'Jorge',           color: '#60a5fa' },
+  { gid: '1214471773268032', name: 'Yandy',           color: '#fbbf24' },
+  { gid: '1214471773268034', name: 'Cesar',           color: '#22d3ee' },
+  { gid: '1214471773268031', name: 'Poli',            color: '#fb923c' },
+  { gid: '1214471773268030', name: 'Midiel',          color: '#f97316' },
+  // Legacy — disabled in Asana but has open tasks
+  { gid: '1212738527863233', name: 'Unassigned',      color: '#6b7280' },
 ];
 
 export const METROS = [

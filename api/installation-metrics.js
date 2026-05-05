@@ -254,13 +254,14 @@ export default async function handler(req, res) {
       count: enriched.filter((t) => t.sectionGid === s.gid && !t.completed).length,
     }));
 
-    // --- By crew (open only) ---
+    // --- By crew ---
     const byCrew = CREWS.map((c) => {
       const crewTasks = enriched.filter((t) => t.crews.includes(c.name));
       const completedTasks = crewTasks.filter((t) => t.completed);
       const crewCompleted = completedTasks.length;
       const crewEarly = completedTasks.filter((t) => t.status === 'early').length;
       const crewOnTime = completedTasks.filter((t) => t.status === 'on_time').length;
+      const crewRescheduled = crewTasks.filter((t) => (t.rescheduleCount ?? 0) >= 1).length;
       return {
         name: c.name,
         color: c.color,
@@ -269,6 +270,7 @@ export default async function handler(req, res) {
         completed: crewCompleted,
         onTime: crewEarly + crewOnTime,
         onTimeRate: crewCompleted > 0 ? Math.round(((crewEarly + crewOnTime) / crewCompleted) * 100) : 0,
+        rescheduled: crewRescheduled,
       };
     }).filter((c) => c.total > 0);
 
@@ -303,16 +305,15 @@ export default async function handler(req, res) {
     const lastWeekStats  = buildScheduleStats(allForSchedule, { start: lastMonday,  end: lastSunday  }, today);
     const monthToDate    = buildScheduleStats(allForSchedule, { start: monthStart,  end: today       }, today);
 
-    // Crew breakdown for this week's jobs (3 main crews only)
-    const MAIN_CREWS = [
-      { name: 'Roberth & Jorge', color: '#ef4444' },
-      { name: 'Yandy & Cesar',   color: '#06b6d4' },
-      { name: 'Poli & Midiel',   color: '#22c55e' },
-    ];
-    const thisWeekCrews = MAIN_CREWS.map((crew) => ({
-      ...crew,
-      jobs: thisWeekStats.jobs.filter((j) => j.crews?.includes(crew.name)),
-    }));
+    // Crew breakdown for this week's jobs (pair crews only, sourced from CREWS)
+    const PAIR_CREW_NAMES = new Set(['Roberth & Jorge', 'Yandy & Cesar', 'Poli & Midiel']);
+    const thisWeekCrews = CREWS
+      .filter((c) => PAIR_CREW_NAMES.has(c.name))
+      .map((crew) => ({
+        name: crew.name,
+        color: crew.color,
+        jobs: thisWeekStats.jobs.filter((j) => j.crews?.includes(crew.name)),
+      }));
 
     const schedule = {
       thisWeek:   { ...thisWeekStats, crews: thisWeekCrews },
