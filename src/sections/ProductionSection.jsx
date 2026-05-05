@@ -4,11 +4,13 @@ import { useThroughput } from '../hooks/useThroughput';
 import OverviewTab from '../components/production/OverviewTab';
 import DepartmentLoadTab from '../components/production/DepartmentLoadTab';
 import ThroughputTab from '../components/production/ThroughputTab';
+import CalendarView from '../components/production/CalendarView';
 
 const TABS = [
   { id: 'overview',    label: 'Overview' },
   { id: 'departments', label: 'Department Load' },
   { id: 'throughput',  label: 'Throughput' },
+  { id: 'calendar',    label: 'Calendar' },
 ];
 
 export default function ProductionSection() {
@@ -56,6 +58,7 @@ export default function ProductionSection() {
         {data && activeTab === 'overview'    && <OverviewTab data={data} />}
         {data && activeTab === 'departments' && <DepartmentLoadTab data={data} />}
         {activeTab === 'throughput'          && <ThroughputTab data={throughputData} />}
+        {data && activeTab === 'calendar'    && <CalendarView rawJobs={data.jobs} onRefresh={refresh} />}
       </div>
     </div>
   );

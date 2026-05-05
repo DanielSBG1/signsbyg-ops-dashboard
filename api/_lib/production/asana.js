@@ -71,3 +71,29 @@ export async function getSubtasks(taskGid, optFields) {
     limit: 100,
   });
 }
+
+// Production Due Date custom field GID
+const PROD_DUE_DATE_GID = '1210757373140456';
+
+export async function updateTaskDueDate(taskGid, dateISO, startDateISO) {
+  const dateValue = dateISO ? { date: dateISO } : null;
+  const body = {
+    due_on: dateISO ?? null,
+    custom_fields: { [PROD_DUE_DATE_GID]: dateValue },
+  };
+  if (startDateISO !== undefined) body.start_on = startDateISO ?? null;
+  const res = await fetch(`${ASANA_BASE}/tasks/${taskGid}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${process.env.ASANA_TOKEN}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ data: body }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Asana PUT ${res.status} on /tasks/${taskGid}: ${text.slice(0, 200)}`);
+  }
+  return res.json();
+}
