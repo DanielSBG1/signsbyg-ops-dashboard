@@ -67,12 +67,15 @@ export async function getTasksInProject(projectGid, opts = {}) {
 
 export async function updateTaskInstallDate(taskGid, dateISO) {
   // dateISO: 'YYYY-MM-DD' to set, null to clear
+  // Asana date custom fields require { date: "YYYY-MM-DD" } object format.
+  // Asana tasks use PUT (not PATCH) — PATCH returns "No matching route".
+  const dateValue = dateISO ? { date: dateISO } : null;
   const res = await rateLimitedFetch(`${BASE}/tasks/${taskGid}`, {
-    method: 'PATCH',
+    method: 'PUT',
     body: JSON.stringify({
       data: {
         custom_fields: {
-          '1209324069252516': dateISO ?? null, // FIELDS.INSTALL_DATE
+          '1209324069252516': dateValue, // FIELDS.INSTALL_DATE
         },
       },
     }),
