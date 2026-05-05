@@ -65,6 +65,25 @@ export async function getTasksInProject(projectGid, opts = {}) {
   return all;
 }
 
+export async function updateTaskInstallDate(taskGid, dateISO) {
+  // dateISO: 'YYYY-MM-DD' to set, null to clear
+  const res = await rateLimitedFetch(`${BASE}/tasks/${taskGid}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      data: {
+        custom_fields: {
+          '1209324069252516': dateISO ?? null, // FIELDS.INSTALL_DATE
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Asana update failed (${res.status}): ${text.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
 export async function getTaskStories(taskGid) {
   const qs = new URLSearchParams();
   qs.set('limit', '100');

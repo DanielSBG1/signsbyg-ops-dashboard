@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useInstallationMetrics } from '../hooks/useInstallationMetrics';
 import SummaryCards from '../components/installation/SummaryCards';
 import SectionPipeline from '../components/installation/SectionPipeline';
@@ -6,9 +6,16 @@ import CrewScorecard from '../components/installation/CrewScorecard';
 import JobsTable from '../components/installation/JobsTable';
 import PipelineBar from '../components/installation/PipelineBar';
 import ScheduleSection from '../components/installation/ScheduleSection';
+import CalendarView from '../components/installation/CalendarView';
+
+const VIEWS = [
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'calendar', label: 'Calendar' },
+];
 
 export default function InstallationSection() {
   const { data, loading, error, lastRefreshed, refresh } = useInstallationMetrics();
+  const [view, setView] = useState('schedule');
 
   return (
     <div className="min-h-screen text-white">
@@ -22,12 +29,30 @@ export default function InstallationSection() {
             </p>
           )}
         </div>
-        <button
-          onClick={refresh}
-          className="text-white/40 hover:text-white/70 text-xs px-3 py-1.5 border border-white/10 rounded-lg transition-colors"
-        >
-          {loading ? 'Loading...' : 'Refresh'}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* View toggle */}
+          <div className="flex rounded-lg border border-white/10 overflow-hidden">
+            {VIEWS.map(v => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`text-xs px-3 py-1.5 transition-colors ${
+                  view === v.id
+                    ? 'bg-white/10 text-white'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={refresh}
+            className="text-white/40 hover:text-white/70 text-xs px-3 py-1.5 border border-white/10 rounded-lg transition-colors"
+          >
+            {loading ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
@@ -45,16 +70,24 @@ export default function InstallationSection() {
             </div>
           </div>
         ) : data ? (
-          <>
-            <ScheduleSection schedule={data.schedule} />
-            <PipelineBar summary={data.summary} jobs={data.jobs} />
-            <SummaryCards summary={data.summary} />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SectionPipeline bySection={data.bySection} />
-              <CrewScorecard byCrew={data.byCrew} />
-            </div>
-            <JobsTable jobs={data.jobs} />
-          </>
+          view === 'calendar' ? (
+            <CalendarView
+              jobs={data.jobs}
+              byCrew={data.byCrew}
+              onRefresh={refresh}
+            />
+          ) : (
+            <>
+              <ScheduleSection schedule={data.schedule} />
+              <PipelineBar summary={data.summary} jobs={data.jobs} />
+              <SummaryCards summary={data.summary} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SectionPipeline bySection={data.bySection} />
+                <CrewScorecard byCrew={data.byCrew} />
+              </div>
+              <JobsTable jobs={data.jobs} />
+            </>
+          )
         ) : null}
       </main>
     </div>
