@@ -10,6 +10,18 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function daysBetween(a, b) {
+  return Math.round(
+    (new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 86400000
+  );
+}
+
+function addDaysToISO(iso, n) {
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 /** Returns the 42-day grid for the calendar month containing `year/month`. */
 function buildMonthGrid(year, month) {
   const firstOfMonth = new Date(year, month, 1);
@@ -38,7 +50,130 @@ const MONTH_NAMES = [
 ];
 const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-// ─── Job chip ─────────────────────────────────────────────────
+// ─── Multi-day bar helpers ────────────────────────────────────
+
+const BAR_H = 20;   // px height per bar lane
+const BAR_GAP = 2;  // px gap between bar top and cell top
+
+/**
+ * For a given 7-day week row, compute which multi-day jobs have bars here
+ * and assign non-overlapping lanes.
+ */
+function getBarsForWeek(weekDays, multiDayJobs) {
+  const weekStart = weekDays[0].iso;
+  const weekEnd = weekDays[6].iso;
+
+  const inWeek = multiDayJobs.filter(
+    j => j.startDate <= weekEnd && j.installDate >= weekStart
+  );
+  if (inWeek.length === 0) return [];
+
+  inWeek.sort((a, b) => (a.startDate < b.startDate ? -1 : 1));
+
+  const colOf = (iso) => {
+    const idx = weekDays.findIndex(d => d.iso === iso);
+    return idx === -1 ? (iso < weekStart ? 0 : 6) : idx;
+  };
+
+  const laneEnds = []; // laneEnds[lane] = colEnd of last bar in that lane
+
+  return inWeek.map(job => {
+    const clippedStart = job.startDate < weekStart ? weekStart : job.startDate;
+    const clippedEnd   = job.installDate > weekEnd  ? weekEnd  : job.installDate;
+
+    const colStart = colOf(clippedStart);
+    const colEnd   = colOf(clippedEnd);
+
+    // Greedy lane: find first lane whose last bar ended before this one starts
+    let lane = laneEnds.findIndex(end => end < colStart);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = colEnd;
+
+    return {
+      job,
+      colStart,
+      colEnd,
+      numCols: colEnd - colStart + 1,
+      lane,
+      isStart: job.startDate >= weekStart,
+      isEnd:   job.installDate <= weekEnd,
+    };
+  });
+}
+
+// ─── Multi-day spanning bar ───────────────────────────────────
+
+function MultiDayBar({ bar, color, updating, onDragStart }) {
+  const isDone = bar.job.completed;
+  const effectiveColor = isDone ? '#22c55e' : color;
+  const label = bar.job.name.replace(/^INSTALLATION\s*[-–]\s*/i, '');
+
+  const radius = bar.isStart && bar.isEnd ? '4px'
+    : bar.isStart ? '4px 0 0 4px'
+    : bar.isEnd   ? '0 4px 4px 0'
+    : '0';
+
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, bar.job)}
+      title={`${bar.job.name}\n${bar.job.crews?.join(', ') || 'Unassigned'}\n${bar.job.startDate} → ${bar.job.installDate}`}
+      style={{
+        position: 'absolute',
+        top: bar.lane * (BAR_H + 2) + BAR_GAP,
+        left: `calc(${bar.colStart} * 100% / 7 + 2px)`,
+        width: `calc(${bar.numCols} * 100% / 7 - 4px)`,
+        height: BAR_H,
+        zIndex: 5,
+        cursor: updating ? 'wait' : 'grab',
+        opacity: updating ? 0.5 : 1,
+        transition: 'opacity 0.15s',
+      }}
+    >
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: 6,
+          paddingRight: 4,
+          overflow: 'hidden',
+          backgroundColor: effectiveColor + '22',
+          border: `1px solid ${effectiveColor}50`,
+          borderLeft: bar.isStart ? `3px solid ${effectiveColor}` : `1px solid ${effectiveColor}30`,
+          borderRight: bar.isEnd ? `1px solid ${effectiveColor}50` : 'none',
+          borderRadius: radius,
+          color: effectiveColor,
+          fontSize: 11,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {/* Only show label at the start of the bar (or when bar continues from prev week at col 0) */}
+        {(bar.isStart || bar.colStart === 0) && (
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', opacity: isDone ? 0.6 : 1 }}>
+            {label}
+          </span>
+        )}
+        {updating && (
+          <span
+            style={{
+              display: 'inline-block',
+              width: 8, height: 8,
+              border: '1.5px solid currentColor',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 0.6s linear infinite',
+              marginLeft: 4,
+              flexShrink: 0,
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Job chip (single-day) ────────────────────────────────────
 
 function JobChip({ job, crewColor, updating, onDragStart }) {
   const isDone = job.completed;
@@ -76,7 +211,7 @@ function JobChip({ job, crewColor, updating, onDragStart }) {
 
 // ─── Day cell ─────────────────────────────────────────────────
 
-function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, onDragStart, onDragOver, onDragLeave, onDrop, onToggleExpand }) {
+function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, topOffset, onDragStart, onDragOver, onDragLeave, onDrop, onToggleExpand }) {
   const MAX_VISIBLE = 3;
   const visible = expanded ? jobs : jobs.slice(0, MAX_VISIBLE);
   const overflow = jobs.length - MAX_VISIBLE;
@@ -84,9 +219,8 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, onD
   return (
     <div
       className={`
-        rounded-lg p-1.5 flex flex-col gap-0.5
-        border transition-colors
-        ${expanded ? 'min-h-[90px]' : 'min-h-[90px]'}
+        rounded-lg flex flex-col gap-0.5
+        border transition-colors min-h-[88px]
         ${day.isToday ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/[0.04]'}
         ${!day.inMonth ? 'opacity-40' : ''}
         ${dragOver ? 'border-blue-400/60 bg-blue-500/10' : ''}
@@ -95,32 +229,35 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, onD
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
-      {/* Date number */}
-      <span className={`text-[11px] font-semibold px-0.5 leading-none mb-0.5
-        ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-white/60' : 'text-white/25'}
-      `}>
-        {day.num}
-      </span>
+      {/* Spacer pushes date number + chips below the bar layer */}
+      <div style={{ height: topOffset }} />
 
-      {/* Job chips */}
-      {visible.map(job => (
-        <JobChip
-          key={job.id}
-          job={job}
-          crewColor={crewColorMap.get(job.crews?.[0])}
-          updating={updatingSet.has(job.id)}
-          onDragStart={onDragStart}
-        />
-      ))}
+      <div className="px-1.5 pb-1 flex flex-col gap-0.5">
+        <span className={`text-[11px] font-semibold leading-none mb-0.5
+          ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-white/60' : 'text-white/25'}
+        `}>
+          {day.num}
+        </span>
 
-      {overflow > 0 && (
-        <button
-          onClick={onToggleExpand}
-          className="text-[10px] text-white/40 hover:text-white/70 px-1 pt-0.5 text-left transition-colors"
-        >
-          {expanded ? '▲ less' : `+${overflow} more`}
-        </button>
-      )}
+        {visible.map(job => (
+          <JobChip
+            key={job.id}
+            job={job}
+            crewColor={crewColorMap.get(job.crews?.[0])}
+            updating={updatingSet.has(job.id)}
+            onDragStart={onDragStart}
+          />
+        ))}
+
+        {overflow > 0 && (
+          <button
+            onClick={onToggleExpand}
+            className="text-[10px] text-white/40 hover:text-white/70 pt-0.5 text-left transition-colors"
+          >
+            {expanded ? '▲ less' : `+${overflow} more`}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -131,12 +268,12 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
-  const [dragging, setDragging] = useState(null);   // { job, fromDate }
+  const [dragging, setDragging] = useState(null);      // { job, fromDate }
   const [dragOverDate, setDragOverDate] = useState(null);
-  const [updating, setUpdating] = useState(new Set());  // Set of taskGids
-  const [overrides, setOverrides] = useState({});       // { taskGid: newDateISO }
-  const [toast, setToast] = useState(null);             // { msg, type }
-  const [expandedDay, setExpandedDay] = useState(null); // date ISO string for inline expansion
+  const [updating, setUpdating] = useState(new Set()); // Set of taskGids
+  const [overrides, setOverrides] = useState({});      // { taskGid: newEndDate, `${taskGid}_start`: newStartDate }
+  const [toast, setToast] = useState(null);            // { msg, type }
+  const [expandedDay, setExpandedDay] = useState(null);
   const toastTimer = useRef(null);
 
   // Build crew → color map
@@ -146,27 +283,44 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
     return m;
   }, [byCrew]);
 
-  // Apply local date overrides on top of server data
+  // Apply local overrides on top of server data
   const effectiveJobs = useMemo(() => {
     return jobs.map(j => ({
       ...j,
       installDate: overrides[j.id] ?? j.installDate,
+      startDate:   overrides[`${j.id}_start`] ?? j.startDate,
     }));
   }, [jobs, overrides]);
 
-  // Group jobs by install date
+  // Split into multi-day (spanning bar) and single-day (chip)
+  const { multiDayJobs, singleDayJobs } = useMemo(() => {
+    const multi = effectiveJobs.filter(j => j.startDate && j.startDate < (j.installDate || ''));
+    const multiIds = new Set(multi.map(j => j.id));
+    return {
+      multiDayJobs: multi,
+      singleDayJobs: effectiveJobs.filter(j => !multiIds.has(j.id)),
+    };
+  }, [effectiveJobs]);
+
+  // Group single-day jobs by install date
   const jobsByDate = useMemo(() => {
     const map = {};
-    for (const j of effectiveJobs) {
+    for (const j of singleDayJobs) {
       if (!j.installDate) continue;
       const d = j.installDate.slice(0, 10);
       if (!map[d]) map[d] = [];
       map[d].push(j);
     }
     return map;
-  }, [effectiveJobs]);
+  }, [singleDayJobs]);
 
   const grid = useMemo(() => buildMonthGrid(year, month), [year, month]);
+
+  // Split grid into 6 week rows
+  const weeks = useMemo(() =>
+    Array.from({ length: 6 }, (_, i) => grid.slice(i * 7, i * 7 + 7)),
+    [grid]
+  );
 
   // ── Navigation ───────────────────────────────────────────────
   function prevMonth() {
@@ -208,7 +362,6 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
   }
 
   function handleDragLeave(e) {
-    // Only clear if truly leaving the cell (not entering a child)
     if (!e.currentTarget.contains(e.relatedTarget)) {
       setDragOverDate(null);
     }
@@ -227,28 +380,44 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
     const job = dragging.job;
     setDragging(null);
 
+    // For multi-day jobs shift startDate by the same delta
+    let newStartDate;
+    if (job.startDate) {
+      const delta = daysBetween(fromDate, toDate);
+      newStartDate = addDaysToISO(job.startDate, delta);
+    }
+
     // Optimistic update
-    setOverrides(prev => ({ ...prev, [taskGid]: toDate }));
+    setOverrides(prev => ({
+      ...prev,
+      [taskGid]: toDate,
+      ...(newStartDate !== undefined ? { [`${taskGid}_start`]: newStartDate } : {}),
+    }));
     setUpdating(prev => new Set(prev).add(taskGid));
 
     try {
+      const body = { taskGid, installDate: toDate };
+      if (newStartDate !== undefined) body.startDate = newStartDate;
+
       const res = await fetch('/api/installation-update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskGid, installDate: toDate }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `HTTP ${res.status}`);
       }
-      showToast(`${job.name.replace(/^INSTALLATION\s*[-–]\s*/i, '').slice(0, 40)} moved to ${toDate}`, 'success');
-      // Refresh after a short delay so Asana has time to persist
+      showToast(
+        `${job.name.replace(/^INSTALLATION\s*[-–]\s*/i, '').slice(0, 40)} moved to ${toDate}`,
+        'success'
+      );
       setTimeout(() => onRefresh?.(), 2000);
     } catch (err) {
-      // Rollback
       setOverrides(prev => {
         const next = { ...prev };
         delete next[taskGid];
+        delete next[`${taskGid}_start`];
         return next;
       });
       showToast(`Update failed: ${err.message}`);
@@ -297,27 +466,47 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div
-        className="grid grid-cols-7 gap-1"
-        onDragEnd={handleDragEnd}
-      >
-        {grid.map(day => (
-          <DayCell
-            key={day.iso}
-            day={day}
-            jobs={jobsByDate[day.iso] || []}
-            crewColorMap={crewColorMap}
-            updatingSet={updating}
-            dragOver={dragOverDate === day.iso}
-            expanded={expandedDay === day.iso}
-            onDragStart={handleDragStart}
-            onDragOver={(e) => handleDragOver(e, day.iso)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, day.iso)}
-            onToggleExpand={() => setExpandedDay(prev => prev === day.iso ? null : day.iso)}
-          />
-        ))}
+      {/* Calendar: one relative row per week so bars can span cells */}
+      <div className="space-y-1" onDragEnd={handleDragEnd}>
+        {weeks.map((week, wi) => {
+          const bars = getBarsForWeek(week, multiDayJobs);
+          const numLanes = bars.length > 0 ? Math.max(...bars.map(b => b.lane)) + 1 : 0;
+          const topOffset = numLanes > 0 ? numLanes * (BAR_H + 2) + BAR_GAP + 4 : 4;
+
+          return (
+            <div key={wi} className="relative grid grid-cols-7 gap-1">
+              {/* Multi-day spanning bars */}
+              {bars.map(bar => (
+                <MultiDayBar
+                  key={bar.job.id}
+                  bar={bar}
+                  color={crewColorMap.get(bar.job.crews?.[0]) || '#4b5563'}
+                  updating={updating.has(bar.job.id)}
+                  onDragStart={handleDragStart}
+                />
+              ))}
+
+              {/* Day cells */}
+              {week.map(day => (
+                <DayCell
+                  key={day.iso}
+                  day={day}
+                  jobs={jobsByDate[day.iso] || []}
+                  crewColorMap={crewColorMap}
+                  updatingSet={updating}
+                  dragOver={dragOverDate === day.iso}
+                  expanded={expandedDay === day.iso}
+                  topOffset={topOffset}
+                  onDragStart={handleDragStart}
+                  onDragOver={(e) => handleDragOver(e, day.iso)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, day.iso)}
+                  onToggleExpand={() => setExpandedDay(prev => prev === day.iso ? null : day.iso)}
+                />
+              ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* Legend */}
@@ -344,7 +533,6 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
           {toast.msg}
         </div>
       )}
-
     </div>
   );
 }

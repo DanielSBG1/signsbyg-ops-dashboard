@@ -32,7 +32,7 @@ async function rateLimitedFetch(url, options = {}, retries = 3) {
 export async function getTasksInProject(projectGid, opts = {}) {
   const { completed_since, opt_fields } = opts;
   const fields = opt_fields || [
-    'name', 'completed', 'completed_at', 'created_at', 'modified_at',
+    'name', 'completed', 'completed_at', 'created_at', 'modified_at', 'start_on', 'due_on',
     'memberships.section.name', 'memberships.section.gid',
     'custom_fields.gid', 'custom_fields.name', 'custom_fields.display_value',
     'custom_fields.enum_value.name', 'custom_fields.enum_value.gid',
@@ -65,21 +65,22 @@ export async function getTasksInProject(projectGid, opts = {}) {
   return all;
 }
 
-export async function updateTaskInstallDate(taskGid, dateISO) {
+export async function updateTaskInstallDate(taskGid, dateISO, startDateISO) {
   // dateISO: 'YYYY-MM-DD' to set, null to clear
+  // startDateISO: optional — set start_on when shifting a multi-day span
   // Asana date custom fields require { date: "YYYY-MM-DD" } object format.
   // Asana tasks use PUT (not PATCH) — PATCH returns "No matching route".
   const dateValue = dateISO ? { date: dateISO } : null;
+  const body = {
+    due_on: dateISO ?? null,
+    custom_fields: {
+      '1209324069252516': dateValue, // FIELDS.INSTALL_DATE
+    },
+  };
+  if (startDateISO !== undefined) body.start_on = startDateISO ?? null;
   const res = await rateLimitedFetch(`${BASE}/tasks/${taskGid}`, {
     method: 'PUT',
-    body: JSON.stringify({
-      data: {
-        due_on: dateISO ?? null,
-        custom_fields: {
-          '1209324069252516': dateValue, // FIELDS.INSTALL_DATE
-        },
-      },
-    }),
+    body: JSON.stringify({ data: body }),
   });
   if (!res.ok) {
     const text = await res.text();
