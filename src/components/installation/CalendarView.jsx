@@ -76,7 +76,7 @@ function JobChip({ job, crewColor, updating, onDragStart }) {
 
 // ─── Day cell ─────────────────────────────────────────────────
 
-function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, onDragStart, onDragOver, onDragLeave, onDrop }) {
+function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, onDragStart, onDragOver, onDragLeave, onDrop, onShowMore }) {
   const MAX_VISIBLE = 3;
   const visible = jobs.slice(0, MAX_VISIBLE);
   const overflow = jobs.length - MAX_VISIBLE;
@@ -113,8 +113,103 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, onDragStart, 
       ))}
 
       {overflow > 0 && (
-        <span className="text-[10px] text-white/30 px-1 pt-0.5">+{overflow} more</span>
+        <button
+          onClick={onShowMore}
+          className="text-[10px] text-white/40 hover:text-white/70 px-1 pt-0.5 text-left transition-colors"
+        >
+          +{overflow} more
+        </button>
       )}
+    </div>
+  );
+}
+
+// ─── Day detail modal ─────────────────────────────────────────
+
+function DayModal({ dateISO, jobs, crewColorMap, onClose }) {
+  const label = new Date(dateISO + 'T12:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  });
+  const today = todayISO();
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md max-h-[70vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <div>
+            <p className="text-xs text-white/40 font-medium uppercase tracking-wider">
+              {jobs.length} job{jobs.length !== 1 ? 's' : ''}
+            </p>
+            <h3 className="text-base font-semibold text-white mt-0.5">{label}</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white/30 hover:text-white/70 transition-colors text-lg leading-none p-1"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Job list */}
+        <div className="overflow-y-auto divide-y divide-white/[0.04]">
+          {jobs.map(job => {
+            const color = crewColorMap.get(job.crews?.[0]) || '#4b5563';
+            const isDone = job.completed;
+            const isOverdue = !isDone && job.installDate < today;
+            const isRescheduled = (job.rescheduleCount ?? 0) > 0;
+
+            return (
+              <div key={job.id} className="flex items-start gap-3 px-5 py-3 hover:bg-white/[0.03] transition-colors">
+                <span
+                  className="mt-0.5 shrink-0 w-1 h-full min-h-[32px] rounded-full"
+                  style={{ backgroundColor: isDone ? '#22c55e' : isOverdue ? '#ef4444' : color }}
+                />
+                <div className="flex-1 min-w-0">
+                  <a
+                    href={job.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-white/85 hover:text-white transition-colors block truncate font-medium"
+                    title={job.name}
+                  >
+                    {job.name.replace(/^INSTALLATION\s*[-–]\s*/i, '')}
+                  </a>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    {job.crews?.length > 0 && (
+                      <span className="text-[11px] text-white/40">{job.crews.join(', ')}</span>
+                    )}
+                    {isDone && <span className="text-[11px] text-green-400">Done</span>}
+                    {isOverdue && <span className="text-[11px] text-red-400">Overdue</span>}
+                    {isRescheduled && (
+                      <span className="text-[11px] text-yellow-400/80">
+                        {job.rescheduleCount} reschedule{job.rescheduleCount !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {job.pm && <span className="text-[11px] text-white/30">PM: {job.pm}</span>}
+                  </div>
+                </div>
+                <a
+                  href={job.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 text-white/20 hover:text-white/60 transition-colors text-xs mt-0.5"
+                  title="Open in Asana"
+                >
+                  ↗
+                </a>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -130,6 +225,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
   const [updating, setUpdating] = useState(new Set());  // Set of taskGids
   const [overrides, setOverrides] = useState({});       // { taskGid: newDateISO }
   const [toast, setToast] = useState(null);             // { msg, type }
+  const [selectedDay, setSelectedDay] = useState(null); // date ISO string for modal
   const toastTimer = useRef(null);
 
   // Build crew → color map
@@ -307,6 +403,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
             onDragOver={(e) => handleDragOver(e, day.iso)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, day.iso)}
+            onShowMore={() => setSelectedDay(day.iso)}
           />
         ))}
       </div>
@@ -334,6 +431,16 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
         `}>
           {toast.msg}
         </div>
+      )}
+
+      {/* Day detail modal */}
+      {selectedDay && (
+        <DayModal
+          dateISO={selectedDay}
+          jobs={jobsByDate[selectedDay] || []}
+          crewColorMap={crewColorMap}
+          onClose={() => setSelectedDay(null)}
+        />
       )}
     </div>
   );
