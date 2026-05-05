@@ -307,15 +307,14 @@ export default async function handler(req, res) {
     const lastWeekStats  = buildScheduleStats(allForSchedule, { start: lastMonday,  end: lastSunday  }, today);
     const monthToDate    = buildScheduleStats(allForSchedule, { start: monthStart,  end: today       }, today);
 
-    // Crew breakdown for this week's jobs (pair crews only, sourced from CREWS)
-    const PAIR_CREW_NAMES = new Set(['Roberth & Jorge', 'Yandy & Cesar', 'Poli & Midiel']);
+    // Crew breakdown for this week's jobs — all crews with at least one job
     const thisWeekCrews = CREWS
-      .filter((c) => PAIR_CREW_NAMES.has(c.name))
       .map((crew) => ({
         name: crew.name,
         color: crew.color,
         jobs: thisWeekStats.jobs.filter((j) => j.crews?.includes(crew.name)),
-      }));
+      }))
+      .filter((c) => c.jobs.length > 0);
 
     const schedule = {
       thisWeek:   { ...thisWeekStats, crews: thisWeekCrews },

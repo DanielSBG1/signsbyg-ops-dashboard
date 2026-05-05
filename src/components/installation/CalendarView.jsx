@@ -180,9 +180,16 @@ function JobChip({ job, crewColor, updating, onDragStart }) {
   const isOverdue = !job.completed && job.installDate < todayISO();
   const isRescheduled = (job.rescheduleCount ?? 0) > 0;
 
-  let borderColor = crewColor || '#4b5563';
-  if (isDone) borderColor = '#22c55e';
-  else if (isOverdue) borderColor = '#ef4444';
+  // Determine colors
+  let bg, border, text;
+  if (isDone) {
+    bg = 'rgba(34,197,94,0.12)'; border = '#22c55e'; text = 'rgba(134,239,172,0.85)';
+  } else if (isOverdue) {
+    bg = 'rgba(239,68,68,0.12)'; border = '#ef4444'; text = 'rgba(252,165,165,0.85)';
+  } else {
+    const c = crewColor || '#4b5563';
+    bg = c + '22'; border = c; text = null; // null = use default white
+  }
 
   return (
     <div
@@ -191,18 +198,20 @@ function JobChip({ job, crewColor, updating, onDragStart }) {
       title={`${job.name}\n${job.crews?.join(', ') || 'Unassigned'}${isRescheduled ? ` · ${job.rescheduleCount} reschedule(s)` : ''}`}
       className={`
         relative flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] cursor-grab active:cursor-grabbing
-        select-none truncate max-w-full
-        ${isDone ? 'bg-green-500/10 text-green-300/80' : isOverdue ? 'bg-red-500/10 text-red-300/80' : 'bg-white/[0.06] text-white/75'}
-        ${updating ? 'opacity-50' : 'hover:bg-white/10'}
-        transition-opacity
+        select-none truncate max-w-full transition-opacity
+        ${updating ? 'opacity-50' : 'hover:brightness-125'}
       `}
-      style={{ borderLeft: `2px solid ${borderColor}` }}
+      style={{
+        backgroundColor: bg,
+        borderLeft: `2.5px solid ${border}`,
+        color: text || 'rgba(255,255,255,0.82)',
+      }}
     >
       {updating && (
         <span className="shrink-0 w-2.5 h-2.5 border border-white/40 border-t-transparent rounded-full animate-spin" />
       )}
       {isRescheduled && !updating && (
-        <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-yellow-400/70" title="Rescheduled" />
+        <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-yellow-400/80" title="Rescheduled" />
       )}
       <span className="truncate">{job.name.replace(/^INSTALLATION\s*[-–]\s*/i, '')}</span>
     </div>
@@ -430,6 +439,17 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
     }
   }, [dragging, onRefresh]);
 
+  // Crews that actually have jobs in the current month's grid
+  const activeCrws = useMemo(() => {
+    const isoSet = new Set(grid.map(d => d.iso));
+    return (byCrew || []).filter(c =>
+      effectiveJobs.some(j =>
+        j.crews?.includes(c.name) &&
+        j.installDate && isoSet.has(j.installDate.slice(0, 10))
+      )
+    );
+  }, [byCrew, effectiveJobs, grid]);
+
   // ── Render ───────────────────────────────────────────────────
   return (
     <div className="bg-slate-card border border-white/5 rounded-2xl p-5 space-y-4 relative">
@@ -457,70 +477,90 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
         </div>
       </div>
 
-      {/* Day-of-week header */}
-      <div className="grid grid-cols-7 gap-1">
-        {DAY_LABELS.map(d => (
-          <div key={d} className="text-center text-[10px] font-semibold text-white/30 uppercase tracking-wider py-1">
-            {d}
+      {/* Calendar + legend side by side */}
+      <div className="flex gap-4">
+        {/* Calendar grid */}
+        <div className="flex-1 min-w-0">
+          {/* Day-of-week header */}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {DAY_LABELS.map(d => (
+              <div key={d} className="text-center text-[10px] font-semibold text-white/30 uppercase tracking-wider py-1">
+                {d}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Calendar: one relative row per week so bars can span cells */}
-      <div className="space-y-1" onDragEnd={handleDragEnd}>
-        {weeks.map((week, wi) => {
-          const bars = getBarsForWeek(week, multiDayJobs);
-          const numLanes = bars.length > 0 ? Math.max(...bars.map(b => b.lane)) + 1 : 0;
-          const topOffset = numLanes > 0 ? numLanes * (BAR_H + 2) + BAR_GAP + 4 : 4;
+          <div className="space-y-1" onDragEnd={handleDragEnd}>
+            {weeks.map((week, wi) => {
+              const bars = getBarsForWeek(week, multiDayJobs);
+              const numLanes = bars.length > 0 ? Math.max(...bars.map(b => b.lane)) + 1 : 0;
+              const topOffset = numLanes > 0 ? numLanes * (BAR_H + 2) + BAR_GAP + 4 : 4;
 
-          return (
-            <div key={wi} className="relative grid grid-cols-7 gap-1">
-              {/* Multi-day spanning bars */}
-              {bars.map(bar => (
-                <MultiDayBar
-                  key={bar.job.id}
-                  bar={bar}
-                  color={crewColorMap.get(bar.job.crews?.[0]) || '#4b5563'}
-                  updating={updating.has(bar.job.id)}
-                  onDragStart={handleDragStart}
-                />
-              ))}
-
-              {/* Day cells */}
-              {week.map(day => (
-                <DayCell
-                  key={day.iso}
-                  day={day}
-                  jobs={jobsByDate[day.iso] || []}
-                  crewColorMap={crewColorMap}
-                  updatingSet={updating}
-                  dragOver={dragOverDate === day.iso}
-                  expanded={expandedDay === day.iso}
-                  topOffset={topOffset}
-                  onDragStart={handleDragStart}
-                  onDragOver={(e) => handleDragOver(e, day.iso)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, day.iso)}
-                  onToggleExpand={() => setExpandedDay(prev => prev === day.iso ? null : day.iso)}
-                />
-              ))}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-4 pt-1 border-t border-white/5 flex-wrap">
-        <span className="text-[10px] text-white/30 uppercase tracking-wider font-semibold">Crews</span>
-        {(byCrew || []).filter(c => c.open > 0 || c.total > 0).slice(0, 8).map(c => (
-          <div key={c.name} className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: c.color }} />
-            <span className="text-[10px] text-white/50">{c.name}</span>
+              return (
+                <div key={wi} className="relative grid grid-cols-7 gap-1">
+                  {bars.map(bar => (
+                    <MultiDayBar
+                      key={bar.job.id}
+                      bar={bar}
+                      color={crewColorMap.get(bar.job.crews?.[0]) || '#4b5563'}
+                      updating={updating.has(bar.job.id)}
+                      onDragStart={handleDragStart}
+                    />
+                  ))}
+                  {week.map(day => (
+                    <DayCell
+                      key={day.iso}
+                      day={day}
+                      jobs={jobsByDate[day.iso] || []}
+                      crewColorMap={crewColorMap}
+                      updatingSet={updating}
+                      dragOver={dragOverDate === day.iso}
+                      expanded={expandedDay === day.iso}
+                      topOffset={topOffset}
+                      onDragStart={handleDragStart}
+                      onDragOver={(e) => handleDragOver(e, day.iso)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, day.iso)}
+                      onToggleExpand={() => setExpandedDay(prev => prev === day.iso ? null : day.iso)}
+                    />
+                  ))}
+                </div>
+              );
+            })}
           </div>
-        ))}
-        <div className="flex items-center gap-1 ml-auto">
-          <span className="w-1.5 h-1.5 rounded-full bg-yellow-400/70" />
-          <span className="text-[10px] text-white/40">Rescheduled</span>
+        </div>
+
+        {/* Legend sidebar */}
+        <div className="w-36 shrink-0 flex flex-col gap-3 pt-8">
+          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Crews</p>
+          <div className="flex flex-col gap-1.5">
+            {(activeCrws.length > 0 ? activeCrws : (byCrew || [])).map(c => (
+              <div key={c.name} className="flex items-center gap-2">
+                <span
+                  className="shrink-0 w-3 h-3 rounded-sm"
+                  style={{ backgroundColor: c.color }}
+                />
+                <span className="text-[11px] text-white/60 leading-tight">{c.name}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 pt-2 border-t border-white/5 flex flex-col gap-2">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Status</p>
+            {[
+              { color: '#22c55e', label: 'Completed' },
+              { color: '#ef4444', label: 'Overdue' },
+              { color: '#eab308', label: 'Rescheduled', dot: true },
+            ].map(({ color, label, dot }) => (
+              <div key={label} className="flex items-center gap-2">
+                {dot
+                  ? <span className="shrink-0 w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                  : <span className="shrink-0 w-3 h-3 rounded-sm" style={{ backgroundColor: color + '30', border: `2px solid ${color}` }} />
+                }
+                <span className="text-[11px] text-white/50">{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
