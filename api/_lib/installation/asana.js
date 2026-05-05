@@ -74,6 +74,7 @@ export async function updateTaskInstallDate(taskGid, dateISO) {
     method: 'PUT',
     body: JSON.stringify({
       data: {
+        due_on: dateISO ?? null,
         custom_fields: {
           '1209324069252516': dateValue, // FIELDS.INSTALL_DATE
         },
