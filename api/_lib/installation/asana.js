@@ -68,7 +68,9 @@ export async function getTasksInProject(projectGid, opts = {}) {
 export async function getTaskStories(taskGid) {
   const qs = new URLSearchParams();
   qs.set('limit', '100');
-  qs.set('opt_fields', 'type,resource_subtype,text,html_text,created_at,created_by.name,new_date_value.value,old_date_value.value,new_value,old_value,custom_field.gid,custom_field.name');
+  // opt_fields: only what's needed for reschedule detection
+  // old/new_date_value sub-fields use .due_on (not .value)
+  qs.set('opt_fields', 'resource_subtype,created_at,custom_field.gid,old_date_value.due_on,new_date_value.due_on');
 
   const res = await rateLimitedFetch(`${BASE}/tasks/${taskGid}/stories?${qs.toString()}`);
   if (!res.ok) return [];

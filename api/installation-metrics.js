@@ -1,4 +1,4 @@
-import { getTasksInProject } from './_lib/installation/asana.js';
+import { getTasksInProject, getTaskStories } from './_lib/installation/asana.js';
 import { INSTALL_PROJECT_GID, FIELDS, SECTIONS, CREWS, METROS } from './_lib/installation/constants.js';
 import { getCached, setCached } from './_lib/cache.js';
 
@@ -34,24 +34,74 @@ function getTextField(task, fieldGid) {
   return f?.text_value || f?.display_value || null;
 }
 
-// Classify completion status per our rules
-// NOTE: rescheduled count requires story/history data — deferred for now.
-// For Phase 1, we infer a task was rescheduled if modified_at > install_date + 1d
-// (a heuristic). Phase 2 will use task stories for precise counts.
-function classifyTask(task, todayISO) {
-  const installDate = getDateField(task, FIELDS.INSTALL_DATE);
-  const completed = task.completed;
-  const completedAt = task.completed_at?.split('T')[0];
+// ─── Reschedule detection ──────────────────────────────────────
+// Rules (from product spec):
+//   1. Correction window: changes within 1h of initial scheduling → not a reschedule
+//   2. Lead time exemption: if job was first scheduled with <48h lead time → no reschedules counted
+//   3. 48h rule: a date change only counts if <48h remained before the old date at change time
 
-  if (completed && installDate) {
-    if (completedAt < installDate) return 'early';
-    if (completedAt === installDate) return 'on_time';
-    // Completed after install date → was rescheduled or bled over
-    return 'failed'; // Will refine with story data
+const CORRECTION_WINDOW_MS  = 60 * 60 * 1000;  // 1 hour
+const MIN_LEAD_TIME_H        = 48;
+const RESCHEDULE_THRESHOLD_H = 48;
+
+function countReschedules(stories) {
+  const changes = stories
+    .filter(s =>
+      s.resource_subtype === 'date_custom_field_changed' &&
+      s.custom_field?.gid === FIELDS.INSTALL_DATE
+    )
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+  if (changes.length === 0) return 0;
+
+  // First scheduling event: null → date
+  const initial = changes.find(s => !s.old_date_value?.due_on && s.new_date_value?.due_on);
+  if (!initial) return 0;
+
+  const initTime  = new Date(initial.created_at).getTime();
+  const initDate  = new Date(initial.new_date_value.due_on + 'T12:00:00Z').getTime();
+  const initLeadH = (initDate - initTime) / (1000 * 60 * 60);
+
+  // Lead time exemption: job was always a rush — skip
+  if (initLeadH < MIN_LEAD_TIME_H) return 0;
+
+  let count = 0;
+  for (const s of changes) {
+    const oldDate = s.old_date_value?.due_on;
+    const newDate = s.new_date_value?.due_on;
+    if (!oldDate || !newDate) continue;  // initial scheduling or clearing — skip
+
+    const changeTime  = new Date(s.created_at).getTime();
+    const oldDateMs   = new Date(oldDate + 'T12:00:00Z').getTime();
+
+    // Correction window: change within 1h of initial scheduling
+    if (changeTime - initTime < CORRECTION_WINDOW_MS) continue;
+
+    // 48h rule: only counts if <48h remained before the old date
+    const hoursRemaining = (oldDateMs - changeTime) / (1000 * 60 * 60);
+    if (hoursRemaining < RESCHEDULE_THRESHOLD_H) count++;
   }
 
+  return count;
+}
+
+// Classify completion status per our rules
+function classifyTask(task, todayISO, rescheduleCount = 0) {
+  const installDate = getDateField(task, FIELDS.INSTALL_DATE);
+  const completed   = task.completed;
+  const completedAt = task.completed_at?.split('T')[0];
+
   if (!installDate) return 'pending';
+
+  if (completed) {
+    if (rescheduleCount >= 1) return 'rescheduled';
+    if (completedAt < installDate) return 'early';
+    if (completedAt === installDate) return 'on_time';
+    return 'failed';  // completed after install date with no tracked reschedule
+  }
+
   if (installDate < todayISO) return 'late';
+  if (rescheduleCount >= 1) return 'rescheduled';
   return 'scheduled';
 }
 
@@ -76,17 +126,18 @@ function buildScheduleStats(jobs, range, today) {
   const completed = inRange.filter((j) => j.completed);
   const open = inRange.filter((j) => !j.completed);
   const onTime = completed.filter((j) => j.status === 'early' || j.status === 'on_time').length;
+  const rescheduled = inRange.filter((j) => (j.rescheduleCount ?? 0) >= 1).length;
   const late = completed.filter((j) => j.status === 'failed').length + open.filter((j) => j.installDate < today).length;
   const inProgress = open.filter((j) => j.installDate >= today).length;
 
   const jobRows = inRange.map((j) => {
     let state;
-    if (j.completed) state = (j.status === 'early' || j.status === 'on_time') ? 'on_time' : 'late';
-    else state = j.installDate < today ? 'overdue' : 'in_progress';
-    return { id: j.id, name: j.name, installDate: j.installDate, crews: j.crews, state, url: j.url };
+    if (j.completed) state = (j.status === 'early' || j.status === 'on_time') ? 'on_time' : j.status === 'rescheduled' ? 'rescheduled' : 'late';
+    else state = j.installDate < today ? 'overdue' : j.rescheduleCount >= 1 ? 'rescheduled' : 'in_progress';
+    return { id: j.id, name: j.name, installDate: j.installDate, crews: j.crews, rescheduleCount: j.rescheduleCount ?? 0, state, url: j.url };
   }).sort((a, b) => (a.installDate < b.installDate ? -1 : 1));
 
-  return { scheduled: inRange.length, onTime, late, inProgress, jobs: jobRows };
+  return { scheduled: inRange.length, onTime, rescheduled, late, inProgress, jobs: jobRows };
 }
 
 // ─── Main handler ─────────────────────────────────────────────
@@ -107,8 +158,18 @@ export default async function handler(req, res) {
 
   try {
     const tasks = await getTasksInProject(INSTALL_PROJECT_GID);
-    const today = new Date().toISOString().split('T')[0];
+    const today      = new Date().toISOString().split('T')[0];
+    const thisMonday = getMondayOf(today);
+    const thisSunday = addDays(thisMonday, 6);
+    const lastMonday = addDays(thisMonday, -7);
+    const lastSunday = addDays(thisMonday, -1);
+    const nextSunday = addDays(thisMonday, 13);   // end of next week
+    const monthStart = today.slice(0, 8) + '01';
+    // Fetch stories for tasks whose install date falls in [windowStart, nextSunday]
+    // This covers last week + this week + next week + current month
+    const windowStart = monthStart < lastMonday ? monthStart : lastMonday;
 
+    // First pass: build enriched without reschedule data
     const enriched = tasks.map((t) => {
       const section = t.memberships?.[0]?.section;
       return {
@@ -133,9 +194,37 @@ export default async function handler(req, res) {
         address: getTextField(t, FIELDS.STREET_ADDRESS),
         contactName: getTextField(t, FIELDS.CONTACT_NAME),
         surveyRequired: getEnumField(t, FIELDS.SURVEY_REQUIRED),
-        status: classifyTask(t, today),
+        rescheduleCount: 0,
+        status: 'pending', // will be set after reschedule counts are known
       };
     });
+
+    // Fetch stories for tasks in the schedule window to detect reschedules
+    const storyTargets = enriched.filter(
+      (t) => t.installDate && t.installDate >= windowStart && t.installDate <= nextSunday
+    );
+    console.log(`[Stories] Fetching stories for ${storyTargets.length} tasks in window ${windowStart}→${nextSunday}`);
+
+    const rescheduleMap = new Map();
+    for (const job of storyTargets) {
+      try {
+        const stories = await getTaskStories(job.id);
+        rescheduleMap.set(job.id, countReschedules(stories));
+      } catch (err) {
+        console.warn(`Stories fetch failed for ${job.id}:`, err.message);
+        rescheduleMap.set(job.id, 0);
+      }
+    }
+
+    // Second pass: apply reschedule counts and final status
+    for (const t of enriched) {
+      t.rescheduleCount = rescheduleMap.get(t.id) ?? 0;
+      t.status = classifyTask(
+        tasks.find((raw) => raw.gid === t.id),
+        today,
+        t.rescheduleCount
+      );
+    }
 
     // --- Summary ---
     const summary = {
@@ -143,15 +232,18 @@ export default async function handler(req, res) {
       open: enriched.filter((t) => !t.completed).length,
       completed: enriched.filter((t) => t.completed).length,
       scheduled: enriched.filter((t) => t.status === 'scheduled').length,
+      rescheduled: enriched.filter((t) => t.status === 'rescheduled').length,
       pending: enriched.filter((t) => t.status === 'pending').length,
       late: enriched.filter((t) => t.status === 'late').length,
       early: enriched.filter((t) => t.status === 'early').length,
       onTime: enriched.filter((t) => t.status === 'on_time').length,
       failed: enriched.filter((t) => t.status === 'failed').length,
+      // rescheduleWindow: how many tasks in the story-fetch window had reschedules
+      rescheduleWindow: storyTargets.filter((t) => (rescheduleMap.get(t.id) ?? 0) >= 1).length,
     };
 
-    // On-time rate (of completed)
-    const totalCompleted = summary.early + summary.onTime + summary.failed;
+    // On-time rate (of completed, excluding rescheduled)
+    const totalCompleted = summary.early + summary.onTime + summary.failed + summary.rescheduled;
     summary.onTimeRate = totalCompleted > 0
       ? Math.round(((summary.early + summary.onTime) / totalCompleted) * 100)
       : 0;
@@ -200,16 +292,11 @@ export default async function handler(req, res) {
       address: t.address,
       contactName: t.contactName,
       completedAt: t.completedAt,
+      rescheduleCount: t.rescheduleCount,
       url: t.url,
     }));
 
     // --- Schedule (this week / last week / month to date) ---
-    const thisMonday   = getMondayOf(today);
-    const thisSunday   = addDays(thisMonday, 6);
-    const lastMonday   = addDays(thisMonday, -7);
-    const lastSunday   = addDays(thisMonday, -1);
-    const monthStart   = today.slice(0, 8) + '01';
-
     const allForSchedule = enriched; // include completed jobs
 
     const thisWeekStats  = buildScheduleStats(allForSchedule, { start: thisMonday,  end: thisSunday  }, today);
