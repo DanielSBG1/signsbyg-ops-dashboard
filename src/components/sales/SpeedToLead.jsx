@@ -181,6 +181,7 @@ export default function SpeedToLead({ sla }) {
                     if (diag.hasNotesLastUpdated) flags.push(`📝 notes_last_updated: ${diag.notesLastUpdatedRaw || ''}`);
                     if (diag.hasSalesActivityTs) flags.push('💼 sales activity ts set');
                     if (diag.hasEmailLastSend) flags.push('📧 email send set');
+                    if (diag.leadStatus) flags.push(`🏷 lead_status: ${diag.leadStatus}`);
                     if (diag.lifecycle) flags.push(`🔄 lifecycle: ${diag.lifecycle}`);
                     if (diag.numDeals > 0) flags.push(`💼 num deals: ${diag.numDeals}`);
                     if (diag.hasOpportunityDate) flags.push(`📈 opportunity date: ${diag.opportunityDateRaw || ''}`);

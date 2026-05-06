@@ -106,6 +106,9 @@ export async function getContactsInRange(startISO, endISO) {
     'hs_lifecyclestage_salesqualifiedlead_date',
     'hs_lifecyclestage_opportunity_date',
     'hs_lifecyclestage_customer_date',
+    // Lead status — set manually by reps; "attempting" / "connected" etc. prove
+    // the rep touched the record even before HubSpot logs a formal engagement
+    'hs_lead_status',
   ];
 
   const allResults = [];
@@ -145,6 +148,7 @@ export async function getContactsForRepInRange(repId, startISO, endISO) {
     'hs_lifecyclestage_salesqualifiedlead_date',
     'hs_lifecyclestage_opportunity_date',
     'hs_lifecyclestage_customer_date',
+    'hs_lead_status',
   ];
   const allResults = [];
   const seen = new Set();

@@ -782,6 +782,16 @@ export default async function handler(req, res) {
     // For each contact in the period, find the earliest activity timestamp.
     // Bucket as: respondedInSLA, respondedOverSLA, breachingNow, safeUncontacted.
     // "Breaching" = uncontacted AND older than SLA. These are the urgent action items.
+
+    // Lead statuses that prove a rep manually worked the record.
+    // "new" is excluded — it is the default state and requires no rep action.
+    // "unqualified" is excluded — those contacts are already skipped above.
+    // "open" is intentionally excluded — HubSpot workflows can set it automatically.
+    const WORKED_LEAD_STATUSES = new Set([
+      'attempting', 'attempted_to_contact', 'connected',
+      'in_progress', 'open_deal', 'bad_timing',
+    ]);
+
     const SLA_MINUTES = 5;
     const slaCutoffMs = SLA_MINUTES * 60 * 1000;
     let slaTotal = 0;
@@ -877,6 +887,16 @@ export default async function handler(req, res) {
         candidates.push(created + slaCutoffMs + 1); // over SLA, but not breaching
       }
 
+      // Lead-status safety net: if a rep manually set the lead status to a
+      // "working" value (e.g. "attempting", "connected") that proves they touched
+      // the record, treat as contacted over SLA. This covers the gap where a rep
+      // sets status + creates a task but HubSpot hasn't logged a formal engagement
+      // yet (tasks only update hs_sa_first_engagement_date when *completed*).
+      const leadStatus = (c.properties.hs_lead_status || '').toLowerCase();
+      if (candidates.length === 0 && WORKED_LEAD_STATUSES.has(leadStatus)) {
+        candidates.push(created + slaCutoffMs + 1); // over SLA, but not breaching
+      }
+
       slaTotal++;
       const nowMs = Date.now();
 
@@ -944,6 +964,7 @@ export default async function handler(req, res) {
               createdAtRaw: c.properties.createdate,
               notesLastUpdatedRaw: c.properties.notes_last_updated || null,
               opportunityDateRaw: c.properties.hs_lifecyclestage_opportunity_date || null,
+              leadStatus: c.properties.hs_lead_status || null,
             },
           });
         } else {
