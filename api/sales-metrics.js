@@ -816,7 +816,9 @@ export default async function handler(req, res) {
       // Skip pure manual entries that never became deals (CRM data entry, not real leads)
       if (isManualEntry && !becameDeal) continue;
       // Skip contacts explicitly marked unqualified — they've been evaluated and dismissed
-      if (lifecycle === 'unqualified') continue;
+      // Note: 'unqualified' is NOT a HubSpot lifecycle stage; UNQUALIFIED lives on hs_lead_status
+      const leadStatusUpper = (c.properties.hs_lead_status || '').toUpperCase();
+      if (leadStatusUpper === 'UNQUALIFIED') continue;
       // Skip internal contacts
       const email = (c.properties.email || '').toLowerCase();
       const domain = email.split('@')[1] || '';
