@@ -55,6 +55,8 @@ export default async function handler(req, res) {
     const skipPrevPeriod = periodDays > 30;
     // Signal-collection budget: OP/Gmail always runs but is capped at this wall-clock limit.
     // If it times out, partialOpenPhoneSignal is set and the UI shows a "partial data" badge.
+    // vercel.json sets maxDuration: 300 (5 min) for all API functions, so 30s is well within
+    // the function timeout and the budget fires before Vercel kills the request.
     // Set OPENPHONE_BUDGET_MS env var to tune (default 30s).
     const OP_BUDGET_MS = parseInt(process.env.OPENPHONE_BUDGET_MS || '30000');
     // KV batch size for phone lookups. Historical/wide periods can safely bump this
@@ -264,7 +266,7 @@ export default async function handler(req, res) {
     })();
 
     const budgetTimer = new Promise((resolve) => setTimeout(resolve, OP_BUDGET_MS, 'timeout'));
-    const signalResult = await Promise.race([signalCollectionPromise.then(() => 'done'), budgetTimer]);
+    const signalResult = await Promise.race([signalCollectionPromise.then(() => 'done').catch(() => 'error'), budgetTimer]);
     if (signalResult === 'timeout') {
       partialOpenPhoneSignal = true;
       console.warn(`[metrics] Signal collection timed out after ${OP_BUDGET_MS}ms — OP/Gmail breach signals may be incomplete (OP=${kvStoreByPhone.size} phones, Gmail=${gmailActivityByEmail.size} contacts collected so far)`);
@@ -867,7 +869,7 @@ export default async function handler(req, res) {
         : DEFAULT_SLA_MINUTES;
       if (contactSlaMinutes === null) continue; // Vendor Partner — no SLA, skip entirely
       const contactSlaCutoffMs = contactSlaMinutes * 60 * 1000;
-      const slaSourceKey = sbgSource || 'Unset';
+      const slaSourceKey = sbgSource || 'Source not set';
       if (!slaBySource[slaSourceKey]) {
         slaBySource[slaSourceKey] = { total: 0, within: 0, over: 0, breaching: 0, safe: 0, thresholdMinutes: contactSlaMinutes };
       }

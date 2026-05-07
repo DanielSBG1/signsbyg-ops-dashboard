@@ -267,7 +267,11 @@ export default function SpeedToLead({ sla }) {
                     : `${row.thresholdMinutes}m`;
                   return (
                     <tr key={row.source} className="border-t border-white/5 hover:bg-white/5">
-                      <td className="py-1.5 pr-3 text-white/70">{row.source}</td>
+                      <td className="py-1.5 pr-3 text-white/70">
+                        {row.source === 'Source not set'
+                          ? <span className="text-white/30 italic">{row.source}</span>
+                          : row.source}
+                      </td>
                       <td className="py-1.5 text-right text-white/40 tabular-nums">{threshold}</td>
                       <td className="py-1.5 text-right text-white/50 tabular-nums">{row.total}</td>
                       <td className="py-1.5 text-right text-success/80 tabular-nums">{row.within}</td>
@@ -282,6 +286,11 @@ export default function SpeedToLead({ sla }) {
               </tbody>
             </table>
           </div>
+          {sla.sourceBreakdown.some((r) => r.source === 'Source not set') && (
+            <p className="text-white/25 text-[10px] mt-2 italic">
+              "Source not set" uses the default 5-min threshold. Populate the SBG Lead Source field in HubSpot to get per-source compliance.
+            </p>
+          )}
         </div>
       )}
       </div>
