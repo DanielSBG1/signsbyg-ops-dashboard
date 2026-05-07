@@ -266,7 +266,9 @@ export async function getAllCallsInPeriod(sinceISO) {
 }
 
 /**
- * Fetch OpenPhone users (reps). Returns Map<userId, displayName>.
+ * Fetch OpenPhone users (reps). Returns Map<userId, { name, email }>.
+ * Includes email so callers can match against HubSpot owner email first (more
+ * reliable than name match) and fall back to name match second.
  */
 export async function getOpenPhoneUsers() {
   if (!process.env.OPENPHONE_API_KEY) return new Map();
@@ -277,7 +279,7 @@ export async function getOpenPhoneUsers() {
     const map = new Map();
     for (const u of data.data || []) {
       const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || u.id;
-      map.set(u.id, name);
+      map.set(u.id, { name, email: u.email || null });
     }
     return map;
   } catch (err) {

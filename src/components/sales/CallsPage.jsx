@@ -79,7 +79,7 @@ export default function CallsPage({ data, loading, error }) {
     );
   }
 
-  const { calls, summary, summaryOnly } = data;
+  const { calls, summary, summaryOnly, phoneEnrichmentPartial, source } = data;
 
   let filtered = calls;
   if (filterClass !== 'all') filtered = filtered.filter((c) => c.classification === filterClass);
@@ -87,13 +87,25 @@ export default function CallsPage({ data, loading, error }) {
 
   return (
     <div className="space-y-6">
+      {/* Polling fallback banner — shown when KV store is empty (bootstrap state) */}
+      {source === 'polling-fallback-unavailable' && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl px-5 py-4 text-yellow-300 text-sm">
+          ⚙ Calls service is initializing — full data will be available shortly once the webhook store is populated.
+        </div>
+      )}
+      {source === 'polling-fallback' && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl px-5 py-4 text-yellow-300 text-sm">
+          ⚠ Showing partial data — only HubSpot-known contacts are matched. Full data available once the webhook store is ready.
+        </div>
+      )}
       {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-8 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-9 gap-3">
         <Kpi label="Total Calls" value={summary.total} />
         <Kpi label="📞 Inbound" value={summary.inbound} colorClass="text-blue-300" />
         <Kpi label="📤 Outbound" value={summary.outbound} colorClass="text-purple-300" />
         <Kpi label="✓ Answered" value={summary.answered} colorClass="text-success" />
-        <Kpi label="❌ Missed" value={summary.missed} colorClass="text-danger" />
+        <Kpi label="❌ Missed" value={summary.missed ?? '—'} colorClass="text-danger" subtext="no message left" />
+        <Kpi label="📨 Voicemails" value={summary.voicemail ?? '—'} colorClass="text-yellow-400" subtext="go listen & call back" />
         <Kpi label="⏱ Avg Length" value={formatDuration(summary.avgDuration)} />
         <Kpi label="📞 Unique Callers" value={summary.uniqueInboundCallers ?? '—'} colorClass="text-blue-300" />
         <Kpi label="🆕 New Inquiries" value={summary.newInquiries ?? '—'} colorClass="text-success" subtext="new prospects, inbound" />
@@ -102,7 +114,17 @@ export default function CallsPage({ data, loading, error }) {
       {/* Classification breakdown — skipped for wide periods */}
       {summary.byClassification ? (
         <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Call Classification</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Call Classification</h2>
+            {phoneEnrichmentPartial && (
+              <span
+                className="text-yellow-400/70 text-xs"
+                title="Some HubSpot lookups failed — classification may be partially incomplete (some calls may show as 'new_prospect' that are actually existing)"
+              >
+                ⚠ partial contact match
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <ClassCard label="🆕 New Prospects" value={summary.byClassification.new_prospect} keyId="new_prospect" filterClass={filterClass} setFilterClass={setFilterClass} />
             <ClassCard label="📋 Existing Leads" value={summary.byClassification.existing_lead} keyId="existing_lead" filterClass={filterClass} setFilterClass={setFilterClass} />

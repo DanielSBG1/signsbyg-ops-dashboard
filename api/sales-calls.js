@@ -1,7 +1,6 @@
 import { getCallsForParticipants, getOpenPhoneUsers, getOpenPhoneNumbers, normalizePhone } from './_lib/sales/openphone.js';
 import { searchAllCRM, getOwners } from './_lib/sales/hubspot.js';
 import { getDateRange } from './_lib/sales/periods.js';
-import { CLOSED_WON_STAGES, CLOSED_LOST_STAGES } from './_lib/sales/constants.js';
 import { getCached, setCached } from './_lib/cache.js';
 import { getCallsFromStore, storeHasAnyCalls } from './_lib/sales/callsStore.js';
 
@@ -22,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     // CDN cache header — Vercel edge serves cached responses in <50ms.
-    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+    res.setHeader('Cache-Control', 'public, s-maxage=180, stale-while-revalidate=600');
 
     const { period = 'today', start: customStart, end: customEnd, page = '0', pageSize = '80' } = req.query;
     const range = getDateRange(period, customStart, customEnd);
@@ -30,7 +29,7 @@ export default async function handler(req, res) {
     const pageSizeNum = Math.max(1, Math.min(500, parseInt(pageSize) || 80));
 
     // Response cache keyed by page as well so different pages cache separately
-    const cacheKey = `callsv3:${period}:${customStart || ''}:${customEnd || ''}:p${pageNum}:s${pageSizeNum}`;
+    const cacheKey = `callsv4:${period}:${customStart || ''}:${customEnd || ''}:p${pageNum}:s${pageSizeNum}`;
     const cachedResult = await getCached(cacheKey);
     if (cachedResult) {
       console.log(`[Cache HIT] ${cacheKey}`);
@@ -76,16 +75,16 @@ export default async function handler(req, res) {
       return res.status(200).json(result);
     }
 
-    // Polling fallback also respects the wide-period summary-only rule.
-    // Without this, selecting a monthly period when the KV store is empty would
-    // trigger an expensive HubSpot contact fetch + OpenPhone poll for months of data.
+    // Polling fallback — KV store is empty (bootstrap state or webhook misconfigured).
+    // This is a degraded path: only contacts HubSpot already knows about are matched,
+    // and only the first page of phones is covered. The KV store should be populated
+    // within minutes once the OpenPhone webhook is active.
     if (summaryOnly) {
       const result = {
         period: { start: range.start, end: range.end, label: range.label },
         calls: [],
         summaryOnly: true,
-        summary: { total: 0, inbound: 0, outbound: 0, missed: 0, answered: 0, avgDuration: 0, byClassification: null },
-        pagination: { page: 0, pageSize: 0, totalPages: 1, totalPhones: 0 },
+        summary: { total: 0, inbound: 0, outbound: 0, missed: 0, voicemail: 0, answered: 0, avgDuration: 0, byClassification: null },
         source: 'polling-fallback-unavailable',
       };
       await setCached(cacheKey, result, 180);
@@ -100,7 +99,7 @@ export default async function handler(req, res) {
       properties: [
         'firstname', 'lastname', 'email', 'phone', 'mobilephone',
         'lifecyclestage', 'num_associated_deals', 'hubspot_owner_id', 'createdate',
-        'hs_analytics_source', 'hs_analytics_source_data_1', 'sbg_lead_source',
+        'hs_analytics_source', 'hs_analytics_source_data_1', 'sbg_lead_source', 'hs_lead_status',
       ],
       sorts: [{ propertyName: 'lastmodifieddate', direction: 'DESCENDING' }],
     });
@@ -121,11 +120,10 @@ export default async function handler(req, res) {
       }
     }
     const totalPhones = participantPhones.length;
-    const totalPages = Math.max(1, Math.ceil(totalPhones / pageSizeNum));
     const pageStart = pageNum * pageSizeNum;
     const pageEnd = Math.min(pageStart + pageSizeNum, totalPhones);
     const pagePhones = participantPhones.slice(pageStart, pageEnd);
-    console.log(`[Calls] page ${pageNum + 1}/${totalPages} — querying phones ${pageStart}-${pageEnd} of ${totalPhones}`);
+    console.log(`[Calls] polling page ${pageNum + 1} — phones ${pageStart}-${pageEnd} of ${totalPhones}`);
 
     // 2. Fetch OpenPhone calls for THIS page's phones + users + owners
     const [calls, opUsers, owners] = await Promise.all([
@@ -148,6 +146,8 @@ export default async function handler(req, res) {
       if (!call.customerPhone) return 'unknown';
       const contact = phoneToContact.get(call.customerPhone);
       if (!contact) return 'new_prospect';
+      const leadStatusUpper = (contact.properties.hs_lead_status || '').toUpperCase();
+      if (leadStatusUpper === 'UNQUALIFIED') return 'unknown';
       const lifecycle = (contact.properties.lifecyclestage || '').toLowerCase();
       const numDeals = parseInt(contact.properties.num_associated_deals) || 0;
       if (lifecycle === 'customer') return 'existing_customer';
@@ -155,15 +155,17 @@ export default async function handler(req, res) {
       return 'existing_lead';
     }
 
-    // 5. Enrich calls
+    // 4. Enrich calls
     const enriched = calls.map((c) => {
       const contact = c.customerPhone ? phoneToContact.get(c.customerPhone) : null;
       const classification = classify(c);
-      const opUserName = c.userId ? opUsers.get(c.userId) || null : null;
-      // Try to map OpenPhone user to HubSpot owner for cross-system rep view
-      let repName = opUserName;
-      if (opUserName) {
-        const matched = ownerByName[opUserName.toLowerCase()];
+      const opUser = c.userId ? opUsers.get(c.userId) || null : null;
+      // Try email match first (most reliable), then name match
+      let repName = opUser?.name || null;
+      if (opUser) {
+        const emailMatch = opUser.email ? ownerByEmail[opUser.email.toLowerCase()] : null;
+        const nameMatch = opUser.name ? ownerByName[opUser.name.toLowerCase()] : null;
+        const matched = emailMatch || nameMatch;
         if (matched) repName = matched.name;
       }
       return {
@@ -184,71 +186,14 @@ export default async function handler(req, res) {
       };
     });
 
-    // 6. Summary stats
-    const summary = {
-      total: enriched.length,
-      inbound: enriched.filter((c) => c.direction === 'incoming').length,
-      outbound: enriched.filter((c) => c.direction === 'outgoing').length,
-      missed: enriched.filter((c) => c.status === 'missed' || c.voicemail).length,
-      answered: enriched.filter((c) => c.duration > 0 && !c.voicemail).length,
-      avgDuration: enriched.filter((c) => c.duration > 0).length > 0
-        ? Math.round(
-            enriched.filter((c) => c.duration > 0).reduce((sum, c) => sum + c.duration, 0) /
-              enriched.filter((c) => c.duration > 0).length
-          )
-        : 0,
-      byClassification: {
-        new_prospect: enriched.filter((c) => c.classification === 'new_prospect').length,
-        existing_lead: enriched.filter((c) => c.classification === 'existing_lead').length,
-        existing_deal: enriched.filter((c) => c.classification === 'existing_deal').length,
-        existing_customer: enriched.filter((c) => c.classification === 'existing_customer').length,
-        unknown: enriched.filter((c) => c.classification === 'unknown').length,
-      },
-    };
-
-    // Unique inbound callers (deduplicated by phone)
-    const uniqueInboundPhones = new Set(
-      enriched.filter((c) => c.direction === 'incoming' && c.customerPhone).map((c) => c.customerPhone)
-    );
-    summary.uniqueInboundCallers = uniqueInboundPhones.size;
-
-    // New prospect inbound calls = people calling about signs for the first time
-    summary.newInquiries = enriched.filter((c) => c.classification === 'new_prospect' && c.direction === 'incoming').length;
-
-    // Source breakdown for all inbound calls where we have a known source
-    const sourceMap = {};
-    for (const c of enriched.filter((c) => c.direction === 'incoming' && c.contactSource)) {
-      sourceMap[c.contactSource] = (sourceMap[c.contactSource] || 0) + 1;
-    }
-    summary.bySource = Object.entries(sourceMap)
-      .map(([source, count]) => ({ source, count }))
-      .sort((a, b) => b.count - a.count);
-
-    // Daily volume breakdown
-    const dayMap = {};
-    for (const c of enriched) {
-      if (!c.createdAt) continue;
-      const day = c.createdAt.slice(0, 10);
-      if (!dayMap[day]) dayMap[day] = { date: day, total: 0, inbound: 0, outbound: 0, newInquiries: 0, uniquePhones: new Set() };
-      dayMap[day].total++;
-      if (c.direction === 'incoming') { dayMap[day].inbound++; if (c.customerPhone) dayMap[day].uniquePhones.add(c.customerPhone); }
-      if (c.direction === 'outgoing') dayMap[day].outbound++;
-      if (c.classification === 'new_prospect' && c.direction === 'incoming') dayMap[day].newInquiries++;
-    }
-    summary.byDay = Object.values(dayMap)
-      .map(({ uniquePhones, ...rest }) => ({ ...rest, uniqueCallers: uniquePhones.size }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    const summary = buildSummary(enriched);
+    summary.byDay = buildDayBreakdown(enriched);
 
     const responsePayload = {
       period: { start: range.start, end: range.end, label: range.label },
       calls: enriched,
       summary,
-      pagination: {
-        page: pageNum,
-        pageSize: pageSizeNum,
-        totalPages,
-        totalPhones,
-      },
+      source: 'polling-fallback',
     };
     await setCached(cacheKey, responsePayload, 180);
     return res.status(200).json(responsePayload);
@@ -278,8 +223,95 @@ function resolveSource(contact) {
 }
 
 /**
+ * Build call summary stats from an enriched call array.
+ * Splits voicemail and missed into separate buckets (different action items).
+ * avgDuration excludes voicemails so it reflects actual conversation length.
+ */
+function buildSummary(enriched) {
+  const counts = enriched.reduce((acc, c) => {
+    acc.total++;
+    if (c.direction === 'incoming') acc.inbound++;
+    else if (c.direction === 'outgoing') acc.outbound++;
+    if (c.voicemail) {
+      acc.voicemail++;
+    } else if (c.status === 'missed' || c.status === 'no-answer') {
+      acc.missed++;
+    }
+    if (c.duration > 0 && !c.voicemail) {
+      acc.answered++;
+      acc.totalAnsweredDuration += c.duration;
+    }
+    acc.byClassification[c.classification] = (acc.byClassification[c.classification] || 0) + 1;
+    return acc;
+  }, {
+    total: 0, inbound: 0, outbound: 0, missed: 0, voicemail: 0,
+    answered: 0, totalAnsweredDuration: 0,
+    byClassification: { new_prospect: 0, existing_lead: 0, existing_deal: 0, existing_customer: 0, unknown: 0 },
+  });
+
+  const summary = {
+    total: counts.total,
+    inbound: counts.inbound,
+    outbound: counts.outbound,
+    missed: counts.missed,
+    voicemail: counts.voicemail,
+    answered: counts.answered,
+    avgDuration: counts.answered > 0 ? Math.round(counts.totalAnsweredDuration / counts.answered) : 0,
+    byClassification: counts.byClassification,
+  };
+
+  // Unique inbound callers (deduplicated by phone)
+  const uniqueInboundPhones = new Set(
+    enriched.filter((c) => c.direction === 'incoming' && c.customerPhone).map((c) => c.customerPhone)
+  );
+  summary.uniqueInboundCallers = uniqueInboundPhones.size;
+  summary.newInquiries = enriched.filter((c) => c.classification === 'new_prospect' && c.direction === 'incoming').length;
+
+  // Source breakdown (inbound only, identified contacts only)
+  const sourceMap = {};
+  for (const c of enriched) {
+    if (c.direction === 'incoming' && c.contactSource) {
+      sourceMap[c.contactSource] = (sourceMap[c.contactSource] || 0) + 1;
+    }
+  }
+  summary.bySource = Object.entries(sourceMap)
+    .map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return summary;
+}
+
+/**
+ * Build daily volume breakdown from an enriched call array.
+ */
+function buildDayBreakdown(enriched) {
+  const dayMap = {};
+  for (const c of enriched) {
+    if (!c.createdAt) continue;
+    const day = c.createdAt.slice(0, 10);
+    if (!dayMap[day]) {
+      dayMap[day] = { date: day, total: 0, inbound: 0, outbound: 0, newInquiries: 0, uniquePhones: new Set() };
+    }
+    dayMap[day].total++;
+    if (c.direction === 'incoming') {
+      dayMap[day].inbound++;
+      if (c.customerPhone) dayMap[day].uniquePhones.add(c.customerPhone);
+    } else if (c.direction === 'outgoing') {
+      dayMap[day].outbound++;
+    }
+    if (c.classification === 'new_prospect' && c.direction === 'incoming') {
+      dayMap[day].newInquiries++;
+    }
+  }
+  return Object.values(dayMap)
+    .map(({ uniquePhones, ...rest }) => ({ ...rest, uniqueCallers: uniquePhones.size }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
  * Fast summary for wide periods (>14 days). Skips HubSpot contact lookup
  * so there are no extra API calls — just iterates the stored call records.
+ * Splits voicemail from missed to match the full-detail response shape.
  */
 function buildSummaryOnlyResponse(storedCalls, range) {
   const answered = storedCalls.filter((c) => c.duration > 0 && !c.voicemail);
@@ -292,12 +324,12 @@ function buildSummaryOnlyResponse(storedCalls, range) {
       total: storedCalls.length,
       inbound: storedCalls.filter((c) => c.direction === 'incoming').length,
       outbound: storedCalls.filter((c) => c.direction === 'outgoing').length,
-      missed: storedCalls.filter((c) => c.status === 'missed' || c.voicemail).length,
+      missed: storedCalls.filter((c) => (c.status === 'missed' || c.status === 'no-answer') && !c.voicemail).length,
+      voicemail: storedCalls.filter((c) => c.voicemail).length,
       answered: answered.length,
       avgDuration: answered.length > 0 ? Math.round(totalDuration / answered.length) : 0,
       byClassification: null, // requires HubSpot lookup — skipped for wide periods
     },
-    pagination: { page: 0, pageSize: 0, totalPages: 1, totalPhones: 0 },
     source: 'webhook-store',
   };
 }
@@ -321,21 +353,20 @@ async function buildCallsResponseFromStore(storedCalls, owners, opUsers, workspa
     return { ...c, _customerPhone: customerPhone };
   });
 
-  // Look up HubSpot contacts by those phones in one batch (chunked)
+  // Look up HubSpot contacts by those phones in one batch (chunked).
+  // Uses hs_searchable_calculated_phone_number instead of raw `phone` to avoid
+  // literal-string mismatches from formatting differences like "(713) 555-1234" vs "7135551234".
   const phoneToContact = new Map();
   const phoneList = [...customerPhones];
   const CHUNK = 100;
+  let phoneEnrichmentPartial = false;
   for (let i = 0; i < phoneList.length; i += CHUNK) {
     const chunk = phoneList.slice(i, i + CHUNK);
-    const variants = chunk.flatMap((p) => {
-      const d = p.replace(/[^0-9]/g, '');
-      const ten = d.length === 11 && d.startsWith('1') ? d.slice(1) : d;
-      return [p, d, ten, `+${d}`];
-    });
+    const normalizedDigits = [...new Set(chunk.map((p) => p.replace(/[^0-9]/g, '')).filter(Boolean))];
     try {
       const results = await searchAllCRM('contacts', {
-        filters: [{ propertyName: 'phone', operator: 'IN', values: variants }],
-        properties: ['firstname', 'lastname', 'email', 'phone', 'mobilephone', 'lifecyclestage', 'num_associated_deals', 'hs_analytics_source', 'hs_analytics_source_data_1', 'sbg_lead_source'],
+        filters: [{ propertyName: 'hs_searchable_calculated_phone_number', operator: 'IN', values: normalizedDigits }],
+        properties: ['firstname', 'lastname', 'email', 'phone', 'mobilephone', 'lifecyclestage', 'num_associated_deals', 'hs_analytics_source', 'hs_analytics_source_data_1', 'sbg_lead_source', 'hs_lead_status'],
       });
       for (const c of results.results || []) {
         for (const p of [c.properties.phone, c.properties.mobilephone].map(normalizePhone).filter(Boolean)) {
@@ -344,13 +375,16 @@ async function buildCallsResponseFromStore(storedCalls, owners, opUsers, workspa
       }
     } catch (err) {
       console.warn(`[Calls] phone lookup error: ${err.message}`);
+      phoneEnrichmentPartial = true;
     }
   }
 
   function classify(call) {
     if (!call._customerPhone) return 'unknown';
     const contact = phoneToContact.get(call._customerPhone);
-    if (!contact) return 'new_prospect'; // NOW actually fires — cold callers!
+    if (!contact) return 'new_prospect'; // cold callers — not in HubSpot at all
+    const leadStatusUpper = (contact.properties.hs_lead_status || '').toUpperCase();
+    if (leadStatusUpper === 'UNQUALIFIED') return 'unknown'; // exclude junk/disqualified records
     const lifecycle = (contact.properties.lifecyclestage || '').toLowerCase();
     const numDeals = parseInt(contact.properties.num_associated_deals) || 0;
     if (lifecycle === 'customer') return 'existing_customer';
@@ -358,16 +392,26 @@ async function buildCallsResponseFromStore(storedCalls, owners, opUsers, workspa
     return 'existing_lead';
   }
 
+  const ownerByEmail = {};
   const ownerByName = {};
   for (const o of owners) {
     const name = `${o.firstName || ''} ${o.lastName || ''}`.trim();
-    if (name) ownerByName[name.toLowerCase()] = name;
+    if (o.email) ownerByEmail[o.email.toLowerCase()] = { id: o.id, name };
+    if (name) ownerByName[name.toLowerCase()] = { id: o.id, name };
   }
 
   const enriched = enrichedRaw.map((c) => {
     const contact = c._customerPhone ? phoneToContact.get(c._customerPhone) : null;
     const classification = classify(c);
-    const opUserName = c.userId ? opUsers.get(c.userId) || null : null;
+    const opUser = c.userId ? opUsers.get(c.userId) || null : null;
+    // Try email match first (most reliable), then name match
+    let repName = opUser?.name || null;
+    if (opUser) {
+      const emailMatch = opUser.email ? ownerByEmail[opUser.email.toLowerCase()] : null;
+      const nameMatch = opUser.name ? ownerByName[opUser.name.toLowerCase()] : null;
+      const matched = emailMatch || nameMatch;
+      if (matched) repName = matched.name;
+    }
     return {
       id: c.id,
       direction: c.direction,
@@ -377,7 +421,7 @@ async function buildCallsResponseFromStore(storedCalls, owners, opUsers, workspa
       voicemail: c.voicemail,
       customerPhone: c._customerPhone,
       ourPhoneLabel: numberLabelById[c.phoneNumberId] || '',
-      rep: opUserName || 'Unknown',
+      rep: repName || 'Unknown',
       classification,
       contactSource: resolveSource(contact),
       contactName: contact
@@ -388,65 +432,15 @@ async function buildCallsResponseFromStore(storedCalls, owners, opUsers, workspa
     };
   });
 
-  const summary = {
-    total: enriched.length,
-    inbound: enriched.filter((c) => c.direction === 'incoming').length,
-    outbound: enriched.filter((c) => c.direction === 'outgoing').length,
-    missed: enriched.filter((c) => c.status === 'missed' || c.voicemail).length,
-    answered: enriched.filter((c) => c.duration > 0 && !c.voicemail).length,
-    avgDuration: enriched.filter((c) => c.duration > 0).length > 0
-      ? Math.round(
-          enriched.filter((c) => c.duration > 0).reduce((s, c) => s + c.duration, 0) /
-            enriched.filter((c) => c.duration > 0).length
-        )
-      : 0,
-    byClassification: {
-      new_prospect: enriched.filter((c) => c.classification === 'new_prospect').length,
-      existing_lead: enriched.filter((c) => c.classification === 'existing_lead').length,
-      existing_deal: enriched.filter((c) => c.classification === 'existing_deal').length,
-      existing_customer: enriched.filter((c) => c.classification === 'existing_customer').length,
-      unknown: enriched.filter((c) => c.classification === 'unknown').length,
-    },
-  };
-
-  // Unique inbound callers (deduplicated by phone)
-  const uniqueInboundPhones = new Set(
-    enriched.filter((c) => c.direction === 'incoming' && c.customerPhone).map((c) => c.customerPhone)
-  );
-  summary.uniqueInboundCallers = uniqueInboundPhones.size;
-
-  // New prospect inbound calls = people calling about signs for the first time
-  summary.newInquiries = enriched.filter((c) => c.classification === 'new_prospect' && c.direction === 'incoming').length;
-
-  // Source breakdown for all inbound calls where we have a known source
-  const sourceMap = {};
-  for (const c of enriched.filter((c) => c.direction === 'incoming' && c.contactSource)) {
-    sourceMap[c.contactSource] = (sourceMap[c.contactSource] || 0) + 1;
-  }
-  summary.bySource = Object.entries(sourceMap)
-    .map(([source, count]) => ({ source, count }))
-    .sort((a, b) => b.count - a.count);
-
-  // Daily volume breakdown
-  const dayMap = {};
-  for (const c of enriched) {
-    if (!c.createdAt) continue;
-    const day = c.createdAt.slice(0, 10);
-    if (!dayMap[day]) dayMap[day] = { date: day, total: 0, inbound: 0, outbound: 0, newInquiries: 0, uniquePhones: new Set() };
-    dayMap[day].total++;
-    if (c.direction === 'incoming') { dayMap[day].inbound++; if (c.customerPhone) dayMap[day].uniquePhones.add(c.customerPhone); }
-    if (c.direction === 'outgoing') dayMap[day].outbound++;
-    if (c.classification === 'new_prospect' && c.direction === 'incoming') dayMap[day].newInquiries++;
-  }
-  summary.byDay = Object.values(dayMap)
-    .map(({ uniquePhones, ...rest }) => ({ ...rest, uniqueCallers: uniquePhones.size }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const summary = buildSummary(enriched);
+  summary.byDay = buildDayBreakdown(enriched);
 
   return {
     period: { start: range.start, end: range.end, label: range.label },
     calls: enriched,
     summary,
-    pagination: { page: 0, pageSize: enriched.length, totalPages: 1, totalPhones: customerPhones.size },
+    phoneEnrichmentPartial,
+    meta: { totalPhones: customerPhones.size },
     source: 'webhook-store',
   };
 }
