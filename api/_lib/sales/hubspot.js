@@ -109,6 +109,8 @@ export async function getContactsInRange(startISO, endISO) {
     // Lead status — set manually by reps; "attempting" / "connected" etc. prove
     // the rep touched the record even before HubSpot logs a formal engagement
     'hs_lead_status',
+    // Custom source field — drives per-source SLA thresholds
+    'sbg_lead_source',
   ];
 
   const allResults = [];
@@ -149,6 +151,7 @@ export async function getContactsForRepInRange(repId, startISO, endISO) {
     'hs_lifecyclestage_opportunity_date',
     'hs_lifecyclestage_customer_date',
     'hs_lead_status',
+    'sbg_lead_source',
   ];
   const allResults = [];
   const seen = new Set();

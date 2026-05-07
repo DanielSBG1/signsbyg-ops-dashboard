@@ -104,7 +104,9 @@ export default function SpeedToLead({ sla }) {
         <div>
           <h2 className="text-lg font-semibold">⚡ Speed to Lead</h2>
           <p className="text-white/40 text-xs mt-0.5">
-            {sla.thresholdMinutes}-minute SLA · industry shows 9× conversion lift when contacted within 5 min
+            {sla.sourceAware
+              ? 'source-aware SLA · 5min web/social, 60min referral, 4hr cold'
+              : `${sla.thresholdMinutes}-minute SLA · industry shows 9× conversion lift when contacted within 5 min`}
           </p>
         </div>
         <button
@@ -121,7 +123,9 @@ export default function SpeedToLead({ sla }) {
         <div className="bg-white/5 rounded-xl p-4 col-span-2 md:col-span-1">
           <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">Compliance</p>
           <p className={`text-4xl font-bold tabular-nums ${status.color}`}>{compliance}%</p>
-          <p className="text-white/40 text-xs mt-1">{sla.within} of {sla.total} within {sla.thresholdMinutes}m</p>
+          <p className="text-white/40 text-xs mt-1">
+            {sla.within} of {sla.total} within SLA
+          </p>
         </div>
         <ClickStat label="✓ Within SLA" value={sla.within} colorClass="text-success" subtext="contacted in time" deals={sla.withinDeals} won={sla.withinWon} active={bucket === 'within'} onClick={() => setBucket('within')} />
         <ClickStat label="⚠ Over SLA" value={sla.over} colorClass="text-yellow-400" subtext="contacted late" deals={sla.overDeals} won={sla.overWon} active={bucket === 'over'} onClick={() => setBucket('over')} />
@@ -235,6 +239,49 @@ export default function SpeedToLead({ sla }) {
             )}
           </>
         )}
+      {/* Per-source SLA breakdown */}
+      {sla.sourceBreakdown && sla.sourceBreakdown.length > 0 && (
+        <div className="border-t border-white/5 pt-4">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">By Source</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-white/30 uppercase text-[10px] tracking-wider">
+                  <th className="text-left pb-1.5 font-medium">Source</th>
+                  <th className="text-right pb-1.5 font-medium">SLA</th>
+                  <th className="text-right pb-1.5 font-medium">Total</th>
+                  <th className="text-right pb-1.5 font-medium">Within</th>
+                  <th className="text-right pb-1.5 font-medium">Over</th>
+                  <th className="text-right pb-1.5 font-medium">Breaching</th>
+                  <th className="text-right pb-1.5 font-medium">Compliance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sla.sourceBreakdown.map((row) => {
+                  const pct = row.compliancePct;
+                  const pctColor = pct == null ? 'text-white/30' : pct >= 80 ? 'text-success' : pct >= 50 ? 'text-yellow-400' : 'text-danger';
+                  const threshold = row.thresholdMinutes >= 60
+                    ? `${row.thresholdMinutes / 60}h`
+                    : `${row.thresholdMinutes}m`;
+                  return (
+                    <tr key={row.source} className="border-t border-white/5 hover:bg-white/5">
+                      <td className="py-1.5 pr-3 text-white/70">{row.source}</td>
+                      <td className="py-1.5 text-right text-white/40 tabular-nums">{threshold}</td>
+                      <td className="py-1.5 text-right text-white/50 tabular-nums">{row.total}</td>
+                      <td className="py-1.5 text-right text-success/80 tabular-nums">{row.within}</td>
+                      <td className="py-1.5 text-right text-yellow-400/80 tabular-nums">{row.over}</td>
+                      <td className="py-1.5 text-right text-danger/80 tabular-nums">{row.breaching}</td>
+                      <td className={`py-1.5 text-right font-semibold tabular-nums ${pctColor}`}>
+                        {pct != null ? `${pct}%` : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

@@ -26,8 +26,8 @@ export default async function handler(req, res) {
 
     // 60-second response cache. Keyed by period+range so different views don't
     // collide. Only caches successful 200 responses (errors fall through).
-    // v15 = always run OP/Gmail signal collection (budget-based, no hard skip on historical)
-    const cacheKey = `metricsv15:${period}:${customStart || ''}:${customEnd || ''}`;
+    // v16 = source-aware SLA thresholds (sbg_lead_source custom field)
+    const cacheKey = `metricsv16:${period}:${customStart || ''}:${customEnd || ''}`;
     // CDN cache header — Vercel's edge network will serve this response in
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
     // s-maxage=120: CDN freshness window (matches cron interval).
@@ -811,8 +811,22 @@ export default async function handler(req, res) {
       'in_progress', 'open_deal', 'bad_timing',
     ]);
 
-    const SLA_MINUTES = 5;
-    const slaCutoffMs = SLA_MINUTES * 60 * 1000;
+    // Source-aware thresholds. Keys match c.properties.sbg_lead_source values exactly.
+    // null threshold = Vendor Partner — excluded from slaTotal entirely.
+    // DEFAULT_SLA_MINUTES applies when sbg_lead_source is unset (Option A: keep at 5-min
+    // until the field is populated on most contacts, then revisit).
+    const SLA_THRESHOLDS_MINUTES = {
+      'Web Form': 5,
+      'Phone Call / Walk-in': 5,
+      'Paid Social': 5,
+      'Referral': 60,
+      'Repeat Client': 60,
+      'Cold Reach Out': 240,
+      'Trade Show / Event': 60,
+      'Vendor Partner': null,
+      'Other': 60,
+    };
+    const DEFAULT_SLA_MINUTES = 5;
     let slaTotal = 0;
     let slaWithin = 0;
     let slaOver = 0;
@@ -823,6 +837,8 @@ export default async function handler(req, res) {
     const slaOverLeads = [];
     const slaSafeLeads = [];
     const slaResponseTimes = []; // for median calc
+    // Per-source accumulators for the breakdown table
+    const slaBySource = {};
 
     for (const c of contacts.results) {
       // Only count "real" leads — skip internal/manual-entry-only contacts
@@ -842,6 +858,19 @@ export default async function handler(req, res) {
       const email = (c.properties.email || '').toLowerCase();
       const domain = email.split('@')[1] || '';
       if (['signsbyghouston.com', 'signsbyghouston.net'].includes(domain)) continue;
+
+      // Per-contact SLA threshold from sbg_lead_source custom field.
+      // Falls back to DEFAULT_SLA_MINUTES (5) when the field is unset.
+      const sbgSource = c.properties.sbg_lead_source || null;
+      const contactSlaMinutes = sbgSource in SLA_THRESHOLDS_MINUTES
+        ? SLA_THRESHOLDS_MINUTES[sbgSource]
+        : DEFAULT_SLA_MINUTES;
+      if (contactSlaMinutes === null) continue; // Vendor Partner — no SLA, skip entirely
+      const contactSlaCutoffMs = contactSlaMinutes * 60 * 1000;
+      const slaSourceKey = sbgSource || 'Unset';
+      if (!slaBySource[slaSourceKey]) {
+        slaBySource[slaSourceKey] = { total: 0, within: 0, over: 0, breaching: 0, safe: 0, thresholdMinutes: contactSlaMinutes };
+      }
 
       const created = Date.parse(c.properties.createdate || '');
       if (!created) continue;
@@ -905,7 +934,7 @@ export default async function handler(req, res) {
       // rather than falsely flagging as "breaching now".
       const workedLifecycles = ['salesqualifiedlead', 'opportunity', 'customer'];
       if (candidates.length === 0 && workedLifecycles.includes(lifecycle)) {
-        candidates.push(created + slaCutoffMs + 1); // over SLA, but not breaching
+        candidates.push(created + contactSlaCutoffMs + 1); // over SLA, but not breaching
       }
 
       // Lead-status safety net: if a rep manually set the lead status to a
@@ -915,10 +944,11 @@ export default async function handler(req, res) {
       // yet (tasks only update hs_sa_first_engagement_date when *completed*).
       const leadStatus = (c.properties.hs_lead_status || '').toLowerCase();
       if (candidates.length === 0 && WORKED_LEAD_STATUSES.has(leadStatus)) {
-        candidates.push(created + slaCutoffMs + 1); // over SLA, but not breaching
+        candidates.push(created + contactSlaCutoffMs + 1); // over SLA, but not breaching
       }
 
       slaTotal++;
+      slaBySource[slaSourceKey].total++;
       // For historical periods, anchor age to when the period ended — not "now".
       // Without this, a Q1 2025 lead shows ageMinutes ≈ 480,000 and label "call these now".
       const ageAnchorMs = isHistoricalPeriod ? periodEndMs : Date.now();
@@ -951,8 +981,9 @@ export default async function handler(req, res) {
       if (candidates.length === 0) {
         // Uncontacted — check if breaching
         const ageMs = ageAnchorMs - created;
-        if (ageMs > slaCutoffMs) {
+        if (ageMs > contactSlaCutoffMs) {
           slaBreaching++;
+          slaBySource[slaSourceKey].breaching++;
           // Diagnostic: which signals are present at all (helps audit false positives)
           const phones = [c.properties.phone, c.properties.mobilephone].filter(Boolean);
           const opChecked = phones.length > 0 && phones.some((p) => normalizePhone(p));
@@ -992,6 +1023,7 @@ export default async function handler(req, res) {
           });
         } else {
           slaSafe++;
+          slaBySource[slaSourceKey].safe++;
           slaSafeLeads.push({ ...leadInfo, ageMinutes: Math.round(ageMs / 60000) }); // ageMs uses ageAnchorMs
         }
       } else {
@@ -1001,11 +1033,13 @@ export default async function handler(req, res) {
         const responseMinutes = Math.round(responseMs / 60000);
         slaResponseTimes.push(responseMinutes);
         const enrichedLead = { ...leadInfo, responseMinutes };
-        if (responseMs <= slaCutoffMs) {
+        if (responseMs <= contactSlaCutoffMs) {
           slaWithin++;
+          slaBySource[slaSourceKey].within++;
           slaWithinLeads.push(enrichedLead);
         } else {
           slaOver++;
+          slaBySource[slaSourceKey].over++;
           slaOverLeads.push(enrichedLead);
         }
       }
@@ -1026,10 +1060,25 @@ export default async function handler(req, res) {
       medianResponseMinutes = sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
     }
 
+    const sourceBreakdown = Object.entries(slaBySource)
+      .map(([source, s]) => ({
+        source,
+        thresholdMinutes: s.thresholdMinutes,
+        total: s.total,
+        within: s.within,
+        over: s.over,
+        breaching: s.breaching,
+        safe: s.safe,
+        compliancePct: s.total > 0 ? Math.round((s.within / s.total) * 100) : null,
+      }))
+      .sort((a, b) => b.total - a.total);
+
     const sla = {
-      thresholdMinutes: SLA_MINUTES,
+      thresholdMinutes: DEFAULT_SLA_MINUTES,
+      sourceAware: true,
       isHistorical: isHistoricalPeriod,
       partialOpenPhoneSignal,
+      sourceBreakdown,
       total: slaTotal,
       within: slaWithin,
       over: slaOver,
