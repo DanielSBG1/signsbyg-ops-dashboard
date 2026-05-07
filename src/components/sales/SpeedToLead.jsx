@@ -261,7 +261,7 @@ export default function SpeedToLead({ sla }) {
               <tbody>
                 {sla.sourceBreakdown.map((row) => {
                   const pct = row.compliancePct;
-                  const pctColor = pct == null ? 'text-white/30' : pct >= 80 ? 'text-success' : pct >= 50 ? 'text-yellow-400' : 'text-danger';
+                  const pctColor = pct == null ? 'text-white/30' : pct >= SLA_COMPLIANCE_THRESHOLDS.onTarget ? 'text-success' : pct >= SLA_COMPLIANCE_THRESHOLDS.attention ? 'text-yellow-400' : 'text-danger';
                   const threshold = row.thresholdMinutes >= 60
                     ? `${row.thresholdMinutes / 60}h`
                     : `${row.thresholdMinutes}m`;
