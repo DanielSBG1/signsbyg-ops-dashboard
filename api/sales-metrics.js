@@ -807,7 +807,7 @@ export default async function handler(req, res) {
     // "unqualified" is excluded — those contacts are already skipped above.
     // "open" is intentionally excluded — HubSpot workflows can set it automatically.
     const WORKED_LEAD_STATUSES = new Set([
-      'attempting', 'attempted_to_contact', 'connected',
+      'attempted_to_contact', 'connected',
       'in_progress', 'open_deal', 'bad_timing',
     ]);
 
@@ -938,7 +938,7 @@ export default async function handler(req, res) {
       }
 
       // Lead-status safety net: if a rep manually set the lead status to a
-      // "working" value (e.g. "attempting", "connected") that proves they touched
+      // "working" value (e.g. "connected", "attempted_to_contact") that proves they touched
       // the record, treat as contacted over SLA. This covers the gap where a rep
       // sets status + creates a task but HubSpot hasn't logged a formal engagement
       // yet (tasks only update hs_sa_first_engagement_date when *completed*).
@@ -1090,10 +1090,10 @@ export default async function handler(req, res) {
       breachingTotal: breachingLeads.length,
       breachingDeals: breachingLeads.filter((l) => l.numDeals > 0).length,
       breachingWon: breachingLeads.filter((l) => l.hasWon).length,
-      withinLeads: slaWithinLeads.slice(0, 75),
+      withinLeads: slaWithinLeads.sort((a, b) => a.responseMinutes - b.responseMinutes).slice(0, 75),
       withinDeals: slaWithinLeads.filter((l) => l.numDeals > 0).length,
       withinWon: slaWithinLeads.filter((l) => l.hasWon).length,
-      overLeads: slaOverLeads.slice(0, 75),
+      overLeads: slaOverLeads.sort((a, b) => b.responseMinutes - a.responseMinutes).slice(0, 75),
       overDeals: slaOverLeads.filter((l) => l.numDeals > 0).length,
       overWon: slaOverLeads.filter((l) => l.hasWon).length,
       safeLeads: slaSafeLeads.slice(0, 75),

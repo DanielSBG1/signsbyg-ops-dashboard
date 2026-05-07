@@ -15,6 +15,8 @@ function formatResponseTime(minutes) {
   return `${(hours / 24).toFixed(1)}d`;
 }
 
+const SLA_COMPLIANCE_THRESHOLDS = { onTarget: 80, attention: 50 };
+
 /**
  * Speed-to-Lead SLA tracker.
  *
@@ -36,8 +38,8 @@ export default function SpeedToLead({ sla }) {
 
   const compliance = sla.compliancePct ?? 0;
   const status =
-    compliance >= 80 ? { color: 'text-success', bg: 'bg-success/10', label: 'On target' } :
-    compliance >= 50 ? { color: 'text-yellow-400', bg: 'bg-yellow-400/10', label: 'Needs attention' } :
+    compliance >= SLA_COMPLIANCE_THRESHOLDS.onTarget ? { color: 'text-success', bg: 'bg-success/10', label: 'On target' } :
+    compliance >= SLA_COMPLIANCE_THRESHOLDS.attention ? { color: 'text-yellow-400', bg: 'bg-yellow-400/10', label: 'Needs attention' } :
     { color: 'text-danger', bg: 'bg-danger/10', label: 'Critical' };
 
   // Pick which list to display based on selected bucket
@@ -111,7 +113,7 @@ export default function SpeedToLead({ sla }) {
         </div>
         <button
           onClick={() => setBucket('breaching')}
-          title="Compliance status: ≥80% On target · 50-79% Needs attention · <50% Critical. Click to view breaching leads."
+          title={`Compliance status: ≥${SLA_COMPLIANCE_THRESHOLDS.onTarget}% On target · ${SLA_COMPLIANCE_THRESHOLDS.attention}-${SLA_COMPLIANCE_THRESHOLDS.onTarget - 1}% Needs attention · <${SLA_COMPLIANCE_THRESHOLDS.attention}% Critical. Click to view breaching leads.`}
           className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer hover:ring-2 hover:ring-white/20 transition-all ${status.bg} ${status.color}`}
         >
           {status.label}
