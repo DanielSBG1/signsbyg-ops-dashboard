@@ -73,7 +73,7 @@ export default function SpeedToLead({ sla }) {
       total: sla.breachingTotal,
       deals: sla.breachingDeals ?? null,
       won: sla.breachingWon ?? null,
-      title: '🚨 Breaching SLA — call these now',
+      title: sla.isHistorical ? '⏱ Never worked — historical breach' : '🚨 Breaching SLA — call these now',
       headerColor: 'text-danger',
       bgClass: 'bg-danger/5 border-danger/20',
       headerBgClass: 'bg-danger/10 text-danger/80',
@@ -125,7 +125,7 @@ export default function SpeedToLead({ sla }) {
         </div>
         <ClickStat label="✓ Within SLA" value={sla.within} colorClass="text-success" subtext="contacted in time" deals={sla.withinDeals} won={sla.withinWon} active={bucket === 'within'} onClick={() => setBucket('within')} />
         <ClickStat label="⚠ Over SLA" value={sla.over} colorClass="text-yellow-400" subtext="contacted late" deals={sla.overDeals} won={sla.overWon} active={bucket === 'over'} onClick={() => setBucket('over')} />
-        <ClickStat label="🚨 Breaching" value={sla.breaching} colorClass="text-danger" subtext="never contacted" deals={sla.breachingDeals} won={sla.breachingWon} active={bucket === 'breaching'} onClick={() => setBucket('breaching')} />
+        <ClickStat label="🚨 Breaching" value={sla.breaching} colorClass="text-danger" subtext={sla.isHistorical ? 'never contacted in period' : 'never contacted'} deals={sla.breachingDeals} won={sla.breachingWon} active={bucket === 'breaching'} onClick={() => setBucket('breaching')} />
         <ClickStat label="🕒 In Window" value={sla.safe} colorClass="text-blue-300" subtext={`new, < ${sla.thresholdMinutes}m`} deals={sla.safeDeals} won={sla.safeWon} active={bucket === 'safe'} onClick={() => setBucket('safe')} />
         <Stat label="Median Response" value={formatResponseTime(sla.medianResponseMinutes)} valueClass="text-2xl" />
       </div>

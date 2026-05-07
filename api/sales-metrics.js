@@ -900,7 +900,9 @@ export default async function handler(req, res) {
       }
 
       slaTotal++;
-      const nowMs = Date.now();
+      // For historical periods, anchor age to when the period ended — not "now".
+      // Without this, a Q1 2025 lead shows ageMinutes ≈ 480,000 and label "call these now".
+      const ageAnchorMs = isHistoricalPeriod ? periodEndMs : Date.now();
 
       // Deal / won signals for close-rate hypothesis tracking
       const slaNumDeals = parseInt(c.properties.num_associated_deals) || 0;
@@ -929,7 +931,7 @@ export default async function handler(req, res) {
 
       if (candidates.length === 0) {
         // Uncontacted — check if breaching
-        const ageMs = nowMs - created;
+        const ageMs = ageAnchorMs - created;
         if (ageMs > slaCutoffMs) {
           slaBreaching++;
           // Diagnostic: which signals are present at all (helps audit false positives)
@@ -971,7 +973,7 @@ export default async function handler(req, res) {
           });
         } else {
           slaSafe++;
-          slaSafeLeads.push({ ...leadInfo, ageMinutes: Math.round(ageMs / 60000) });
+          slaSafeLeads.push({ ...leadInfo, ageMinutes: Math.round(ageMs / 60000) }); // ageMs uses ageAnchorMs
         }
       } else {
         // Contacted — within or over SLA
@@ -1007,6 +1009,7 @@ export default async function handler(req, res) {
 
     const sla = {
       thresholdMinutes: SLA_MINUTES,
+      isHistorical: isHistoricalPeriod,
       total: slaTotal,
       within: slaWithin,
       over: slaOver,
