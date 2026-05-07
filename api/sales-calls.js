@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     const pageSizeNum = Math.max(1, Math.min(500, parseInt(pageSize) || 80));
 
     // Response cache keyed by page as well so different pages cache separately
-    const cacheKey = `callsv2:${period}:${customStart || ''}:${customEnd || ''}:p${pageNum}:s${pageSizeNum}`;
+    const cacheKey = `callsv3:${period}:${customStart || ''}:${customEnd || ''}:p${pageNum}:s${pageSizeNum}`;
     const cachedResult = await getCached(cacheKey);
     if (cachedResult) {
       console.log(`[Cache HIT] ${cacheKey}`);
@@ -100,6 +100,7 @@ export default async function handler(req, res) {
       properties: [
         'firstname', 'lastname', 'email', 'phone', 'mobilephone',
         'lifecyclestage', 'num_associated_deals', 'hubspot_owner_id', 'createdate',
+        'hs_analytics_source', 'hs_analytics_source_data_1', 'sbg_lead_source',
       ],
       sorts: [{ propertyName: 'lastmodifieddate', direction: 'DESCENDING' }],
     });
@@ -176,6 +177,7 @@ export default async function handler(req, res) {
         ourPhoneLabel: c.ourPhoneLabel,
         rep: repName || 'Unknown',
         classification,
+        contactSource: resolveSource(contact),
         contactName: contact ? `${contact.properties.firstname || ''} ${contact.properties.lastname || ''}`.trim() || contact.properties.email : null,
         contactEmail: contact?.properties.email || null,
         contactId: contact?.id || null,
@@ -204,6 +206,39 @@ export default async function handler(req, res) {
       },
     };
 
+    // Unique inbound callers (deduplicated by phone)
+    const uniqueInboundPhones = new Set(
+      enriched.filter((c) => c.direction === 'incoming' && c.customerPhone).map((c) => c.customerPhone)
+    );
+    summary.uniqueInboundCallers = uniqueInboundPhones.size;
+
+    // New prospect inbound calls = people calling about signs for the first time
+    summary.newInquiries = enriched.filter((c) => c.classification === 'new_prospect' && c.direction === 'incoming').length;
+
+    // Source breakdown for all inbound calls where we have a known source
+    const sourceMap = {};
+    for (const c of enriched.filter((c) => c.direction === 'incoming' && c.contactSource)) {
+      sourceMap[c.contactSource] = (sourceMap[c.contactSource] || 0) + 1;
+    }
+    summary.bySource = Object.entries(sourceMap)
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Daily volume breakdown
+    const dayMap = {};
+    for (const c of enriched) {
+      if (!c.createdAt) continue;
+      const day = c.createdAt.slice(0, 10);
+      if (!dayMap[day]) dayMap[day] = { date: day, total: 0, inbound: 0, outbound: 0, newInquiries: 0, uniquePhones: new Set() };
+      dayMap[day].total++;
+      if (c.direction === 'incoming') { dayMap[day].inbound++; if (c.customerPhone) dayMap[day].uniquePhones.add(c.customerPhone); }
+      if (c.direction === 'outgoing') dayMap[day].outbound++;
+      if (c.classification === 'new_prospect' && c.direction === 'incoming') dayMap[day].newInquiries++;
+    }
+    summary.byDay = Object.values(dayMap)
+      .map(({ uniquePhones, ...rest }) => ({ ...rest, uniqueCallers: uniquePhones.size }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
     const responsePayload = {
       period: { start: range.start, end: range.end, label: range.label },
       calls: enriched,
@@ -221,6 +256,25 @@ export default async function handler(req, res) {
     console.error('Calls API error:', err);
     return res.status(500).json({ error: err.message });
   }
+}
+
+/**
+ * Resolve the marketing source for a HubSpot contact using custom and
+ * analytics source properties.
+ */
+function resolveSource(contact) {
+  if (!contact) return null;
+  if (contact.properties.sbg_lead_source) return contact.properties.sbg_lead_source;
+  const src = (contact.properties.hs_analytics_source || '').toLowerCase();
+  const detail = (contact.properties.hs_analytics_source_data_1 || '').toLowerCase();
+  if (detail.includes('facebook') || detail.includes('fb') || src === 'paid_social') return 'Facebook / Instagram';
+  if (detail.includes('google') || src === 'paid_search') return 'Google Ads';
+  if (src === 'organic_search') return 'Organic Search';
+  if (src === 'referrals') return 'Referral';
+  if (src === 'direct_traffic') return 'Direct';
+  if (src === 'email_marketing') return 'Email';
+  if (src) return src;
+  return null;
 }
 
 /**
@@ -281,7 +335,7 @@ async function buildCallsResponseFromStore(storedCalls, owners, opUsers, workspa
     try {
       const results = await searchAllCRM('contacts', {
         filters: [{ propertyName: 'phone', operator: 'IN', values: variants }],
-        properties: ['firstname', 'lastname', 'email', 'phone', 'mobilephone', 'lifecyclestage', 'num_associated_deals'],
+        properties: ['firstname', 'lastname', 'email', 'phone', 'mobilephone', 'lifecyclestage', 'num_associated_deals', 'hs_analytics_source', 'hs_analytics_source_data_1', 'sbg_lead_source'],
       });
       for (const c of results.results || []) {
         for (const p of [c.properties.phone, c.properties.mobilephone].map(normalizePhone).filter(Boolean)) {
@@ -325,6 +379,7 @@ async function buildCallsResponseFromStore(storedCalls, owners, opUsers, workspa
       ourPhoneLabel: numberLabelById[c.phoneNumberId] || '',
       rep: opUserName || 'Unknown',
       classification,
+      contactSource: resolveSource(contact),
       contactName: contact
         ? `${contact.properties.firstname || ''} ${contact.properties.lastname || ''}`.trim() || contact.properties.email
         : null,
@@ -353,6 +408,39 @@ async function buildCallsResponseFromStore(storedCalls, owners, opUsers, workspa
       unknown: enriched.filter((c) => c.classification === 'unknown').length,
     },
   };
+
+  // Unique inbound callers (deduplicated by phone)
+  const uniqueInboundPhones = new Set(
+    enriched.filter((c) => c.direction === 'incoming' && c.customerPhone).map((c) => c.customerPhone)
+  );
+  summary.uniqueInboundCallers = uniqueInboundPhones.size;
+
+  // New prospect inbound calls = people calling about signs for the first time
+  summary.newInquiries = enriched.filter((c) => c.classification === 'new_prospect' && c.direction === 'incoming').length;
+
+  // Source breakdown for all inbound calls where we have a known source
+  const sourceMap = {};
+  for (const c of enriched.filter((c) => c.direction === 'incoming' && c.contactSource)) {
+    sourceMap[c.contactSource] = (sourceMap[c.contactSource] || 0) + 1;
+  }
+  summary.bySource = Object.entries(sourceMap)
+    .map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // Daily volume breakdown
+  const dayMap = {};
+  for (const c of enriched) {
+    if (!c.createdAt) continue;
+    const day = c.createdAt.slice(0, 10);
+    if (!dayMap[day]) dayMap[day] = { date: day, total: 0, inbound: 0, outbound: 0, newInquiries: 0, uniquePhones: new Set() };
+    dayMap[day].total++;
+    if (c.direction === 'incoming') { dayMap[day].inbound++; if (c.customerPhone) dayMap[day].uniquePhones.add(c.customerPhone); }
+    if (c.direction === 'outgoing') dayMap[day].outbound++;
+    if (c.classification === 'new_prospect' && c.direction === 'incoming') dayMap[day].newInquiries++;
+  }
+  summary.byDay = Object.values(dayMap)
+    .map(({ uniquePhones, ...rest }) => ({ ...rest, uniqueCallers: uniquePhones.size }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   return {
     period: { start: range.start, end: range.end, label: range.label },

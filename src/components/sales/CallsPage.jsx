@@ -88,13 +88,15 @@ export default function CallsPage({ data, loading, error }) {
   return (
     <div className="space-y-6">
       {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-8 gap-3">
         <Kpi label="Total Calls" value={summary.total} />
         <Kpi label="📞 Inbound" value={summary.inbound} colorClass="text-blue-300" />
         <Kpi label="📤 Outbound" value={summary.outbound} colorClass="text-purple-300" />
         <Kpi label="✓ Answered" value={summary.answered} colorClass="text-success" />
         <Kpi label="❌ Missed" value={summary.missed} colorClass="text-danger" />
         <Kpi label="⏱ Avg Length" value={formatDuration(summary.avgDuration)} />
+        <Kpi label="📞 Unique Callers" value={summary.uniqueInboundCallers ?? '—'} colorClass="text-blue-300" />
+        <Kpi label="🆕 New Inquiries" value={summary.newInquiries ?? '—'} colorClass="text-success" subtext="new prospects, inbound" />
       </div>
 
       {/* Classification breakdown — skipped for wide periods */}
@@ -110,6 +112,57 @@ export default function CallsPage({ data, loading, error }) {
           </div>
         </div>
       ) : null}
+
+      {/* Call Sources card */}
+      {summary.bySource && summary.bySource.length > 0 && (
+        <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">📡 How Callers Found Us</h2>
+            <span className="text-white/30 text-xs">identified inbound callers only</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {summary.bySource.map((s) => (
+              <div key={s.source} className="bg-white/5 rounded-xl p-4">
+                <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1 truncate">{s.source}</p>
+                <p className="text-2xl font-bold tabular-nums text-white">{s.count}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Daily Volume table */}
+      {summary.byDay && summary.byDay.length > 1 && (
+        <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+          <h2 className="text-lg font-semibold mb-4">📅 Daily Volume</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-white/40 text-xs uppercase tracking-wider">
+                  <th className="pb-3 text-left">Date</th>
+                  <th className="pb-3 text-right">Total</th>
+                  <th className="pb-3 text-right">Inbound</th>
+                  <th className="pb-3 text-right">Outbound</th>
+                  <th className="pb-3 text-right">Unique Callers</th>
+                  <th className="pb-3 text-right">New Inquiries</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.byDay.map((d) => (
+                  <tr key={d.date} className="border-t border-white/5 hover:bg-white/5">
+                    <td className="py-2 text-white/70">{new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
+                    <td className="py-2 text-right tabular-nums text-white/80">{d.total}</td>
+                    <td className="py-2 text-right tabular-nums text-blue-300">{d.inbound}</td>
+                    <td className="py-2 text-right tabular-nums text-purple-300">{d.outbound}</td>
+                    <td className="py-2 text-right tabular-nums text-white/60">{d.uniqueCallers}</td>
+                    <td className="py-2 text-right tabular-nums text-success">{d.newInquiries || 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Calls table — hidden for wide periods */}
       {summaryOnly ? (
@@ -201,11 +254,12 @@ export default function CallsPage({ data, loading, error }) {
   );
 }
 
-function Kpi({ label, value, colorClass = 'text-white' }) {
+function Kpi({ label, value, colorClass = 'text-white', subtext }) {
   return (
     <div className="bg-slate-card border border-white/5 rounded-xl p-4">
       <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold tabular-nums ${colorClass}`}>{value}</p>
+      {subtext && <p className="text-white/40 text-[10px] mt-0.5">{subtext}</p>}
     </div>
   );
 }
