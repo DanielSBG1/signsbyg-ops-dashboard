@@ -1050,6 +1050,12 @@ export default async function handler(req, res) {
     // Sort breaching leads by age desc (oldest first — most urgent)
     breachingLeads.sort((a, b) => b.ageMinutes - a.ageMinutes);
 
+    // Current compliance = contacts-within ÷ total contacts (equal-weight per lead).
+    // TODO: replace with deal-weighted compliance once sbg_lead_source is populated on
+    // most contacts (target: "Source not set" row < 20% of total in the breakdown table).
+    // Deal-weighted formula: sum(deal_value * withinSLA) / sum(deal_value) — a missed
+    // $18K referral should count more than a missed $200 FB lead ad. Revisit when the
+    // source breakdown data is meaningful enough to reflect the actual lead mix.
     const slaCompliancePct = slaTotal > 0
       ? Math.round((slaWithin / slaTotal) * 100)
       : null;
