@@ -125,7 +125,17 @@ export default function SpeedToLead({ sla }) {
         </div>
         <ClickStat label="✓ Within SLA" value={sla.within} colorClass="text-success" subtext="contacted in time" deals={sla.withinDeals} won={sla.withinWon} active={bucket === 'within'} onClick={() => setBucket('within')} />
         <ClickStat label="⚠ Over SLA" value={sla.over} colorClass="text-yellow-400" subtext="contacted late" deals={sla.overDeals} won={sla.overWon} active={bucket === 'over'} onClick={() => setBucket('over')} />
-        <ClickStat label="🚨 Breaching" value={sla.breaching} colorClass="text-danger" subtext={sla.isHistorical ? 'never contacted in period' : 'never contacted'} deals={sla.breachingDeals} won={sla.breachingWon} active={bucket === 'breaching'} onClick={() => setBucket('breaching')} />
+        <ClickStat
+          label="🚨 Breaching"
+          value={sla.breaching}
+          colorClass="text-danger"
+          subtext={sla.isHistorical ? 'never contacted in period' : 'never contacted'}
+          deals={sla.breachingDeals}
+          won={sla.breachingWon}
+          active={bucket === 'breaching'}
+          onClick={() => setBucket('breaching')}
+          partialSignal={sla.partialOpenPhoneSignal}
+        />
         <ClickStat label="🕒 In Window" value={sla.safe} colorClass="text-blue-300" subtext={`new, < ${sla.thresholdMinutes}m`} deals={sla.safeDeals} won={sla.safeWon} active={bucket === 'safe'} onClick={() => setBucket('safe')} />
         <Stat label="Median Response" value={formatResponseTime(sla.medianResponseMinutes)} valueClass="text-2xl" />
       </div>
@@ -240,7 +250,7 @@ function Stat({ label, value, colorClass = 'text-white', valueClass = 'text-2xl'
   );
 }
 
-function ClickStat({ label, value, colorClass = 'text-white', subtext, deals, won, active, onClick }) {
+function ClickStat({ label, value, colorClass = 'text-white', subtext, deals, won, active, onClick, partialSignal }) {
   return (
     <button
       onClick={onClick}
@@ -254,6 +264,14 @@ function ClickStat({ label, value, colorClass = 'text-white', subtext, deals, wo
       {deals != null && (
         <p className="text-white/30 text-[10px] mt-1.5 tabular-nums">
           {deals} deals{won > 0 ? ` · ${won} won` : ''}
+        </p>
+      )}
+      {partialSignal && (
+        <p
+          className="text-yellow-400/70 text-[10px] mt-1.5"
+          title="OpenPhone/Gmail polling timed out — breach count may be over-stated"
+        >
+          ⚠ partial OP/Gmail data
         </p>
       )}
     </button>

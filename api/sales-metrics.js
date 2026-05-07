@@ -26,8 +26,8 @@ export default async function handler(req, res) {
 
     // 60-second response cache. Keyed by period+range so different views don't
     // collide. Only caches successful 200 responses (errors fall through).
-    // v12 = show contacts for lastweek (decouple leadsOmitted from skipOpenPhonePoll)
-    const cacheKey = `metricsv14:${period}:${customStart || ''}:${customEnd || ''}`;
+    // v15 = always run OP/Gmail signal collection (budget-based, no hard skip on historical)
+    const cacheKey = `metricsv15:${period}:${customStart || ''}:${customEnd || ''}`;
     // CDN cache header — Vercel's edge network will serve this response in
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
     // s-maxage=120: CDN freshness window (matches cron interval).
@@ -43,19 +43,23 @@ export default async function handler(req, res) {
 
     // Period width — computed early so we can skip expensive fetches below
     const periodDays = (Date.parse(range.end) - Date.parse(range.start)) / 86400000;
-    // A "historical" period ended more than 1 hour ago — all contacts in it are past
-    // their 5-minute SLA window, so KV phone lookups add zero actionable signal.
-    // This catches lastweek and any fixed-end custom range without needing a special case.
     const periodEndMs = Date.parse(range.end);
+    // A "historical" period ended more than 1 hour ago. Used by the SLA age anchor
+    // (ageAnchorMs) and the UI label — no longer used to skip OP/Gmail polling.
     const isHistoricalPeriod = Date.now() - periodEndMs > 60 * 60 * 1000;
-    const skipOpenPhonePoll = periodDays > 14 || isHistoricalPeriod;
     const skipSourceOverride = periodDays > 14;
     // For Q1/Q2/Q3/Q4/year (>30 days), skip fetching the previous period entirely.
     // The prev period would also be 90+ days with just as many contacts/deals, adding
     // 3 more large paginated queries on top of the current period's already-large fetch.
     // Trend percentages are set to null for these wide periods instead.
     const skipPrevPeriod = periodDays > 30;
-    if (skipOpenPhonePoll) console.log(`[metrics] Skipping OpenPhone polling for ${Math.round(periodDays)}-day period (historical=${isHistoricalPeriod})`);
+    // Signal-collection budget: OP/Gmail always runs but is capped at this wall-clock limit.
+    // If it times out, partialOpenPhoneSignal is set and the UI shows a "partial data" badge.
+    // Set OPENPHONE_BUDGET_MS env var to tune (default 30s).
+    const OP_BUDGET_MS = parseInt(process.env.OPENPHONE_BUDGET_MS || '30000');
+    // KV batch size for phone lookups. Historical/wide periods can safely bump this
+    // (Redis reads are fast). Set OPENPHONE_CONCURRENCY env var to override.
+    const OP_BATCH = parseInt(process.env.OPENPHONE_CONCURRENCY || '50');
     if (skipSourceOverride) console.log(`[metrics] Skipping source override for ${Math.round(periodDays)}-day period`);
     if (skipPrevPeriod) console.log(`[metrics] Skipping prev-period fetches for ${Math.round(periodDays)}-day period`);
 
@@ -200,12 +204,20 @@ export default async function handler(req, res) {
     // webhooks and is orders of magnitude faster (Redis reads vs API calls).
     const openPhoneActivity = new Map();
 
-    // KV-store phone lookups: find earliest outbound OpenPhone activity per contact.
-    // Skipped for wide periods (>14 days) — Q1 alone has 1000+ contacts × 2 phones =
-    // 40+ sequential Redis batches adding 6-8 seconds. For wide periods the contacts
-    // are long past their 5-minute SLA window anyway, so the signal adds no value.
+    // --- OpenPhone + Gmail signal collection ---
+    // Always runs regardless of period width or age. A lead genuinely called via
+    // OpenPhone but never logged to HubSpot would otherwise appear as breaching
+    // on any historical or wide view.
+    //
+    // Both sources run inside a shared Promise.race against OP_BUDGET_MS (default 30s).
+    // If the budget is exceeded we move on with whatever was collected and set
+    // partialOpenPhoneSignal = true so the UI can surface a "partial data" badge.
     const kvStoreByPhone = new Map();
-    if (!skipOpenPhonePoll) {
+    const gmailActivityByEmail = new Map();
+    let partialOpenPhoneSignal = false;
+
+    const signalCollectionPromise = (async () => {
+      // KV-store phone lookups (Redis reads — fast, ~1-5ms each)
       const allPhones = new Set();
       for (const c of contacts.results) {
         for (const p of [c.properties.phone, c.properties.mobilephone].map(normalizePhone).filter(Boolean)) {
@@ -214,9 +226,9 @@ export default async function handler(req, res) {
       }
       const phoneArr = [...allPhones];
       if (phoneArr.length > 0) {
-        const BATCH = 50;
-        for (let i = 0; i < phoneArr.length; i += BATCH) {
-          const batch = phoneArr.slice(i, i + BATCH);
+        console.log(`[metrics] OpenPhone KV polling ${phoneArr.length} phones for ${Math.round(periodDays)}-day period (batch=${OP_BATCH})`);
+        for (let i = 0; i < phoneArr.length; i += OP_BATCH) {
+          const batch = phoneArr.slice(i, i + OP_BATCH);
           const results = await Promise.all(
             batch.map((p) => getEarliestOutboundForPhone(p, range.start).catch(() => null))
           );
@@ -224,33 +236,40 @@ export default async function handler(req, res) {
             if (results[j]) kvStoreByPhone.set(batch[j], results[j]);
           }
         }
+        console.log(`[metrics] OpenPhone KV: ${kvStoreByPhone.size} phones matched`);
       }
-    }
 
-    // --- Gmail activity map ---
-    // Only run for today (1-day window) — the Gmail API makes 2 calls per contact
-    // pair at concurrency 5, which adds 10-20s for weekly periods. HubSpot's own
-    // hs_sa_first_engagement_date already captures email engagement for wider periods.
-    const skipGmail = periodDays > 1;
-    const gmailActivityByEmail = new Map();
-    if (GMAIL_ENABLED && !skipOpenPhonePoll && !skipGmail) {
-      // Build rep email lookup from owners
-      const ownerEmailById = {};
-      for (const o of owners) {
-        if (o.email) ownerEmailById[o.id] = o.email;
-      }
-      // Build sender→recipient pairs
-      const gmailPairs = [];
-      for (const c of contacts.results) {
-        const contactEmail = (c.properties.email || '').toLowerCase();
-        const repId = c.properties.hubspot_owner_id;
-        const repEmail = ownerEmailById[repId];
-        if (contactEmail && repEmail) {
-          gmailPairs.push({ senderEmail: repEmail, recipientEmail: contactEmail });
+      // Gmail polling (2 API calls per contact pair at concurrency 5)
+      if (GMAIL_ENABLED) {
+        const ownerEmailById = {};
+        for (const o of owners) {
+          if (o.email) ownerEmailById[o.id] = o.email;
+        }
+        const gmailPairs = [];
+        for (const c of contacts.results) {
+          const contactEmail = (c.properties.email || '').toLowerCase();
+          const repId = c.properties.hubspot_owner_id;
+          const repEmail = ownerEmailById[repId];
+          if (contactEmail && repEmail) {
+            gmailPairs.push({ senderEmail: repEmail, recipientEmail: contactEmail });
+          }
+        }
+        if (gmailPairs.length > 0) {
+          console.log(`[metrics] Gmail polling ${gmailPairs.length} pairs for ${Math.round(periodDays)}-day period`);
+          const gmailMap = await buildGmailActivityMap(gmailPairs, range.start);
+          for (const [email, ts] of gmailMap) gmailActivityByEmail.set(email, ts);
+          console.log(`[metrics] Gmail: ${gmailActivityByEmail.size} contacts matched`);
         }
       }
-      const gmailMap = await buildGmailActivityMap(gmailPairs, range.start);
-      for (const [email, ts] of gmailMap) gmailActivityByEmail.set(email, ts);
+    })();
+
+    const budgetTimer = new Promise((resolve) => setTimeout(resolve, OP_BUDGET_MS, 'timeout'));
+    const signalResult = await Promise.race([signalCollectionPromise.then(() => 'done'), budgetTimer]);
+    if (signalResult === 'timeout') {
+      partialOpenPhoneSignal = true;
+      console.warn(`[metrics] Signal collection timed out after ${OP_BUDGET_MS}ms — OP/Gmail breach signals may be incomplete (OP=${kvStoreByPhone.size} phones, Gmail=${gmailActivityByEmail.size} contacts collected so far)`);
+    } else {
+      console.log(`[metrics] Signal collection complete for ${Math.round(periodDays)}-day period`);
     }
 
     function lookupGmailTimestamp(contact) {
@@ -1010,6 +1029,7 @@ export default async function handler(req, res) {
     const sla = {
       thresholdMinutes: SLA_MINUTES,
       isHistorical: isHistoricalPeriod,
+      partialOpenPhoneSignal,
       total: slaTotal,
       within: slaWithin,
       over: slaOver,
@@ -1255,8 +1275,8 @@ export default async function handler(req, res) {
       // Omit individual contact records for wide periods (>14 days) — too many
       // to display usefully and a significant payload cost. Counts (leadCounts)
       // are always included so the summary cards stay accurate.
-      // Note: skipOpenPhonePoll also covers historical periods (e.g. lastweek)
-      // but we still want to show contacts there — just without SLA phone data.
+      // Contact records are omitted for wide periods (>14 days) to limit payload size.
+      // SLA phone/Gmail signals still run for all periods (budget-capped at OP_BUDGET_MS).
       leads: skipSourceOverride ? [] : leads,
       leadsOmitted: skipSourceOverride,
       leadCounts,
