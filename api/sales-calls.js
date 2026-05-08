@@ -4,6 +4,11 @@ import { getDateRange } from './_lib/sales/periods.js';
 import { getCached, setCached } from './_lib/cache.js';
 import { getCallsFromStore, storeHasAnyCalls } from './_lib/sales/callsStore.js';
 
+// During polling fallback we cap the phone-lookup loop to limit OpenPhone API
+// costs while the webhook store warms up. Once the webhook is populating the
+// KV store, store mode covers the full call universe without this cap.
+const POLLING_FALLBACK_PHONE_CAP = 80;
+
 /**
  * /api/calls
  *
@@ -23,13 +28,10 @@ export default async function handler(req, res) {
     // CDN cache header — Vercel edge serves cached responses in <50ms.
     res.setHeader('Cache-Control', 'public, s-maxage=180, stale-while-revalidate=600');
 
-    const { period = 'today', start: customStart, end: customEnd, page = '0', pageSize = '80' } = req.query;
+    const { period = 'today', start: customStart, end: customEnd } = req.query;
     const range = getDateRange(period, customStart, customEnd);
-    const pageNum = Math.max(0, parseInt(page) || 0);
-    const pageSizeNum = Math.max(1, Math.min(500, parseInt(pageSize) || 80));
 
-    // Response cache keyed by page as well so different pages cache separately
-    const cacheKey = `callsv4:${period}:${customStart || ''}:${customEnd || ''}:p${pageNum}:s${pageSizeNum}`;
+    const cacheKey = `callsv5:${period}:${customStart || ''}:${customEnd || ''}`;
     const cachedResult = await getCached(cacheKey);
     if (cachedResult) {
       console.log(`[Cache HIT] ${cacheKey}`);
@@ -92,17 +94,25 @@ export default async function handler(req, res) {
     }
 
     // 1. Polling fallback: pull HubSpot contacts in period, query OpenPhone.
-    const hubspotContacts = await searchAllCRM('contacts', {
-      filters: [
-        { propertyName: 'lastmodifieddate', operator: 'GTE', value: range.start },
-      ],
-      properties: [
-        'firstname', 'lastname', 'email', 'phone', 'mobilephone',
-        'lifecyclestage', 'num_associated_deals', 'hubspot_owner_id', 'createdate',
-        'hs_analytics_source', 'hs_analytics_source_data_1', 'sbg_lead_source', 'hs_lead_status',
-      ],
-      sorts: [{ propertyName: 'lastmodifieddate', direction: 'DESCENDING' }],
-    });
+    let phoneEnrichmentPartial = false;
+    let hubspotContacts;
+    try {
+      hubspotContacts = await searchAllCRM('contacts', {
+        filters: [
+          { propertyName: 'lastmodifieddate', operator: 'GTE', value: range.start },
+        ],
+        properties: [
+          'firstname', 'lastname', 'email', 'phone', 'mobilephone',
+          'lifecyclestage', 'num_associated_deals', 'hubspot_owner_id', 'createdate',
+          'hs_analytics_source', 'hs_analytics_source_data_1', 'sbg_lead_source', 'hs_lead_status',
+        ],
+        sorts: [{ propertyName: 'lastmodifieddate', direction: 'DESCENDING' }],
+      });
+    } catch (err) {
+      console.warn(`[Calls] HubSpot contact pull failed: ${err.message}`);
+      hubspotContacts = { results: [] };
+      phoneEnrichmentPartial = true;
+    }
     console.log(`[Calls] Pulled ${hubspotContacts.results.length} HubSpot contacts modified in period`);
 
     // Build phone → contact map and the participants list
@@ -120,14 +130,13 @@ export default async function handler(req, res) {
       }
     }
     const totalPhones = participantPhones.length;
-    const pageStart = pageNum * pageSizeNum;
-    const pageEnd = Math.min(pageStart + pageSizeNum, totalPhones);
-    const pagePhones = participantPhones.slice(pageStart, pageEnd);
-    console.log(`[Calls] polling page ${pageNum + 1} — phones ${pageStart}-${pageEnd} of ${totalPhones}`);
+    const cappedPhones = participantPhones.slice(0, POLLING_FALLBACK_PHONE_CAP);
+    const wasCapped = participantPhones.length > POLLING_FALLBACK_PHONE_CAP;
+    console.log(`[Calls] polling fallback: ${cappedPhones.length} of ${totalPhones} phones${wasCapped ? ' (CAPPED)' : ''}`);
 
-    // 2. Fetch OpenPhone calls for THIS page's phones + users + owners
+    // 2. Fetch OpenPhone calls for this set of phones + users + owners
     const [calls, opUsers, owners] = await Promise.all([
-      getCallsForParticipants(pagePhones, range.start),
+      getCallsForParticipants(cappedPhones, range.start),
       getOpenPhoneUsers(),
       getOwners(),
     ]);
@@ -193,6 +202,11 @@ export default async function handler(req, res) {
       period: { start: range.start, end: range.end, label: range.label },
       calls: enriched,
       summary,
+      phoneEnrichmentPartial,
+      meta: {
+        totalPhones,
+        cappedAt: wasCapped ? POLLING_FALLBACK_PHONE_CAP : null,
+      },
       source: 'polling-fallback',
     };
     await setCached(cacheKey, responsePayload, 180);

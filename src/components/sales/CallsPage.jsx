@@ -95,7 +95,11 @@ export default function CallsPage({ data, loading, error }) {
       )}
       {source === 'polling-fallback' && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl px-5 py-4 text-yellow-300 text-sm">
-          ⚠ Showing partial data — only HubSpot-known contacts are matched. Full data available once the webhook store is ready.
+          ⚠ Showing data from polling fallback — only HubSpot-known contacts are matched
+          {data.meta?.cappedAt && (
+            <> (capped at first {data.meta.cappedAt} phones to limit API costs)</>
+          )}
+          . Full data available once the webhook store is ready.
         </div>
       )}
       {/* KPI strip */}
