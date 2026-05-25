@@ -1404,6 +1404,16 @@ export default async function handler(req, res) {
         batchReadCount: currentSentFull.length,
         batchError: sentBatchError,
         filteredCount: dealsSentRaw.results.length,
+        // Deals currently in sent stages from allDeals, sorted by most recent entry
+        allDealsInSentStages: (allDeals.results || [])
+          .filter((d) => sentStageIdSet.has(d.properties.dealstage))
+          .sort((a, b) => new Date(b.properties.hs_v2_date_entered_current_stage || 0) - new Date(a.properties.hs_v2_date_entered_current_stage || 0))
+          .slice(0, 10)
+          .map((d) => ({
+            dealname: d.properties.dealname,
+            dealstage: d.properties.dealstage,
+            hs_v2_date_entered_current_stage: d.properties.hs_v2_date_entered_current_stage,
+          })),
         sampleDeals: currentSentFull.slice(0, 3).map((d) => ({
           id: d.id,
           dealname: d.properties.dealname,
