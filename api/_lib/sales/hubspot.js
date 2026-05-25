@@ -365,7 +365,7 @@ export async function getDealsByIds(dealIds, properties) {
 export async function getDealsByIdsWithStageHistory(dealIds) {
   const out = [];
   if (!dealIds || dealIds.length === 0) return out;
-  const CHUNK = 100;
+  const CHUNK = 50; // HubSpot caps propertiesWithHistory batch reads at 50
   for (let i = 0; i < dealIds.length; i += CHUNK) {
     const chunk = dealIds.slice(i, i + CHUNK);
     const res = await rateLimitedFetch(
