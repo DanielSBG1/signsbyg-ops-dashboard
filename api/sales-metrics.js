@@ -1,4 +1,4 @@
-import { getContactsInRange, getDealsInRange, getDealsClosedInRange, getAllOpenDeals, getOwners, getContactDealAssociationsBatch, getDealsByIds, getDealsEnteredSentStages } from './_lib/sales/hubspot.js';
+import { getContactsInRange, getDealsInRange, getDealsClosedInRange, getAllOpenDeals, getOwners, getContactDealAssociationsBatch, getDealsByIds, getDealsEnteredSentStages, getDealsByIdsWithStageHistory } from './_lib/sales/hubspot.js';
 import { normalizePhone } from './_lib/sales/openphone.js';
 import { getEarliestOutboundForPhone } from './_lib/sales/callsStore.js';
 import { buildGmailActivityMap, GMAIL_ENABLED } from './_lib/sales/gmail.js';
@@ -143,7 +143,6 @@ export default async function handler(req, res) {
     // Step 2: batch-read those IDs with hs_date_entered_* so we get real values.
     // Step 3: filter in-memory for entries within the period window.
     const sentStageIds  = DEALS_SENT_STAGES.map((s) => s.id);
-    const sentStageProps = sentStageIds.map((id) => `hs_date_entered_${id}`);
     const sentRangeStartMs = Date.parse(range.start);
     const sentRangeEndMs   = Date.parse(range.end);
     const prevSentStartMs  = Date.parse(range.prevStart || '');
@@ -159,18 +158,20 @@ export default async function handler(req, res) {
     const currentSentIds = (currentSentRaw.results || []).map((d) => d.id);
     const prevSentIds    = (prevSentRaw.results || []).map((d) => d.id);
 
-    const batchProps = ['dealname', 'dealstage', 'pipeline', 'amount', 'hubspot_owner_id', 'createdate', 'closedate', 'lead_source', ...sentStageProps];
+    // Batch-read with propertiesWithHistory so we can check whether a deal
+    // entered a sent stage during the period — even if it has since moved on.
     const [currentSentFull, prevSentFull] = await Promise.all([
-      currentSentIds.length > 0 ? getDealsByIds(currentSentIds, batchProps) : [],
-      prevSentIds.length > 0 ? getDealsByIds(prevSentIds, batchProps) : [],
+      currentSentIds.length > 0 ? getDealsByIdsWithStageHistory(currentSentIds) : [],
+      prevSentIds.length > 0 ? getDealsByIdsWithStageHistory(prevSentIds) : [],
     ]);
 
     function filterSentDeals(dealsList, startMs, endMs) {
       const map = new Map();
       for (const d of dealsList) {
-        for (const id of sentStageIds) {
-          const rawVal = d.properties[`hs_date_entered_${id}`];
-          const enteredMs = rawVal ? parseInt(rawVal, 10) : NaN;
+        const history = d.propertiesWithHistory?.dealstage || [];
+        for (const entry of history) {
+          if (!sentStageIdSet.has(entry.value)) continue;
+          const enteredMs = entry.timestamp ? new Date(entry.timestamp).getTime() : NaN;
           if (!isNaN(enteredMs) && enteredMs >= startMs && enteredMs <= endMs) {
             map.set(d.id, d);
             break;
@@ -180,6 +181,7 @@ export default async function handler(req, res) {
       return { results: [...map.values()], total: map.size };
     }
 
+    const sentStageIdSet   = new Set(sentStageIds);
     const dealsSentRaw     = filterSentDeals(currentSentFull, sentRangeStartMs, sentRangeEndMs);
     const prevDealsSentRaw = filterSentDeals(prevSentFull, prevSentStartMs, prevSentEndMs);
 
@@ -1397,19 +1399,14 @@ export default async function handler(req, res) {
       _debugSent: {
         rangeStart: range.start,
         rangeEnd: range.end,
-        sentRangeStartMs,
-        sentRangeEndMs,
         searchCount: currentSentRaw.results.length,
         batchReadCount: currentSentFull.length,
         filteredCount: dealsSentRaw.results.length,
-        sentStageIds,
-        sampleDeals: currentSentFull.slice(0, 5).map((d) => ({
+        sampleDeals: currentSentFull.slice(0, 3).map((d) => ({
           id: d.id,
           dealname: d.properties.dealname,
           dealstage: d.properties.dealstage,
-          enteredProps: Object.fromEntries(
-            sentStageIds.map((id) => [`hs_date_entered_${id}`, d.properties[`hs_date_entered_${id}`]])
-          ),
+          stageHistory: (d.propertiesWithHistory?.dealstage || []).slice(0, 5),
         })),
       },
     };

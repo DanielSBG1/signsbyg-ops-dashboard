@@ -359,6 +359,34 @@ export async function getDealsByIds(dealIds, properties) {
   return out;
 }
 
+// Batch-reads deals with full dealstage history. HubSpot's hs_date_entered_*
+// properties are not populated for this account, so we use propertiesWithHistory
+// to get stage change timestamps instead.
+export async function getDealsByIdsWithStageHistory(dealIds) {
+  const out = [];
+  if (!dealIds || dealIds.length === 0) return out;
+  const CHUNK = 100;
+  for (let i = 0; i < dealIds.length; i += CHUNK) {
+    const chunk = dealIds.slice(i, i + CHUNK);
+    const res = await rateLimitedFetch(
+      `${HUBSPOT_BASE}/crm/v3/objects/deals/batch/read`,
+      {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({
+          properties: ['dealname', 'dealstage', 'pipeline', 'amount', 'hubspot_owner_id', 'createdate', 'closedate', 'lead_source'],
+          propertiesWithHistory: ['dealstage'],
+          inputs: chunk.map((id) => ({ id: String(id) })),
+        }),
+      }
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+    out.push(...(data.results || []));
+  }
+  return out;
+}
+
 export async function getDealContacts(dealId) {
   const res = await rateLimitedFetch(
     `${HUBSPOT_BASE}/crm/v3/objects/deals/${dealId}/associations/contacts`,
