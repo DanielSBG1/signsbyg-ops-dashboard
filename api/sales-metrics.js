@@ -160,9 +160,10 @@ export default async function handler(req, res) {
 
     // Batch-read with propertiesWithHistory so we can check whether a deal
     // entered a sent stage during the period — even if it has since moved on.
+    let sentBatchError = null;
     const [currentSentFull, prevSentFull] = await Promise.all([
-      currentSentIds.length > 0 ? getDealsByIdsWithStageHistory(currentSentIds) : [],
-      prevSentIds.length > 0 ? getDealsByIdsWithStageHistory(prevSentIds) : [],
+      currentSentIds.length > 0 ? getDealsByIdsWithStageHistory(currentSentIds).catch((e) => { sentBatchError = e.message; return []; }) : [],
+      prevSentIds.length > 0 ? getDealsByIdsWithStageHistory(prevSentIds).catch(() => []) : [],
     ]);
 
     function filterSentDeals(dealsList, startMs, endMs) {
@@ -1401,6 +1402,7 @@ export default async function handler(req, res) {
         rangeEnd: range.end,
         searchCount: currentSentRaw.results.length,
         batchReadCount: currentSentFull.length,
+        batchError: sentBatchError,
         filteredCount: dealsSentRaw.results.length,
         sampleDeals: currentSentFull.slice(0, 3).map((d) => ({
           id: d.id,

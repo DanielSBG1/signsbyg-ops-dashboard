@@ -380,7 +380,11 @@ export async function getDealsByIdsWithStageHistory(dealIds) {
         }),
       }
     );
-    if (!res.ok) continue;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[getDealsByIdsWithStageHistory] batch/read failed (${res.status}): ${errText}`);
+      throw new Error(`batch/read ${res.status}: ${errText}`);
+    }
     const data = await res.json();
     out.push(...(data.results || []));
   }
