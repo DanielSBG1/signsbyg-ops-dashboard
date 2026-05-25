@@ -160,9 +160,8 @@ export default async function handler(req, res) {
 
     // Batch-read with propertiesWithHistory so we can check whether a deal
     // entered a sent stage during the period — even if it has since moved on.
-    let sentBatchError = null;
     const [currentSentFull, prevSentFull] = await Promise.all([
-      currentSentIds.length > 0 ? getDealsByIdsWithStageHistory(currentSentIds).catch((e) => { sentBatchError = e.message; return []; }) : [],
+      currentSentIds.length > 0 ? getDealsByIdsWithStageHistory(currentSentIds).catch((e) => { console.error('[metrics] dealsSent batch history error:', e.message); return []; }) : [],
       prevSentIds.length > 0 ? getDealsByIdsWithStageHistory(prevSentIds).catch(() => []) : [],
     ]);
 
@@ -1397,30 +1396,6 @@ export default async function handler(req, res) {
       periodDeals,
       dealsSentDeals,
       sla,
-      _debugSent: {
-        rangeStart: range.start,
-        rangeEnd: range.end,
-        searchCount: currentSentRaw.results.length,
-        batchReadCount: currentSentFull.length,
-        batchError: sentBatchError,
-        filteredCount: dealsSentRaw.results.length,
-        // Deals currently in sent stages from allDeals, sorted by most recent entry
-        allDealsInSentStages: (allDeals.results || [])
-          .filter((d) => sentStageIdSet.has(d.properties.dealstage))
-          .sort((a, b) => new Date(b.properties.hs_v2_date_entered_current_stage || 0) - new Date(a.properties.hs_v2_date_entered_current_stage || 0))
-          .slice(0, 10)
-          .map((d) => ({
-            dealname: d.properties.dealname,
-            dealstage: d.properties.dealstage,
-            hs_v2_date_entered_current_stage: d.properties.hs_v2_date_entered_current_stage,
-          })),
-        sampleDeals: currentSentFull.slice(0, 3).map((d) => ({
-          id: d.id,
-          dealname: d.properties.dealname,
-          dealstage: d.properties.dealstage,
-          stageHistory: (d.propertiesWithHistory?.dealstage || []).slice(0, 5),
-        })),
-      },
     };
     // Wide periods (Q1-Q4, year) are cached 30 min so the cron (every 10 min) always
     // finds a warm entry and never leaves a gap. Narrow periods stay at 10 min.
