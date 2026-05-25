@@ -140,8 +140,8 @@ export default async function handler(req, res) {
     // hs_lastmodifieddate), request the entered-date for each sent stage as a
     // property, then filter in-memory for entries that fall within the window.
     const sentStageIds = DEALS_SENT_STAGES.map((s) => s.id);
-    const rangeStartMs = Date.parse(range.start);
-    const rangeEndMs   = Date.parse(range.end);
+    const sentRangeStartMs = Date.parse(range.start);
+    const sentRangeEndMs   = Date.parse(range.end);
 
     const [currentSentRaw, prevSentRaw] = await Promise.all([
       getDealsEnteredSentStages(sentStageIds, range.start).catch(() => ({ results: [] })),
@@ -164,10 +164,10 @@ export default async function handler(req, res) {
       return { results: [...map.values()], total: map.size };
     }
 
-    const prevRangeStartMs = Date.parse(range.prevStart || '');
-    const prevRangeEndMs   = Date.parse(range.prevEnd   || '');
-    const dealsSentRaw     = filterSentDeals(currentSentRaw, rangeStartMs, rangeEndMs);
-    const prevDealsSentRaw = filterSentDeals(prevSentRaw, prevRangeStartMs, prevRangeEndMs);
+    const prevSentStartMs  = Date.parse(range.prevStart || '');
+    const prevSentEndMs    = Date.parse(range.prevEnd   || '');
+    const dealsSentRaw     = filterSentDeals(currentSentRaw, sentRangeStartMs, sentRangeEndMs);
+    const prevDealsSentRaw = filterSentDeals(prevSentRaw, prevSentStartMs, prevSentEndMs);
 
     // --- Source override from associated deals ---
     // For each contact with at least one associated deal, look up the deal's
