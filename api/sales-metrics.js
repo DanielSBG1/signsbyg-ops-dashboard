@@ -1381,6 +1381,24 @@ export default async function handler(req, res) {
       periodDeals,
       dealsSentDeals,
       sla,
+      _debugSent: {
+        rangeStart: range.start,
+        rangeEnd: range.end,
+        sentRangeStartMs,
+        sentRangeEndMs,
+        fetchedCount: currentSentRaw.results.length,
+        filteredCount: dealsSentRaw.results.length,
+        sentStageIds,
+        sampleDeals: (currentSentRaw.results || []).slice(0, 5).map((d) => ({
+          id: d.id,
+          dealname: d.properties.dealname,
+          dealstage: d.properties.dealstage,
+          hs_lastmodifieddate: d.properties.hs_lastmodifieddate,
+          enteredProps: Object.fromEntries(
+            sentStageIds.map((id) => [`hs_date_entered_${id}`, d.properties[`hs_date_entered_${id}`]])
+          ),
+        })),
+      },
     };
     // Wide periods (Q1-Q4, year) are cached 30 min so the cron (every 10 min) always
     // finds a warm entry and never leaves a gap. Narrow periods stay at 10 min.
