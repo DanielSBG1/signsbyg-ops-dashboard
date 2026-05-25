@@ -134,14 +134,20 @@ export default async function handler(req, res) {
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsClosedInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
     ]);
 
-    // --- Deals Sent: in-memory filtering ---
-    // HubSpot Search API does NOT support filtering on hs_date_entered_* directly.
-    // Instead: fetch deals modified since period start (stage moves always update
-    // hs_lastmodifieddate), request the entered-date for each sent stage as a
-    // property, then filter in-memory for entries that fall within the window.
-    const sentStageIds = DEALS_SENT_STAGES.map((s) => s.id);
+    // --- Deals Sent: two-step fetch ---
+    // HubSpot Search API does NOT return hs_date_entered_* properties even when
+    // explicitly requested — they are internal computed properties only accessible
+    // via the batch read endpoint (/crm/v3/objects/deals/batch/read).
+    // Step 1: search to get candidate deal IDs (deals modified since period start,
+    //         since a stage move always updates hs_lastmodifieddate).
+    // Step 2: batch-read those IDs with hs_date_entered_* so we get real values.
+    // Step 3: filter in-memory for entries within the period window.
+    const sentStageIds  = DEALS_SENT_STAGES.map((s) => s.id);
+    const sentStageProps = sentStageIds.map((id) => `hs_date_entered_${id}`);
     const sentRangeStartMs = Date.parse(range.start);
     const sentRangeEndMs   = Date.parse(range.end);
+    const prevSentStartMs  = Date.parse(range.prevStart || '');
+    const prevSentEndMs    = Date.parse(range.prevEnd   || '');
 
     const [currentSentRaw, prevSentRaw] = await Promise.all([
       getDealsEnteredSentStages(sentStageIds, range.start).catch(() => ({ results: [] })),
@@ -150,9 +156,18 @@ export default async function handler(req, res) {
         : getDealsEnteredSentStages(sentStageIds, range.prevStart).catch(() => ({ results: [] })),
     ]);
 
-    function filterSentDeals(raw, startMs, endMs) {
+    const currentSentIds = (currentSentRaw.results || []).map((d) => d.id);
+    const prevSentIds    = (prevSentRaw.results || []).map((d) => d.id);
+
+    const batchProps = ['dealname', 'dealstage', 'pipeline', 'amount', 'hubspot_owner_id', 'createdate', 'closedate', 'lead_source', ...sentStageProps];
+    const [currentSentFull, prevSentFull] = await Promise.all([
+      currentSentIds.length > 0 ? getDealsByIds(currentSentIds, batchProps) : [],
+      prevSentIds.length > 0 ? getDealsByIds(prevSentIds, batchProps) : [],
+    ]);
+
+    function filterSentDeals(dealsList, startMs, endMs) {
       const map = new Map();
-      for (const d of raw.results || []) {
+      for (const d of dealsList) {
         for (const id of sentStageIds) {
           const rawVal = d.properties[`hs_date_entered_${id}`];
           const enteredMs = rawVal ? parseInt(rawVal, 10) : NaN;
@@ -165,10 +180,8 @@ export default async function handler(req, res) {
       return { results: [...map.values()], total: map.size };
     }
 
-    const prevSentStartMs  = Date.parse(range.prevStart || '');
-    const prevSentEndMs    = Date.parse(range.prevEnd   || '');
-    const dealsSentRaw     = filterSentDeals(currentSentRaw, sentRangeStartMs, sentRangeEndMs);
-    const prevDealsSentRaw = filterSentDeals(prevSentRaw, prevSentStartMs, prevSentEndMs);
+    const dealsSentRaw     = filterSentDeals(currentSentFull, sentRangeStartMs, sentRangeEndMs);
+    const prevDealsSentRaw = filterSentDeals(prevSentFull, prevSentStartMs, prevSentEndMs);
 
     // --- Source override from associated deals ---
     // For each contact with at least one associated deal, look up the deal's
@@ -1386,14 +1399,14 @@ export default async function handler(req, res) {
         rangeEnd: range.end,
         sentRangeStartMs,
         sentRangeEndMs,
-        fetchedCount: currentSentRaw.results.length,
+        searchCount: currentSentRaw.results.length,
+        batchReadCount: currentSentFull.length,
         filteredCount: dealsSentRaw.results.length,
         sentStageIds,
-        sampleDeals: (currentSentRaw.results || []).slice(0, 5).map((d) => ({
+        sampleDeals: currentSentFull.slice(0, 5).map((d) => ({
           id: d.id,
           dealname: d.properties.dealname,
           dealstage: d.properties.dealstage,
-          hs_lastmodifieddate: d.properties.hs_lastmodifieddate,
           enteredProps: Object.fromEntries(
             sentStageIds.map((id) => [`hs_date_entered_${id}`, d.properties[`hs_date_entered_${id}`]])
           ),
