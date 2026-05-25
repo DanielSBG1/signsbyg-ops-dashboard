@@ -154,8 +154,9 @@ export default async function handler(req, res) {
       const map = new Map();
       for (const d of raw.results || []) {
         for (const id of sentStageIds) {
-          const enteredMs = Date.parse(d.properties[`hs_date_entered_${id}`] || '');
-          if (enteredMs >= startMs && enteredMs <= endMs) {
+          const rawVal = d.properties[`hs_date_entered_${id}`];
+          const enteredMs = rawVal ? parseInt(rawVal, 10) : NaN;
+          if (!isNaN(enteredMs) && enteredMs >= startMs && enteredMs <= endMs) {
             map.set(d.id, d);
             break;
           }
