@@ -33,7 +33,7 @@ export function useMetrics(enabled = true) {
   const intervalRef = useRef(null);
   const abortRef = useRef(null); // abort controller for in-flight fetch
 
-  const fetchMetrics = useCallback(async () => {
+  const fetchMetrics = useCallback(async ({ force = false } = {}) => {
     if (!enabled) return;
 
     // Cancel any previous in-flight fetch so stale results don't overwrite fresh ones
@@ -43,13 +43,14 @@ export function useMetrics(enabled = true) {
 
     const key = lsKey(period, customRange.start, customRange.end);
     const stale = lsRead(key);
-    if (stale) {
+    if (stale && !force) {
       // Show cached data immediately — no spinner, just spin the refresh icon
       setData(stale);
       setLoading(false);
       setRefreshing(true);
     } else {
-      setLoading(true);
+      setLoading(!stale); // show spinner only if we have nothing to show yet
+      setRefreshing(!!stale);
     }
     setError(null);
     try {
@@ -57,6 +58,7 @@ export function useMetrics(enabled = true) {
       if (period === 'custom' && customRange.start && customRange.end) {
         url += `&start=${customRange.start}&end=${customRange.end}`;
       }
+      if (force) url += '&nocache=1';
       const res = await fetch(url, { signal: controller.signal });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const json = await res.json();
@@ -110,6 +112,7 @@ export function useMetrics(enabled = true) {
     customRange,
     setCustomRange,
     lastRefreshed,
-    refresh: fetchMetrics,
+    // Manual refresh bypasses server KV cache; auto-interval uses normal path.
+    refresh: () => fetchMetrics({ force: true }),
   };
 }

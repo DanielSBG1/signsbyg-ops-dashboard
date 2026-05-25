@@ -8,7 +8,7 @@ import {
   PIPELINE_STAGES, SOURCE_MAP, classifySource, mapDealLeadSource,
   AVG_CYCLE_DAYS, AVG_CYCLE_DEAL_COUNTS, AVG_CYCLE_GENERATED_AT,
   HOT_STAGES_BY_PIPELINE, STICKY_HOT_STAGES_BY_PIPELINE, DESIGN_MILESTONE_STAGE,
-  PRE_DESIGN_STAGES, POST_DESIGN_STAGE,
+  PRE_DESIGN_STAGES, POST_DESIGN_STAGE, DEALS_SENT_STAGES,
 } from './_lib/sales/constants.js';
 import { buildPipelineHealth } from './_lib/sales/pipelineHealthBuilder.js';
 import { buildPipeline } from './_lib/sales/pipelineBuilder.js';
@@ -21,7 +21,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { period = 'today', start: customStart, end: customEnd } = req.query;
+    const { period = 'today', start: customStart, end: customEnd, nocache } = req.query;
+    const forceRefresh = nocache === '1';
     const range = getDateRange(period, customStart, customEnd);
 
     // 60-second response cache. Keyed by period+range so different views don't
@@ -32,14 +33,21 @@ export default async function handler(req, res) {
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
     // s-maxage=120: CDN freshness window (matches cron interval).
     // stale-while-revalidate=600: serve stale up to 10 min while CDN revalidates.
-    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
-
-    const cachedResp = await getCached(cacheKey);
-    if (cachedResp) {
-      console.log(`[Cache HIT] ${cacheKey}`);
-      return res.status(200).json(cachedResp);
+    // nocache=1 (manual refresh): skip CDN and KV caches entirely.
+    if (forceRefresh) {
+      res.setHeader('Cache-Control', 'no-store');
+    } else {
+      res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
     }
-    console.log(`[Cache MISS] ${cacheKey}`);
+
+    if (!forceRefresh) {
+      const cachedResp = await getCached(cacheKey);
+      if (cachedResp) {
+        console.log(`[Cache HIT] ${cacheKey}`);
+        return res.status(200).json(cachedResp);
+      }
+    }
+    console.log(`[Cache ${forceRefresh ? 'BYPASS' : 'MISS'}] ${cacheKey}`);
 
     // Period width — computed early so we can skip expensive fetches below
     const periodDays = (Date.parse(range.end) - Date.parse(range.start)) / 86400000;
@@ -75,7 +83,7 @@ export default async function handler(req, res) {
     // 10-minute window reuse one fetch instead of each triggering the full
     // paginated query (the single biggest cold-cache bottleneck).
     const OPEN_DEALS_CACHE_KEY = 'opendeals:v1';
-    let allDeals = await getCached(OPEN_DEALS_CACHE_KEY);
+    let allDeals = forceRefresh ? null : await getCached(OPEN_DEALS_CACHE_KEY);
     if (!allDeals) {
       allDeals = await getAllOpenDeals().catch((e) => {
         console.error('[metrics] getAllOpenDeals error (pipeline/health will be empty):', e.message);
@@ -116,8 +124,8 @@ export default async function handler(req, res) {
       prevContacts,
       prevDeals,
       prevClosedDeals,
-      dealsSentRaw,
-      prevDealsSentRaw,
+      dealsSentPages,
+      prevDealsSentPages,
     ] = await Promise.all([
       getContactsInRange(range.start, range.end).catch((e) => { console.error('[metrics] contacts error:', e.message); return EMPTY_PAGE; }),
       getDealsInRange(range.start, range.end).catch((e) => { console.error('[metrics] deals error:', e.message); return EMPTY_PAGE; }),
@@ -126,9 +134,21 @@ export default async function handler(req, res) {
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getContactsInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsClosedInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
-      getDealsEnteredStageInRange('decisionmakerboughtin', range.start, range.end).catch(() => EMPTY_PAGE),
-      skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsEnteredStageInRange('decisionmakerboughtin', range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
+      // All bid/proposal-sent stages across all pipelines — run in parallel, deduplicated below
+      Promise.all(DEALS_SENT_STAGES.map((s) => getDealsEnteredStageInRange(s.id, range.start, range.end).catch(() => EMPTY_PAGE))),
+      skipPrevPeriod
+        ? Promise.resolve(DEALS_SENT_STAGES.map(() => EMPTY_PAGE))
+        : Promise.all(DEALS_SENT_STAGES.map((s) => getDealsEnteredStageInRange(s.id, range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE))),
     ]);
+
+    // Deduplicate across pipeline stages (a deal moved through multiple stages
+    // would appear in more than one page — keep it once).
+    const dealsSentMap = new Map();
+    for (const page of dealsSentPages) for (const d of page.results || []) dealsSentMap.set(d.id, d);
+    const dealsSentRaw = { results: [...dealsSentMap.values()], total: dealsSentMap.size };
+    const prevDealsSentMap = new Map();
+    for (const page of prevDealsSentPages) for (const d of page.results || []) prevDealsSentMap.set(d.id, d);
+    const prevDealsSentRaw = { results: [...prevDealsSentMap.values()], total: prevDealsSentMap.size };
 
     // --- Source override from associated deals ---
     // For each contact with at least one associated deal, look up the deal's

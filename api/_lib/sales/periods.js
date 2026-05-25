@@ -77,6 +77,18 @@ export function getDateRange(period, customStart, customEnd) {
         label: 'Today',
       };
     }
+    case 'yesterday': {
+      const start = businessMidnightUTC(biz.year, biz.month, biz.day - 1);
+      const end   = businessMidnightUTC(biz.year, biz.month, biz.day);
+      const prevStart = businessMidnightUTC(biz.year, biz.month, biz.day - 2);
+      return {
+        start: start.toISOString(),
+        end: end.toISOString(),
+        prevStart: prevStart.toISOString(),
+        prevEnd: start.toISOString(),
+        label: 'Yesterday',
+      };
+    }
     case 'week': {
       // Week starts Sunday in Houston TZ
       const today = businessMidnightUTC(biz.year, biz.month, biz.day);
@@ -115,6 +127,24 @@ export function getDateRange(period, customStart, customEnd) {
         label: 'Last Week',
       };
     }
+    case 'twoweeksago': {
+      const dowParts = new Intl.DateTimeFormat('en-US', {
+        timeZone: BUSINESS_TZ,
+        weekday: 'short',
+      }).formatToParts(businessMidnightUTC(biz.year, biz.month, biz.day));
+      const wd = dowParts.find((p) => p.type === 'weekday').value;
+      const dayOfWeek = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[wd] ?? 0;
+      const twoWeeksAgoStart = businessMidnightUTC(biz.year, biz.month, biz.day - dayOfWeek - 14);
+      const twoWeeksAgoEnd   = businessMidnightUTC(biz.year, biz.month, biz.day - dayOfWeek - 7);
+      const prevStart = businessMidnightUTC(biz.year, biz.month, biz.day - dayOfWeek - 21);
+      return {
+        start: twoWeeksAgoStart.toISOString(),
+        end: twoWeeksAgoEnd.toISOString(),
+        prevStart: prevStart.toISOString(),
+        prevEnd: twoWeeksAgoStart.toISOString(),
+        label: '2 Weeks Ago',
+      };
+    }
     case 'month': {
       const monthStart = businessMidnightUTC(biz.year, biz.month, 1);
       const prevMonthStart = businessMidnightUTC(biz.year, biz.month - 1, 1);
@@ -124,6 +154,18 @@ export function getDateRange(period, customStart, customEnd) {
         prevStart: prevMonthStart.toISOString(),
         prevEnd: monthStart.toISOString(),
         label: 'This Month',
+      };
+    }
+    case 'lastmonth': {
+      const lastMonthStart = businessMidnightUTC(biz.year, biz.month - 1, 1);
+      const thisMonthStart = businessMidnightUTC(biz.year, biz.month, 1);
+      const twoMonthsAgoStart = businessMidnightUTC(biz.year, biz.month - 2, 1);
+      return {
+        start: lastMonthStart.toISOString(),
+        end: thisMonthStart.toISOString(),
+        prevStart: twoMonthsAgoStart.toISOString(),
+        prevEnd: lastMonthStart.toISOString(),
+        label: 'Last Month',
       };
     }
     case 'quarter': {

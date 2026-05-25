@@ -62,7 +62,7 @@ const CARD_FILTERS = [
   { filterKey: 'facebookLeads', row: 'leads', label: 'FB Leads',       value: (s) => s.facebookLeads,                      trend: (s) => s.trends.facebookLeads,   tooltip: 'Contacts with original source = Facebook/Paid Social' },
   { filterKey: 'coldOutreach',  row: 'leads', label: 'Cold Outreach',  value: (s) => s.coldOutreachLeads ?? s.otherLeads,  trend: (s) => s.trends.coldOutreachLeads ?? s.trends.otherLeads, tooltip: 'Contacts sourced via email prospecting or cold outreach' },
   { filterKey: 'dealsWon',      row: 'won',   label: 'Deals Won',      value: (s) => s.dealsWon,                           trend: (s) => s.trends.dealsWon,        tooltip: 'Deals closed-won in this period' },
-  { filterKey: 'dealsSent',     row: 'sent',  label: 'Deals Sent',     value: (s) => s.dealsSent ?? '—',                  trend: (s) => s.trends.dealsSent ?? 0,  tooltip: 'Deals that entered Proposal Sent & Awaiting Response in this period' },
+  { filterKey: 'dealsSent',     row: 'sent',  label: 'Deals Sent',     value: (s) => s.dealsSent ?? '—',                  trend: (s) => s.trends.dealsSent ?? 0,  tooltip: 'Deals that entered any bid/proposal sent stage in this period (all pipelines: Retail, GC, Wholesale, PM)' },
   { filterKey: 'dealsCreated',  row: 'deals', label: 'Deals Created',  value: (s) => s.dealsCreated ?? '—',               trend: (s) => s.trends.dealsCreated ?? 0, tooltip: 'New deals opened in this period' },
   { filterKey: 'revenueClosed', row: 'won',   label: 'Revenue Closed', value: (s) => s.revenueClosed,                     trend: (s) => s.trends.revenueClosed,   format: 'currency', tooltip: 'Sum of amounts on deals closed-won in this period' },
 ];

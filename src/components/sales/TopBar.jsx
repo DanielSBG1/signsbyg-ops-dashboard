@@ -4,15 +4,18 @@ import React from 'react';
 function getPeriods() {
   const currentQuarter = Math.floor(new Date().getMonth() / 3) + 1;
   return [
-    { value: 'today', label: 'Today' },
-    { value: 'week', label: 'This Week' },
-    { value: 'lastweek', label: 'Last Week' },
-    { value: 'month', label: 'This Month' },
+    { value: 'today',       label: 'Today' },
+    { value: 'yesterday',   label: 'Yesterday' },
+    { value: 'week',        label: 'This Week' },
+    { value: 'lastweek',    label: 'Last Week' },
+    { value: 'twoweeksago', label: '2 Weeks Ago' },
+    { value: 'month',       label: 'This Month' },
+    { value: 'lastmonth',   label: 'Last Month' },
+    { value: 'quarter',     label: 'This Quarter', isQuarter: true, isCurrent: true },
     { value: 'q1', label: 'Q1', isQuarter: true, isCurrent: currentQuarter === 1 },
     { value: 'q2', label: 'Q2', isQuarter: true, isCurrent: currentQuarter === 2 },
     { value: 'q3', label: 'Q3', isQuarter: true, isCurrent: currentQuarter === 3 },
     { value: 'q4', label: 'Q4', isQuarter: true, isCurrent: currentQuarter === 4 },
-    { value: 'year', label: 'This Year' },
     { value: 'custom', label: 'Custom' },
   ];
 }

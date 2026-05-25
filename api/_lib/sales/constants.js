@@ -109,6 +109,17 @@ export const DESIGNER_NAMES = ['yusseli', 'jonathan'];
 //   1. Run: node scripts/compute-avg-cycle.js
 //   2. Paste the output below (replacing the existing values)
 //   3. Commit
+// All "bid / proposal sent" stages across every pipeline.
+// Used to power the "Deals Sent" metric card so it reflects activity
+// from Retail, GC, Wholesale, and PM — not just Retail.
+export const DEALS_SENT_STAGES = [
+  { id: 'decisionmakerboughtin', pipelineKey: 'retail' },
+  { id: '225153858',             pipelineKey: 'gc' },       // Invited Bids Sent
+  { id: '3514106575',            pipelineKey: 'gc' },       // Generic Bids Sent
+  { id: '180986278',             pipelineKey: 'wholesale' }, // Bid Presented / Follow Up
+  { id: '225693363',             pipelineKey: 'pm' },        // Bid Presented / Follow Up
+];
+
 export const AVG_CYCLE_DAYS = {
   retail: 32,
   gc: 53,
