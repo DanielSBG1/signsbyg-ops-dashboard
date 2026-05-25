@@ -1,4 +1,4 @@
-import { getContactsInRange, getDealsInRange, getDealsClosedInRange, getDealsEnteredStageInRange, getAllOpenDeals, getOwners, getContactDealAssociationsBatch, getDealsByIds } from './_lib/sales/hubspot.js';
+import { getContactsInRange, getDealsInRange, getDealsClosedInRange, getAllOpenDeals, getOwners, getContactDealAssociationsBatch, getDealsByIds, getDealsEnteredSentStages } from './_lib/sales/hubspot.js';
 import { normalizePhone } from './_lib/sales/openphone.js';
 import { getEarliestOutboundForPhone } from './_lib/sales/callsStore.js';
 import { buildGmailActivityMap, GMAIL_ENABLED } from './_lib/sales/gmail.js';
@@ -124,8 +124,6 @@ export default async function handler(req, res) {
       prevContacts,
       prevDeals,
       prevClosedDeals,
-      dealsSentPages,
-      prevDealsSentPages,
     ] = await Promise.all([
       getContactsInRange(range.start, range.end).catch((e) => { console.error('[metrics] contacts error:', e.message); return EMPTY_PAGE; }),
       getDealsInRange(range.start, range.end).catch((e) => { console.error('[metrics] deals error:', e.message); return EMPTY_PAGE; }),
@@ -134,21 +132,42 @@ export default async function handler(req, res) {
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getContactsInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
       skipPrevPeriod ? Promise.resolve(EMPTY_PAGE) : getDealsClosedInRange(range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE),
-      // All bid/proposal-sent stages across all pipelines — run in parallel, deduplicated below
-      Promise.all(DEALS_SENT_STAGES.map((s) => getDealsEnteredStageInRange(s.id, range.start, range.end).catch(() => EMPTY_PAGE))),
-      skipPrevPeriod
-        ? Promise.resolve(DEALS_SENT_STAGES.map(() => EMPTY_PAGE))
-        : Promise.all(DEALS_SENT_STAGES.map((s) => getDealsEnteredStageInRange(s.id, range.prevStart, range.prevEnd).catch(() => EMPTY_PAGE))),
     ]);
 
-    // Deduplicate across pipeline stages (a deal moved through multiple stages
-    // would appear in more than one page — keep it once).
-    const dealsSentMap = new Map();
-    for (const page of dealsSentPages) for (const d of page.results || []) dealsSentMap.set(d.id, d);
-    const dealsSentRaw = { results: [...dealsSentMap.values()], total: dealsSentMap.size };
-    const prevDealsSentMap = new Map();
-    for (const page of prevDealsSentPages) for (const d of page.results || []) prevDealsSentMap.set(d.id, d);
-    const prevDealsSentRaw = { results: [...prevDealsSentMap.values()], total: prevDealsSentMap.size };
+    // --- Deals Sent: in-memory filtering ---
+    // HubSpot Search API does NOT support filtering on hs_date_entered_* directly.
+    // Instead: fetch deals modified since period start (stage moves always update
+    // hs_lastmodifieddate), request the entered-date for each sent stage as a
+    // property, then filter in-memory for entries that fall within the window.
+    const sentStageIds = DEALS_SENT_STAGES.map((s) => s.id);
+    const rangeStartMs = Date.parse(range.start);
+    const rangeEndMs   = Date.parse(range.end);
+
+    const [currentSentRaw, prevSentRaw] = await Promise.all([
+      getDealsEnteredSentStages(sentStageIds, range.start).catch(() => ({ results: [] })),
+      skipPrevPeriod
+        ? Promise.resolve({ results: [] })
+        : getDealsEnteredSentStages(sentStageIds, range.prevStart).catch(() => ({ results: [] })),
+    ]);
+
+    function filterSentDeals(raw, startMs, endMs) {
+      const map = new Map();
+      for (const d of raw.results || []) {
+        for (const id of sentStageIds) {
+          const enteredMs = Date.parse(d.properties[`hs_date_entered_${id}`] || '');
+          if (enteredMs >= startMs && enteredMs <= endMs) {
+            map.set(d.id, d);
+            break;
+          }
+        }
+      }
+      return { results: [...map.values()], total: map.size };
+    }
+
+    const prevRangeStartMs = Date.parse(range.prevStart || '');
+    const prevRangeEndMs   = Date.parse(range.prevEnd   || '');
+    const dealsSentRaw     = filterSentDeals(currentSentRaw, rangeStartMs, rangeEndMs);
+    const prevDealsSentRaw = filterSentDeals(prevSentRaw, prevRangeStartMs, prevRangeEndMs);
 
     // --- Source override from associated deals ---
     // For each contact with at least one associated deal, look up the deal's

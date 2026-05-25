@@ -208,6 +208,25 @@ export async function getDealsModifiedInRange(startISO, endISO) {
   });
 }
 
+// Fetches deals modified since startISO requesting hs_date_entered_* for the given
+// sentStageIds. Caller filters in-memory — HubSpot search doesn't support filtering
+// on hs_date_entered_* directly.
+export async function getDealsEnteredSentStages(sentStageIds, startISO) {
+  const stageProps = sentStageIds.map((id) => `hs_date_entered_${id}`);
+  return searchAllCRM('deals', {
+    filters: [
+      { propertyName: 'hs_lastmodifieddate', operator: 'GTE', value: startISO },
+    ],
+    properties: [
+      'dealname', 'dealstage', 'pipeline', 'amount',
+      'hubspot_owner_id', 'createdate', 'hs_lastmodifieddate', 'closedate',
+      'lead_source',
+      ...stageProps,
+    ],
+    sorts: [{ propertyName: 'hs_lastmodifieddate', direction: 'DESCENDING' }],
+  });
+}
+
 // Fetches deals modified since rangeStart (broad net), requesting hs_date_entered_*
 // for all open stages so that buildActivityFunnel can filter in-memory.
 // HubSpot search doesn't support filtering on hs_date_entered_* properties directly.
