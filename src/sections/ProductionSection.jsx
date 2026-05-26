@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useProductionData } from '../hooks/useProductionData';
 import { useThroughput } from '../hooks/useThroughput';
+import WeeklyOverview from '../components/production/WeeklyOverview';
 import OverviewTab from '../components/production/OverviewTab';
 import DepartmentLoadTab from '../components/production/DepartmentLoadTab';
 import ThroughputTab from '../components/production/ThroughputTab';
@@ -14,7 +15,8 @@ const TABS = [
 ];
 
 export default function ProductionSection() {
-  const [activeTab, setActiveTab]         = useState('overview');
+  const [activeTab, setActiveTab]       = useState('overview');
+  const [overviewMode, setOverviewMode] = useState('weekly'); // 'weekly' | 'list'
   const { data, loading, error, refresh } = useProductionData();
   const { data: throughputData }          = useThroughput();
 
@@ -39,7 +41,11 @@ export default function ProductionSection() {
 
         <div className="flex gap-1 bg-white/5 rounded-xl p-1 w-fit">
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)}
+            <button key={t.id}
+              onClick={() => {
+                setActiveTab(t.id);
+                if (t.id === 'overview') setOverviewMode('weekly');
+              }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === t.id ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white/80'
               }`}>
@@ -55,7 +61,22 @@ export default function ProductionSection() {
           </div>
         )}
 
-        {data && activeTab === 'overview'    && <OverviewTab data={data} />}
+        {data && activeTab === 'overview' && overviewMode === 'weekly' && (
+          <WeeklyOverview data={data} onSwitchToList={() => setOverviewMode('list')} />
+        )}
+        {data && activeTab === 'overview' && overviewMode === 'list' && (
+          <>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setOverviewMode('weekly')}
+                className="text-[11px] text-white/35 hover:text-white/60 transition-colors"
+              >
+                ← Weekly view
+              </button>
+            </div>
+            <OverviewTab data={data} />
+          </>
+        )}
         {data && activeTab === 'departments' && <DepartmentLoadTab data={data} />}
         {activeTab === 'throughput'          && <ThroughputTab data={throughputData} />}
         {data && activeTab === 'calendar'    && <CalendarView rawJobs={data.jobs} onRefresh={refresh} />}
