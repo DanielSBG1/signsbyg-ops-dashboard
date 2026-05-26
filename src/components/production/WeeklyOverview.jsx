@@ -67,7 +67,6 @@ function currentStage(jobGid, jobMap) {
   if (!job) return 'Complete';
   const incomplete = job.subTasks.filter(s => !s.completed);
   if (incomplete.length === 0) return 'Complete';
-  // Return the first incomplete stage (chronological order they appear)
   return incomplete[0].name ?? 'In Progress';
 }
 
@@ -437,10 +436,12 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) + projectedLateInPeriod.length;
 
-  // Rollover jobs: open jobs whose due date was last week
+  // Rollover jobs: any open job with a past due date (not just last week)
   const rolloverJobs = useMemo(() =>
-    (data.schedule?.lastWeek?.jobs ?? []).filter(j => j.state === 'overdue'),
-  [data.schedule]);
+    data.jobs
+      .filter(j => j.due_on && j.due_on < today)
+      .map(j => ({ gid: j.gid, name: j.name, due_on: j.due_on, state: 'overdue' })),
+  [data.jobs, today]);
 
   // Unreviewed jobs: jobs with no production stages added yet
   const unreviewedJobs = useMemo(() =>
@@ -485,7 +486,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       {/* ── Needs Attention alerts ── */}
       <div className="grid grid-cols-2 gap-4">
         <AlertCard
-          label="Rolled Over from Last Week"
+          label="Rolled Over / Still Open"
           value={rolloverJobs.length}
           sub="open jobs past their due date — complete ASAP"
           active={activeAlert === 'rollover'}
