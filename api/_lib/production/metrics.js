@@ -1,4 +1,4 @@
-import { DEPT_RULES, REDO_PREFIX, PRODUCTION_PROJECT_GID, PROD_SUBTASK_FIELDS, SUBSUBTASK_FIELDS, PRODUCTION_DUE_DATE_CF_GID, PROMISED_DATE_CF_GID } from './constants.js';
+import { DEPT_SECTION_MAP, REDO_PREFIX, PRODUCTION_PROJECT_GID, PROD_SUBTASK_FIELDS, SUBSUBTASK_FIELDS, PRODUCTION_DUE_DATE_CF_GID, PROMISED_DATE_CF_GID } from './constants.js';
 import { getProjectTasks, getTasksCompletedSince, getSubtasks } from './asana.js';
 import { pLimit } from '../concurrency.js';
 
@@ -123,17 +123,15 @@ export function detectRedoType(subSubTasks, parentSubtaskCount) {
 }
 
 /**
- * Infers department from which sub-sub-tasks are present.
- * Uses DEPT_RULES priority order — first match wins.
- * @param {Array<{name: string}>} subSubTasks
+ * Infers department from the Asana section the task belongs to.
+ * Falls back to 'outsourced' if no section matches.
+ * @param {object} task  raw Asana task with memberships
  * @returns {'channel_letters'|'fabrication'|'vinyl_fco'|'outsourced'}
  */
-export function inferDepartment(subSubTasks) {
-  const names = subSubTasks.map(s => s.name?.toLowerCase() ?? '');
-  for (const rule of DEPT_RULES) {
-    if (rule.indicator && names.some(n => n.includes(rule.indicator))) {
-      return rule.key;
-    }
+export function inferDepartment(task) {
+  const sectionName = task.memberships?.[0]?.section?.name?.toLowerCase() ?? '';
+  for (const { key, fragment } of DEPT_SECTION_MAP) {
+    if (sectionName.includes(fragment)) return key;
   }
   return 'outsourced';
 }
@@ -242,7 +240,7 @@ export async function buildProductionMetrics() {
         status,
         projectedLate: status !== 'late' && isProjectedLate(subTasks, today),
         redoType: detectRedoType(subTasks, count),
-        department: inferDepartment(subTasks),
+        department: inferDepartment(t),
         subTasks,
       };
     });

@@ -11,6 +11,7 @@ export const PROD_SUBTASK_FIELDS = [
   'gid', 'name', 'due_on', 'start_on', 'completed', 'created_at',
   'parent.gid', 'parent.name', 'assignee.name',
   'custom_fields.gid', 'custom_fields.date_value',
+  'memberships.section.name',
 ].join(',');
 
 // opt_fields for sub-sub-task queries
@@ -24,14 +25,13 @@ export const THROUGHPUT_FIELDS = [
 ].join(',');
 
 /**
- * Department bucket rules — evaluated in priority order, first match wins.
- * `indicator` is matched case-insensitively against sub-sub-task names.
+ * Maps Asana section name fragments (case-insensitive) to department keys.
+ * Evaluated in order — first match wins. Falls back to 'outsourced'.
  */
-export const DEPT_RULES = [
-  { key: 'channel_letters', label: 'Channel Letters', indicator: 'channel letter fab' },
-  { key: 'fabrication',     label: 'Fabrication',     indicator: 'fabrication' },
-  { key: 'vinyl_fco',       label: 'Vinyl & FCO',      indicator: 'vinyl' },
-  { key: 'outsourced',      label: 'Outsourced',       indicator: null },
+export const DEPT_SECTION_MAP = [
+  { key: 'channel_letters', fragment: 'channel' },
+  { key: 'fabrication',     fragment: 'fab' },
+  { key: 'vinyl_fco',       fragment: 'vinyl' },
 ];
 
 // Prefix that identifies a redo sub-sub-task (case-insensitive)
