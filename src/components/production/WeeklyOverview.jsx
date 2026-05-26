@@ -67,6 +67,7 @@ function currentStage(jobGid, jobMap) {
   if (!job) return 'Complete';
   const incomplete = job.subTasks.filter(s => !s.completed);
   if (incomplete.length === 0) return 'Complete';
+  // Return the first incomplete stage (chronological order they appear)
   return incomplete[0].name ?? 'In Progress';
 }
 
@@ -120,6 +121,68 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
         {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
       </p>
     </button>
+  );
+}
+
+// ─── Unreviewed job panel (shows promised date + days waiting) ────────────────
+
+function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
+  if (jobs.length === 0) {
+    return (
+      <div className="bg-slate-card border border-white/10 rounded-2xl p-8 text-center text-white/30 text-sm">
+        No unreviewed jobs right now.
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-card border border-danger/30 rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-white/[0.06] flex items-center justify-between">
+        <p className="text-xs text-white/40 font-semibold uppercase tracking-widest">Unreviewed Jobs</p>
+        <p className="text-xs text-white/30">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
+      </div>
+      {/* Column headers */}
+      <div className="px-5 py-2 border-b border-white/[0.04] grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center">
+        <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest">Job</span>
+        <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest text-right">Promised Date</span>
+        <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest text-right">Prod Due</span>
+        <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest text-right">Days Waiting</span>
+      </div>
+      <div className="divide-y divide-white/[0.04]">
+        {jobs.map(job => {
+          const urgency = job.daysWaiting >= 7 ? 'text-danger' : job.daysWaiting >= 3 ? 'text-orange-400' : 'text-white/50';
+          return (
+            <button
+              key={job.gid}
+              onClick={() => {
+                const full = jobMap[job.gid];
+                if (full) onSelectJob(full);
+              }}
+              className="w-full text-left px-5 py-3.5 hover:bg-white/[0.03] transition-colors grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-white truncate">{job.name}</p>
+              </div>
+              <div className="text-right shrink-0">
+                {job.promisedDate
+                  ? <span className="text-[11px] text-warning font-semibold">{formatDate(job.promisedDate)}</span>
+                  : <span className="text-[11px] text-white/20">—</span>}
+              </div>
+              <div className="text-right shrink-0">
+                {job.due_on
+                  ? <span className="text-[11px] text-white/50">{formatDate(job.due_on)}</span>
+                  : <span className="text-[11px] text-white/20">—</span>}
+              </div>
+              <div className="text-right shrink-0">
+                <span className={`text-sm font-bold tabular-nums ${urgency}`}>
+                  {job.daysWaiting}d
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -444,11 +507,25 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   [data.jobs, today]);
 
   // Unreviewed jobs: jobs with no production stages added yet
-  const unreviewedJobs = useMemo(() =>
-    data.jobs
+  const unreviewedJobs = useMemo(() => {
+    return data.jobs
       .filter(j => j.subTasks.length === 0)
-      .map(j => ({ gid: j.gid, name: j.name, due_on: j.due_on, state: 'in_progress' })),
-  [data.jobs]);
+      .map(j => {
+        const ref = j.createdAt ?? j.startDate ?? null;
+        const daysWaiting = ref
+          ? Math.max(0, Math.floor((new Date(today) - new Date(ref)) / 86400000))
+          : 0;
+        return {
+          gid: j.gid,
+          name: j.name,
+          due_on: j.due_on,
+          promisedDate: j.promisedDate ?? null,
+          daysWaiting,
+          state: 'in_progress',
+        };
+      })
+      .sort((a, b) => b.daysWaiting - a.daysWaiting);
+  }, [data.jobs, today]);
 
   // Jobs to show in alert panels
   const alertPanelJobs = useMemo(() => {
@@ -502,12 +579,19 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       </div>
 
       {/* ── Alert panel ── */}
-      {activeAlert && (
+      {activeAlert === 'rollover' && (
         <JobPanel
           jobs={alertPanelJobs}
           jobMap={jobMap}
           onSelectJob={setSelectedJob}
           accentColor="danger"
+        />
+      )}
+      {activeAlert === 'unreviewed' && (
+        <UnreviewedJobPanel
+          jobs={unreviewedJobs}
+          jobMap={jobMap}
+          onSelectJob={setSelectedJob}
         />
       )}
 

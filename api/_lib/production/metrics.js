@@ -1,4 +1,4 @@
-import { DEPT_RULES, REDO_PREFIX, PRODUCTION_PROJECT_GID, PROD_SUBTASK_FIELDS, SUBSUBTASK_FIELDS, PRODUCTION_DUE_DATE_CF_GID } from './constants.js';
+import { DEPT_RULES, REDO_PREFIX, PRODUCTION_PROJECT_GID, PROD_SUBTASK_FIELDS, SUBSUBTASK_FIELDS, PRODUCTION_DUE_DATE_CF_GID, PROMISED_DATE_CF_GID } from './constants.js';
 import { getProjectTasks, getTasksCompletedSince, getSubtasks } from './asana.js';
 import { pLimit } from '../concurrency.js';
 
@@ -76,6 +76,14 @@ export function buildScheduleStats(openTasks, completedTasks, range, today) {
 export function extractProductionDueDate(task) {
   const cf = task.custom_fields?.find(f => f.gid === PRODUCTION_DUE_DATE_CF_GID);
   return cf?.date_value?.date ?? task.due_on ?? null;
+}
+
+/**
+ * Returns the "Promised Date" custom field value (YYYY-MM-DD) for a task, or null.
+ */
+export function extractPromisedDate(task) {
+  const cf = task.custom_fields?.find(f => f.gid === PROMISED_DATE_CF_GID);
+  return cf?.date_value?.date ?? null;
 }
 
 /**
@@ -228,6 +236,9 @@ export async function buildProductionMetrics() {
         gid:  t.gid,
         name: t.parent.name,
         due_on,
+        startDate:    t.start_on ?? null,
+        createdAt:    t.created_at ? t.created_at.slice(0, 10) : null,
+        promisedDate: extractPromisedDate(t),
         status,
         projectedLate: status !== 'late' && isProjectedLate(subTasks, today),
         redoType: detectRedoType(subTasks, count),

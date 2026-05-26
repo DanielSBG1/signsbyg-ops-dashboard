@@ -3,9 +3,12 @@ export const PRODUCTION_PROJECT_GID = '1204877952044255';
 // GID of the "Production Due Date" custom field — authoritative expected completion date
 export const PRODUCTION_DUE_DATE_CF_GID = '1210757373140456';
 
+// GID of the "Promised Date" custom field — customer-facing commitment date
+export const PROMISED_DATE_CF_GID = '1212638956774268';
+
 // opt_fields for production sub-task queries
 export const PROD_SUBTASK_FIELDS = [
-  'gid', 'name', 'due_on', 'completed', 'modified_at',
+  'gid', 'name', 'due_on', 'start_on', 'completed', 'created_at',
   'parent.gid', 'parent.name', 'assignee.name',
   'custom_fields.gid', 'custom_fields.date_value',
 ].join(',');
