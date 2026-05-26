@@ -75,7 +75,7 @@ function isAtRisk(job, today) {
   return job.subTasks.some(s => !s.completed && s.due_on && s.due_on <= today);
 }
 
-// ─── Alert card ──────────────────────────────────────────────────────────────────
+// ─── Alert card ──────────────────────────────────────────────────────────────
 
 function AlertCard({ label, value, sub, active, onClick }) {
   return (
@@ -124,7 +124,7 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
   );
 }
 
-// ─── Unreviewed job panel ───────────────────────────────────────────────────────────
+// ─── Unreviewed job panel ─────────────────────────────────────────────────────
 
 function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
   if (jobs.length === 0) {
@@ -134,7 +134,6 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
       </div>
     );
   }
-
   return (
     <div className="bg-slate-card border border-danger/30 rounded-2xl overflow-hidden">
       <div className="px-5 py-3 border-b border-white/[0.06] flex items-center justify-between">
@@ -229,7 +228,7 @@ function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
   );
 }
 
-// ─── Job card (day column) ──────────────────────────────────────────────────────────
+// ─── Job card (day column) ────────────────────────────────────────────────────
 
 function JobCard({ job, today, onClick }) {
   const { band } = job._health;
@@ -278,28 +277,37 @@ function JobCard({ job, today, onClick }) {
   );
 }
 
-// ─── Department stage summary (bottom of day column) ──────────────────────────────
+// ─── Department stage summary (bottom of day column) ─────────────────────────
+// Shows 3 states per department: completed on time (green), completed late (orange), still open (red)
 
 function DeptStageSummary({ subTasksByDept }) {
   const hasAny = DEPT_META.some(d => (subTasksByDept[d.key]?.length ?? 0) > 0);
   if (!hasAny) return null;
   return (
-    <div className="space-y-2 pt-3 border-t border-white/[0.06]">
+    <div className="space-y-2.5 pt-3 border-t border-white/[0.06]">
       <p className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">Stages due</p>
       {DEPT_META.map(dept => {
         const tasks = subTasksByDept[dept.key] ?? [];
         if (tasks.length === 0) return null;
-        const done   = tasks.filter(t => t.completed).length;
-        const overdue = tasks.filter(t => !t.completed && t.due_on).length;
+        const onTime = tasks.filter(t => t.completed && t.completed_at && t.completed_at <= t.due_on).length;
+        const late   = tasks.filter(t => t.completed && (!t.completed_at || t.completed_at > t.due_on)).length;
+        const open   = tasks.filter(t => !t.completed).length;
         return (
-          <div key={dept.key} className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
+          <div key={dept.key} className="space-y-1">
+            <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
               <span className="text-[11px] text-white/50 truncate">{dept.label}</span>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[11px] text-white/30 tabular-nums">{done}/{tasks.length}</span>
-              {overdue > 0 && <span className="text-[10px] text-danger tabular-nums font-semibold">({overdue} open)</span>}
+            <div className="flex items-center gap-2 pl-3">
+              {onTime > 0 && (
+                <span className="text-[10px] tabular-nums font-semibold text-success">{onTime} on time</span>
+              )}
+              {late > 0 && (
+                <span className="text-[10px] tabular-nums font-semibold text-orange-400">{late} late</span>
+              )}
+              {open > 0 && (
+                <span className="text-[10px] tabular-nums font-semibold text-danger">{open} open</span>
+              )}
             </div>
           </div>
         );
@@ -354,7 +362,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   );
 }
 
-// ─── Department load summary panel ────────────────────────────────────────────
+// ─── Department load summary panel ───────────────────────────────────────────
 
 function DepartmentLoadPanel({ departmentLoad }) {
   return (
@@ -367,16 +375,12 @@ function DepartmentLoadPanel({ departmentLoad }) {
           const doneSubs  = jobs.reduce((n, j) => n + j.subTasks.filter(s => s.completed).length, 0);
           const pct       = totalSubs > 0 ? Math.round((doneSubs / totalSubs) * 100) : 0;
           const lateCount = jobs.filter(j => j.status === 'late').length;
-
           return (
             <div key={dept.key} className="space-y-3">
-              {/* Dept name */}
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
                 <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">{dept.label}</span>
               </div>
-
-              {/* Job count + late badge */}
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-black tabular-nums leading-none" style={{ color: dept.color }}>
                   {jobs.length}
@@ -388,22 +392,16 @@ function DepartmentLoadPanel({ departmentLoad }) {
                   </span>
                 )}
               </div>
-
-              {/* Progress bar */}
               <div className="space-y-1.5">
                 <div className="h-2 rounded-full bg-white/[0.08] overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{ width: `${pct}%`, backgroundColor: dept.color }}
-                  />
+                  <div className="h-full rounded-full transition-all duration-300"
+                    style={{ width: `${pct}%`, backgroundColor: dept.color }} />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-white/30 tabular-nums">
                     {totalSubs > 0 ? `${doneSubs}/${totalSubs} stages` : 'No stages'}
                   </span>
-                  <span className="text-[11px] font-bold tabular-nums" style={{ color: dept.color }}>
-                    {pct}%
-                  </span>
+                  <span className="text-[11px] font-bold tabular-nums" style={{ color: dept.color }}>{pct}%</span>
                 </div>
               </div>
             </div>
@@ -424,7 +422,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // 3-week calendar: this week, next week, in 2 weeks
   const calendarWeeks = useMemo(() =>
     CALENDAR_WEEK_LABELS.map((label, i) => {
       const d = new Date(today + 'T12:00:00Z');
@@ -433,12 +430,10 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     }),
   [today]);
 
-  // jobMap
   const jobMap = useMemo(() =>
     Object.fromEntries(data.jobs.map(j => [j.gid, j])),
   [data.jobs]);
 
-  // annotated jobs
   const annotatedJobs = useMemo(() =>
     data.jobs.map(job => ({
       ...job,
@@ -447,7 +442,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     })),
   [data.jobs, today]);
 
-  // jobs by date for all 3 calendar weeks
   const calendarJobsByDay = useMemo(() => {
     const map = {};
     for (const week of calendarWeeks)
@@ -457,7 +451,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, calendarWeeks]);
 
-  // sub-tasks by date → dept for all 3 calendar weeks
   const calendarSubTasksByDay = useMemo(() => {
     const map = {};
     for (const week of calendarWeeks)
@@ -469,7 +462,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, calendarWeeks]);
 
-  // KPI schedule stats (driven by period selector)
   const schedule       = data.schedule?.[activePeriod] ?? {};
   const scheduledTotal = schedule.scheduled ?? 0;
   const onTimeTotal    = schedule.onTime    ?? 0;
@@ -481,14 +473,12 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) + projectedLateInPeriod.length;
 
-  // Rollover jobs
   const rolloverJobs = useMemo(() =>
     data.jobs
       .filter(j => j.due_on && j.due_on < today)
       .map(j => ({ gid: j.gid, name: j.name, due_on: j.due_on, state: 'overdue' })),
   [data.jobs, today]);
 
-  // Unreviewed jobs
   const unreviewedJobs = useMemo(() =>
     data.jobs
       .filter(j => j.subTasks.length === 0)
@@ -614,7 +604,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       {/* ── 3-week Mon–Fri calendar ── */}
       {calendarWeeks.map((week, wi) => (
         <div key={wi} className="space-y-3">
-          {/* Week section header */}
           <div className="flex items-center gap-3">
             <p className="text-[11px] font-bold uppercase tracking-widest text-white/40 shrink-0">{week.label}</p>
             <div className="flex-1 h-px bg-white/[0.06]" />

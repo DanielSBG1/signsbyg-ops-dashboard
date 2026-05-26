@@ -16,7 +16,7 @@ export const PROD_SUBTASK_FIELDS = [
 
 // opt_fields for sub-sub-task queries
 export const SUBSUBTASK_FIELDS = [
-  'gid', 'name', 'due_on', 'completed', 'assignee.name',
+  'gid', 'name', 'due_on', 'completed', 'completed_at', 'assignee.name',
 ].join(',');
 
 // opt_fields for throughput queries (completed tasks)
