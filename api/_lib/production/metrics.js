@@ -151,6 +151,9 @@ export async function buildProductionMetrics() {
   const twoWeeksAgoD = new Date(today + 'T12:00:00Z');
   twoWeeksAgoD.setUTCDate(twoWeeksAgoD.getUTCDate() - 14);
   const twoWeeksAgoRange = getWeekRange(twoWeeksAgoD.toISOString().slice(0, 10));
+  const nextWeekD = new Date(today + 'T12:00:00Z');
+  nextWeekD.setUTCDate(nextWeekD.getUTCDate() + 7);
+  const nextWeekRange = getWeekRange(nextWeekD.toISOString().slice(0, 10));
 
   const monthStart = `${year}-${month}-01`;
   const monthEnd = new Date(Number(year), Number(month), 0).toISOString().slice(0, 10);
@@ -255,6 +258,7 @@ export async function buildProductionMetrics() {
   const bss = (range) => buildScheduleStats(normalizedIncompleteTasks, completedTasksOnly, range, today);
   const schedule = {
     thisWeek:    bss(thisWeekRange),
+    nextWeek:    bss(nextWeekRange),
     lastWeek:    bss(lastWeekRange),
     twoWeeksAgo: bss(twoWeeksAgoRange),
     thisMonth:   bss({ start: monthStart,     end: monthEnd }),

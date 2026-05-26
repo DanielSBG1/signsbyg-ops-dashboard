@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import JobDrawer from './JobDrawer';
 import { computeProductionHealth, BAND_CONFIG } from '../../utils/health.js';
 
-// ─── Constants ───────────────────────────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const DEPT_META = [
   { key: 'channel_letters', label: 'Channel Letters', short: 'CL',    color: '#06b6d4' },
@@ -15,6 +15,7 @@ const DEPT_BY_KEY = Object.fromEntries(DEPT_META.map(d => [d.key, d]));
 
 const PERIODS = [
   { id: 'thisWeek',    label: 'This Week',    isWeek: true  },
+  { id: 'nextWeek',    label: 'Next Week',    isWeek: true  },
   { id: 'lastWeek',    label: 'Last Week',    isWeek: true  },
   { id: 'twoWeeksAgo', label: '2 Weeks Ago',  isWeek: true  },
   { id: 'thisMonth',   label: 'This Month',   isWeek: false },
@@ -52,12 +53,20 @@ function getWeekDays(today) {
   });
 }
 
+function formatDate(iso) {
+  if (!iso) return 'No date';
+  return new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC',
+  });
+}
+
 /** Returns the first incomplete subTask name, or 'Complete' if all done. */
 function currentStage(jobGid, jobMap) {
   const job = jobMap[jobGid];
   if (!job) return 'Complete';
   const incomplete = job.subTasks.filter(s => !s.completed);
   if (incomplete.length === 0) return 'Complete';
+  // Return the first incomplete stage (chronological order they appear)
   return incomplete[0].name ?? 'In Progress';
 }
 
@@ -65,7 +74,7 @@ function isAtRisk(job, today) {
   return job.subTasks.some(s => !s.completed && s.due_on && s.due_on <= today);
 }
 
-// ─── KPI card ────────────────────────────────────────────────────────────────────────────
+// ─── KPI card ────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, color, active, onClick }) {
   const cls = { success: 'text-success', danger: 'text-danger', warning: 'text-warning' }[color] ?? 'text-white';
@@ -109,6 +118,7 @@ function JobPanel({ jobs, jobMap, onSelectJob }) {
         {jobs.map(job => {
           const badge = STATE_BADGE[job.state] ?? STATE_BADGE.in_progress;
           const stage = currentStage(job.gid, jobMap);
+          const isDone = job.state === 'on_time' || job.state === 'late';
           return (
             <button
               key={job.gid}
@@ -116,17 +126,19 @@ function JobPanel({ jobs, jobMap, onSelectJob }) {
                 const full = jobMap[job.gid];
                 if (full) onSelectJob(full);
               }}
-              className="w-full text-left px-5 py-3.5 hover:bg-white/[0.03] transition-colors flex items-center gap-4"
+              className={`w-full text-left px-5 py-3.5 hover:bg-white/[0.03] transition-colors flex items-center gap-4 ${isDone ? 'opacity-60' : ''}`}
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white font-medium truncate">{job.name}</p>
-                <p className="text-[11px] text-white/30 mt-0.5">{job.due_on ?? 'No date'}</p>
+                <p className={`text-sm font-medium truncate ${isDone ? 'text-white/60 line-through decoration-white/20' : 'text-white'}`}>{job.name}</p>
+                <p className="text-[11px] text-white/40 mt-0.5 font-medium">{formatDate(job.due_on)}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold truncate max-w-[140px]"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                  {stage}
-                </span>
+                {!isDone && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold truncate max-w-[140px]"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                    {stage}
+                  </span>
+                )}
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${badge.cls}`}>
                   {badge.label}
                 </span>
@@ -139,7 +151,7 @@ function JobPanel({ jobs, jobMap, onSelectJob }) {
   );
 }
 
-// ─── Job card (inside a day column) ────────────────────────────────────────────
+// ─── Job card (inside a day column) ──────────────────────────────────────────
 
 function JobCard({ job, today, onClick }) {
   const { band } = job._health;
@@ -237,7 +249,7 @@ function DeptStageSummary({ subTasksByDept }) {
   );
 }
 
-// ─── Day column ────────────────────────────────────────────────────────────────
+// ─── Day column ───────────────────────────────────────────────────────────────
 
 function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   const atRiskCount = jobs.filter(j => j._atRisk || j.status === 'late').length;
@@ -311,10 +323,13 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   const [activePeriod, setActivePeriod] = useState('thisWeek');
   const [activeCard,   setActiveCard]   = useState(null); // 'scheduled' | 'onTime' | 'atRisk'
 
-  const today     = new Date().toISOString().slice(0, 10);
+  const today    = new Date().toISOString().slice(0, 10);
   const periodCfg = PERIODS.find(p => p.id === activePeriod) ?? PERIODS[0];
+
+  // Only show weekly calendar for week-type periods
   const showCalendar = periodCfg.isWeek;
 
+  // Week days (for calendar view)
   const weekDays = useMemo(() => {
     if (!showCalendar) return [];
     if (activePeriod === 'lastWeek') {
@@ -327,13 +342,20 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       d.setUTCDate(d.getUTCDate() - 14);
       return getWeekDays(d.toISOString().slice(0, 10));
     }
+    if (activePeriod === 'nextWeek') {
+      const d = new Date(today + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() + 7);
+      return getWeekDays(d.toISOString().slice(0, 10));
+    }
     return getWeekDays(today);
   }, [activePeriod, showCalendar, today]);
 
+  // Build jobMap from data.jobs for stage lookup
   const jobMap = useMemo(() =>
     Object.fromEntries(data.jobs.map(j => [j.gid, j])),
   [data.jobs]);
 
+  // Annotate every job with health + at-risk flag
   const annotatedJobs = useMemo(() =>
     data.jobs.map(job => ({
       ...job,
@@ -342,6 +364,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     })),
   [data.jobs, today]);
 
+  // Group annotated jobs by their due_on date (within this week only)
   const jobsByDay = useMemo(() => {
     if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
@@ -352,6 +375,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, weekDays, showCalendar]);
 
+  // Group sub-tasks by day → department
   const subTasksByDay = useMemo(() => {
     if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
@@ -371,11 +395,13 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, weekDays, showCalendar]);
 
-  const schedule      = data.schedule?.[activePeriod] ?? {};
+  // Schedule stats for the active period
+  const schedule   = data.schedule?.[activePeriod] ?? {};
   const scheduledTotal = schedule.scheduled ?? 0;
   const onTimeTotal    = schedule.onTime    ?? 0;
   const atRiskTotal    = schedule.late      ?? 0;
 
+  // Jobs to show in the inline panel (filtered by which card is open)
   const panelJobs = useMemo(() => {
     if (!activeCard || !schedule.jobs) return [];
     if (activeCard === 'scheduled') return schedule.jobs;
@@ -391,7 +417,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   return (
     <div className="space-y-5">
 
-      {/* Period selector */}
+      {/* ── Period selector ── */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -408,7 +434,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         ))}
       </div>
 
-      {/* KPI strip */}
+      {/* ── KPI strip ── */}
       <div className="grid grid-cols-3 gap-4">
         <KpiCard
           label="Jobs Scheduled"
@@ -435,7 +461,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       </div>
 
-      {/* Inline job panel */}
+      {/* ── Inline job panel ── */}
       {activeCard && (
         <JobPanel
           jobs={panelJobs}
@@ -444,7 +470,36 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       )}
 
-      {/* Legend + list-view toggle (week periods only) */}
+      {/* ── Next Week Forecast strip ── */}
+      {activePeriod !== 'nextWeek' && (() => {
+        const nw = data.schedule?.nextWeek ?? {};
+        const nwScheduled = nw.scheduled ?? 0;
+        const nwOnTime    = nw.onTime    ?? 0;
+        const nwAtRisk    = nw.late      ?? 0;
+        return (
+          <div className="bg-slate-card border border-white/[0.07] rounded-2xl px-5 py-4 flex items-center gap-6">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30 shrink-0">
+              Next Week Forecast
+            </p>
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold tabular-nums text-white">{nwScheduled}</span>
+                <span className="text-[11px] text-white/35">scheduled</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold tabular-nums text-success">{nwOnTime}</span>
+                <span className="text-[11px] text-white/35">on time</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-2xl font-bold tabular-nums ${nwAtRisk > 0 ? 'text-danger' : 'text-white/40'}`}>{nwAtRisk}</span>
+                <span className="text-[11px] text-white/35">at risk</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Legend + list-view toggle (week periods only) ── */}
       {showCalendar && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -469,7 +524,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         </div>
       )}
 
-      {/* Mon–Fri day columns (week periods only) */}
+      {/* ── Mon–Fri day columns (week periods only) ── */}
       {showCalendar && (
         <div className="grid grid-cols-5 gap-3 items-start">
           {weekDays.map(day => (
@@ -486,7 +541,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         </div>
       )}
 
-      {/* Job drawer */}
+      {/* ── Job drawer ── */}
       {selectedJob && (
         <JobDrawer job={selectedJob} onClose={() => setSelectedJob(null)} />
       )}
