@@ -1,95 +1,62 @@
 import React, { useState } from 'react';
 import { useInstallationMetrics } from '../hooks/useInstallationMetrics';
-import SummaryCards from '../components/installation/SummaryCards';
-import SectionPipeline from '../components/installation/SectionPipeline';
-import CrewScorecard from '../components/installation/CrewScorecard';
-import JobsTable from '../components/installation/JobsTable';
-import PipelineBar from '../components/installation/PipelineBar';
-import ScheduleSection from '../components/installation/ScheduleSection';
+import InstallationOverview from '../components/installation/InstallationOverview';
 import CalendarView from '../components/installation/CalendarView';
 
-const VIEWS = [
-  { id: 'schedule', label: 'Schedule' },
+const TABS = [
+  { id: 'overview', label: 'Overview' },
   { id: 'calendar', label: 'Calendar' },
 ];
 
 export default function InstallationSection() {
+  const [activeTab, setActiveTab] = useState('overview');
   const { data, loading, error, lastRefreshed, refresh } = useInstallationMetrics();
-  const [view, setView] = useState('schedule');
 
   return (
     <div className="min-h-screen text-white">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <div>
-          <h1 className="text-2xl font-bold">Installation</h1>
-          {lastRefreshed && (
-            <p className="text-white/40 text-xs mt-1">
-              Updated {lastRefreshed.toLocaleTimeString()}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          {/* View toggle */}
-          <div className="flex rounded-lg border border-white/10 overflow-hidden">
-            {VIEWS.map(v => (
-              <button
-                key={v.id}
-                onClick={() => setView(v.id)}
-                className={`text-xs px-3 py-1.5 transition-colors ${
-                  view === v.id
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
-                }`}
-              >
-                {v.label}
-              </button>
-            ))}
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Installation</h1>
+            {lastRefreshed && (
+              <p className="text-white/40 text-xs mt-1">
+                Live snapshot · Updated {lastRefreshed.toLocaleTimeString()}
+              </p>
+            )}
           </div>
-          <button
-            onClick={refresh}
-            className="text-white/40 hover:text-white/70 text-xs px-3 py-1.5 border border-white/10 rounded-lg transition-colors"
-          >
-            {loading ? 'Loading...' : 'Refresh'}
+          <button onClick={refresh}
+            className="text-white/40 hover:text-white/70 text-xs px-3 py-1.5 border border-white/10 rounded-lg transition-colors">
+            Refresh
           </button>
         </div>
-      </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+        <div className="flex gap-1 bg-white/5 rounded-xl p-1 w-fit">
+          {TABS.map(t => (
+            <button key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === t.id ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white/80'
+              }`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {loading && !data && (
+          <div className="text-center py-20 text-white/40">Loading installation data...</div>
+        )}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">
-            Failed to load data: {error}
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
+            Error: {error}
           </div>
         )}
 
-        {loading && !data ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-              <p className="text-white/40 text-sm">Loading installation data...</p>
-            </div>
-          </div>
-        ) : data ? (
-          view === 'calendar' ? (
-            <CalendarView
-              jobs={data.jobs}
-              byCrew={data.byCrew}
-              onRefresh={refresh}
-            />
-          ) : (
-            <>
-              <ScheduleSection schedule={data.schedule} />
-              <PipelineBar summary={data.summary} jobs={data.jobs} />
-              <SummaryCards summary={data.summary} />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <SectionPipeline bySection={data.bySection} />
-                <CrewScorecard byCrew={data.byCrew} />
-              </div>
-              <JobsTable jobs={data.jobs} />
-            </>
-          )
-        ) : null}
-      </main>
+        {data && activeTab === 'overview' && <InstallationOverview data={data} />}
+        {data && activeTab === 'calendar' && (
+          <CalendarView jobs={data.jobs} byCrew={data.byCrew} onRefresh={refresh} />
+        )}
+      </div>
     </div>
   );
 }
