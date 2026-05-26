@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import JobDrawer from './JobDrawer';
 import { computeProductionHealth, BAND_CONFIG } from '../../utils/health.js';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────────────────
 
 const DEPT_META = [
   { key: 'channel_letters', label: 'Channel Letters', short: 'CL',    color: '#06b6d4' },
@@ -13,9 +13,28 @@ const DEPT_META = [
 
 const DEPT_BY_KEY = Object.fromEntries(DEPT_META.map(d => [d.key, d]));
 
+const PERIODS = [
+  { id: 'thisWeek',    label: 'This Week',    isWeek: true  },
+  { id: 'lastWeek',    label: 'Last Week',    isWeek: true  },
+  { id: 'twoWeeksAgo', label: '2 Weeks Ago',  isWeek: true  },
+  { id: 'thisMonth',   label: 'This Month',   isWeek: false },
+  { id: 'lastMonth',   label: 'Last Month',   isWeek: false },
+  { id: 'thisQuarter', label: 'This Quarter', isWeek: false },
+  { id: 'q1',          label: 'Q1',           isWeek: false },
+  { id: 'q2',          label: 'Q2',           isWeek: false },
+  { id: 'q3',          label: 'Q3',           isWeek: false },
+  { id: 'q4',          label: 'Q4',           isWeek: false },
+];
+
+const STATE_BADGE = {
+  on_time:     { label: 'On Time',     cls: 'bg-success/20 text-success' },
+  late:        { label: 'Late',        cls: 'bg-danger/20 text-danger' },
+  in_progress: { label: 'In Progress', cls: 'bg-accent/20 text-accent' },
+  overdue:     { label: 'Overdue',     cls: 'bg-orange-400/20 text-orange-400' },
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Returns Mon–Fri (YYYY-MM-DD) for the ISO week containing `today`. */
 function getWeekDays(today) {
   const d = new Date(today + 'T12:00:00Z');
   const dow = d.getUTCDay();
@@ -33,28 +52,94 @@ function getWeekDays(today) {
   });
 }
 
-/**
- * A job is "at risk" when it has at least one incomplete stage (sub-task)
- * whose due date has passed — meaning the work is behind schedule.
- */
+/** Returns the first incomplete subTask name, or 'Complete' if all done. */
+function currentStage(jobGid, jobMap) {
+  const job = jobMap[jobGid];
+  if (!job) return 'Complete';
+  const incomplete = job.subTasks.filter(s => !s.completed);
+  if (incomplete.length === 0) return 'Complete';
+  return incomplete[0].name ?? 'In Progress';
+}
+
 function isAtRisk(job, today) {
   return job.subTasks.some(s => !s.completed && s.due_on && s.due_on <= today);
 }
 
-// ─── KPI card ────────────────────────────────────────────────────────────────
+// ─── KPI card ────────────────────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, color }) {
+function KpiCard({ label, value, sub, color, active, onClick }) {
   const cls = { success: 'text-success', danger: 'text-danger', warning: 'text-warning' }[color] ?? 'text-white';
   return (
-    <div className="bg-slate-card border border-white/10 rounded-2xl p-6">
+    <button
+      onClick={onClick}
+      className={`w-full text-left bg-slate-card border rounded-2xl p-6 transition-all duration-150 ${
+        active
+          ? 'border-accent/60 ring-1 ring-accent/30 bg-accent/[0.04]'
+          : 'border-white/10 hover:border-white/20'
+      }`}
+    >
       <p className="text-white/40 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
       <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '—'}</p>
       {sub && <p className="text-white/30 text-xs mt-2">{sub}</p>}
+      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-white/20'}`}>
+        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
+      </p>
+    </button>
+  );
+}
+
+// ─── Inline job panel ─────────────────────────────────────────────────────────
+
+function JobPanel({ jobs, jobMap, onSelectJob }) {
+  if (jobs.length === 0) {
+    return (
+      <div className="bg-slate-card border border-white/10 rounded-2xl p-8 text-center text-white/30 text-sm">
+        No jobs for this metric in the selected period.
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-card border border-accent/20 rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-white/[0.06] flex items-center justify-between">
+        <p className="text-xs text-white/40 font-semibold uppercase tracking-widest">Jobs</p>
+        <p className="text-xs text-white/30">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
+      </div>
+      <div className="divide-y divide-white/[0.04]">
+        {jobs.map(job => {
+          const badge = STATE_BADGE[job.state] ?? STATE_BADGE.in_progress;
+          const stage = currentStage(job.gid, jobMap);
+          return (
+            <button
+              key={job.gid}
+              onClick={() => {
+                const full = jobMap[job.gid];
+                if (full) onSelectJob(full);
+              }}
+              className="w-full text-left px-5 py-3.5 hover:bg-white/[0.03] transition-colors flex items-center gap-4"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white font-medium truncate">{job.name}</p>
+                <p className="text-[11px] text-white/30 mt-0.5">{job.due_on ?? 'No date'}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold truncate max-w-[140px]"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                  {stage}
+                </span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${badge.cls}`}>
+                  {badge.label}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-// ─── Job card (inside a day column) ──────────────────────────────────────────
+// ─── Job card (inside a day column) ────────────────────────────────────────────
 
 function JobCard({ job, today, onClick }) {
   const { band } = job._health;
@@ -71,7 +156,6 @@ function JobCard({ job, today, onClick }) {
       onClick={onClick}
       className={`w-full text-left rounded-xl border ${cfg.borderClass} bg-white/[0.025] hover:bg-white/[0.055] transition-all duration-150 p-3 space-y-2.5 group`}
     >
-      {/* Name + status dot */}
       <div className="flex items-start gap-2">
         <span className={`mt-[3px] w-2 h-2 rounded-full shrink-0 ${cfg.fillClass}`} />
         <span className="text-sm font-medium text-white leading-snug group-hover:text-white/90">
@@ -79,7 +163,6 @@ function JobCard({ job, today, onClick }) {
         </span>
       </div>
 
-      {/* Stage progress bar */}
       {total > 0 && (
         <div className="space-y-1">
           <div className="h-1 rounded-full bg-white/10 overflow-hidden">
@@ -97,7 +180,6 @@ function JobCard({ job, today, onClick }) {
         </div>
       )}
 
-      {/* Badges */}
       <div className="flex items-center gap-1.5 flex-wrap">
         {dept && (
           <span
@@ -155,7 +237,7 @@ function DeptStageSummary({ subTasksByDept }) {
   );
 }
 
-// ─── Day column ───────────────────────────────────────────────────────────────
+// ─── Day column ────────────────────────────────────────────────────────────────
 
 function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   const atRiskCount = jobs.filter(j => j._atRisk || j.status === 'late').length;
@@ -168,7 +250,6 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
           : 'border-white/10 bg-slate-card'
       }`}
     >
-      {/* Day header */}
       <div className={`px-4 pt-4 pb-3 ${isToday ? 'border-b border-accent/20' : 'border-b border-white/[0.06]'}`}>
         <div className="flex items-center justify-between mb-1">
           <span className={`text-[11px] font-bold uppercase tracking-widest ${isToday ? 'text-accent' : 'text-white/35'}`}>
@@ -201,7 +282,6 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
         </div>
       </div>
 
-      {/* Jobs */}
       <div className="flex-1 p-3 space-y-2">
         {jobs.length === 0 ? (
           <p className="text-white/15 text-xs text-center py-6">No jobs due</p>
@@ -217,7 +297,6 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
         )}
       </div>
 
-      {/* Department stage counts */}
       <div className="px-4 pb-4">
         <DeptStageSummary subTasksByDept={subTasksByDept} />
       </div>
@@ -228,11 +307,33 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function WeeklyOverview({ data, onSwitchToList }) {
-  const [selectedJob, setSelectedJob] = useState(null);
-  const today    = new Date().toISOString().slice(0, 10);
-  const weekDays = useMemo(() => getWeekDays(today), [today]);
+  const [selectedJob,  setSelectedJob]  = useState(null);
+  const [activePeriod, setActivePeriod] = useState('thisWeek');
+  const [activeCard,   setActiveCard]   = useState(null); // 'scheduled' | 'onTime' | 'atRisk'
 
-  // Annotate every job with health + at-risk flag
+  const today     = new Date().toISOString().slice(0, 10);
+  const periodCfg = PERIODS.find(p => p.id === activePeriod) ?? PERIODS[0];
+  const showCalendar = periodCfg.isWeek;
+
+  const weekDays = useMemo(() => {
+    if (!showCalendar) return [];
+    if (activePeriod === 'lastWeek') {
+      const d = new Date(today + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() - 7);
+      return getWeekDays(d.toISOString().slice(0, 10));
+    }
+    if (activePeriod === 'twoWeeksAgo') {
+      const d = new Date(today + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() - 14);
+      return getWeekDays(d.toISOString().slice(0, 10));
+    }
+    return getWeekDays(today);
+  }, [activePeriod, showCalendar, today]);
+
+  const jobMap = useMemo(() =>
+    Object.fromEntries(data.jobs.map(j => [j.gid, j])),
+  [data.jobs]);
+
   const annotatedJobs = useMemo(() =>
     data.jobs.map(job => ({
       ...job,
@@ -241,18 +342,18 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     })),
   [data.jobs, today]);
 
-  // Group annotated jobs by their due_on date (within this week only)
   const jobsByDay = useMemo(() => {
+    if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
     const map = Object.fromEntries(weekDays.map(d => [d.date, []]));
     for (const job of annotatedJobs) {
       if (job.due_on && validDates.has(job.due_on)) map[job.due_on].push(job);
     }
     return map;
-  }, [annotatedJobs, weekDays]);
+  }, [annotatedJobs, weekDays, showCalendar]);
 
-  // Group sub-tasks by day → department (for the "stages due" footer)
   const subTasksByDay = useMemo(() => {
+    if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
     const map = Object.fromEntries(
       weekDays.map(d => [
@@ -268,78 +369,124 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       }
     }
     return map;
-  }, [annotatedJobs, weekDays]);
+  }, [annotatedJobs, weekDays, showCalendar]);
 
-  // ── KPI numbers ──
-  const schedule     = data.schedule?.thisWeek;
-  const weekJobsAll  = annotatedJobs.filter(j => j.due_on >= weekDays[0].date && j.due_on <= weekDays[4].date);
-  const atRiskTotal  = weekJobsAll.filter(j => j._atRisk || j.status === 'late').length;
-  const onTimeTotal  = schedule?.onTime ?? 0;
-  const scheduledTotal = schedule?.scheduled ?? weekJobsAll.length;
+  const schedule      = data.schedule?.[activePeriod] ?? {};
+  const scheduledTotal = schedule.scheduled ?? 0;
+  const onTimeTotal    = schedule.onTime    ?? 0;
+  const atRiskTotal    = schedule.late      ?? 0;
+
+  const panelJobs = useMemo(() => {
+    if (!activeCard || !schedule.jobs) return [];
+    if (activeCard === 'scheduled') return schedule.jobs;
+    if (activeCard === 'onTime')    return schedule.jobs.filter(j => j.state === 'on_time');
+    if (activeCard === 'atRisk')    return schedule.jobs.filter(j => j.state === 'overdue' || j.state === 'late');
+    return [];
+  }, [activeCard, schedule.jobs]);
+
+  function toggleCard(card) {
+    setActiveCard(prev => prev === card ? null : card);
+  }
 
   return (
     <div className="space-y-5">
 
-      {/* ── KPI strip ── */}
+      {/* Period selector */}
+      <div className="flex flex-wrap gap-1.5">
+        {PERIODS.map(p => (
+          <button
+            key={p.id}
+            onClick={() => { setActivePeriod(p.id); setActiveCard(null); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              activePeriod === p.id
+                ? 'bg-accent text-white'
+                : 'bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* KPI strip */}
       <div className="grid grid-cols-3 gap-4">
         <KpiCard
-          label="Jobs This Week"
+          label="Jobs Scheduled"
           value={scheduledTotal}
-          sub="scheduled & in production"
+          sub="total jobs in period"
+          active={activeCard === 'scheduled'}
+          onClick={() => toggleCard('scheduled')}
         />
         <KpiCard
           label="On Time"
           value={onTimeTotal}
           sub="completed on schedule"
           color="success"
+          active={activeCard === 'onTime'}
+          onClick={() => toggleCard('onTime')}
         />
         <KpiCard
-          label="At Risk"
+          label="At Risk / Late"
           value={atRiskTotal}
-          sub="stages overdue or past due date"
+          sub="overdue or past due date"
           color={atRiskTotal > 0 ? 'danger' : undefined}
+          active={activeCard === 'atRisk'}
+          onClick={() => toggleCard('atRisk')}
         />
       </div>
 
-      {/* ── Legend + list-view toggle ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {[
-            { label: 'Healthy',  cls: 'bg-success' },
-            { label: 'Watch',    cls: 'bg-yellow-400' },
-            { label: 'At Risk',  cls: 'bg-orange-400' },
-            { label: 'Critical', cls: 'bg-danger' },
-          ].map(({ label, cls }) => (
-            <div key={label} className="flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${cls}`} />
-              <span className="text-[11px] text-white/40">{label}</span>
-            </div>
+      {/* Inline job panel */}
+      {activeCard && (
+        <JobPanel
+          jobs={panelJobs}
+          jobMap={jobMap}
+          onSelectJob={setSelectedJob}
+        />
+      )}
+
+      {/* Legend + list-view toggle (week periods only) */}
+      {showCalendar && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {[
+              { label: 'Healthy',  cls: 'bg-success' },
+              { label: 'Watch',    cls: 'bg-yellow-400' },
+              { label: 'At Risk',  cls: 'bg-orange-400' },
+              { label: 'Critical', cls: 'bg-danger' },
+            ].map(({ label, cls }) => (
+              <div key={label} className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${cls}`} />
+                <span className="text-[11px] text-white/40">{label}</span>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={onSwitchToList}
+            className="text-[11px] text-white/35 hover:text-white/60 transition-colors"
+          >
+            List view →
+          </button>
+        </div>
+      )}
+
+      {/* Mon–Fri day columns (week periods only) */}
+      {showCalendar && (
+        <div className="grid grid-cols-5 gap-3 items-start">
+          {weekDays.map(day => (
+            <DayColumn
+              key={day.date}
+              day={day}
+              jobs={jobsByDay[day.date] ?? []}
+              subTasksByDept={subTasksByDay[day.date] ?? {}}
+              isToday={day.date === today}
+              today={today}
+              onSelectJob={setSelectedJob}
+            />
           ))}
         </div>
-        <button
-          onClick={onSwitchToList}
-          className="text-[11px] text-white/35 hover:text-white/60 transition-colors"
-        >
-          List view →
-        </button>
-      </div>
+      )}
 
-      {/* ── Mon–Fri day columns ── */}
-      <div className="grid grid-cols-5 gap-3 items-start">
-        {weekDays.map(day => (
-          <DayColumn
-            key={day.date}
-            day={day}
-            jobs={jobsByDay[day.date] ?? []}
-            subTasksByDept={subTasksByDay[day.date] ?? {}}
-            isToday={day.date === today}
-            today={today}
-            onSelectJob={setSelectedJob}
-          />
-        ))}
-      </div>
-
-      {/* ── Job drawer ── */}
+      {/* Job drawer */}
       {selectedJob && (
         <JobDrawer job={selectedJob} onClose={() => setSelectedJob(null)} />
       )}

@@ -141,13 +141,35 @@ export async function buildProductionMetrics() {
     .toISOString().slice(0, 10);
 
   // Date ranges for schedule stats
+  const year = today.slice(0, 4);
+  const month = today.slice(5, 7);
+
   const thisWeekRange = getWeekRange(today);
   const lastWeekD = new Date(today + 'T12:00:00Z');
   lastWeekD.setUTCDate(lastWeekD.getUTCDate() - 7);
   const lastWeekRange = getWeekRange(lastWeekD.toISOString().slice(0, 10));
-  const monthStart = `${today.slice(0, 7)}-01`;
-  // Fetch from earliest date needed (start of month or start of last week)
-  const scheduleSince = monthStart <= lastWeekRange.start ? monthStart : lastWeekRange.start;
+  const twoWeeksAgoD = new Date(today + 'T12:00:00Z');
+  twoWeeksAgoD.setUTCDate(twoWeeksAgoD.getUTCDate() - 14);
+  const twoWeeksAgoRange = getWeekRange(twoWeeksAgoD.toISOString().slice(0, 10));
+
+  const monthStart = `${year}-${month}-01`;
+  const monthEnd = new Date(Number(year), Number(month), 0).toISOString().slice(0, 10);
+
+  const lastMonthNum = Number(month) === 1 ? 12 : Number(month) - 1;
+  const lastMonthYear = Number(month) === 1 ? Number(year) - 1 : Number(year);
+  const lastMonthStart = `${lastMonthYear}-${String(lastMonthNum).padStart(2, '0')}-01`;
+  const lastMonthEnd = new Date(Number(lastMonthYear), lastMonthNum, 0).toISOString().slice(0, 10);
+
+  const currentQuarter = Math.ceil(Number(month) / 3);
+  const quarterStarts = ['01-01', '04-01', '07-01', '10-01'];
+  const quarterEnds   = ['03-31', '06-30', '09-30', '12-31'];
+  const thisQuarterRange = {
+    start: `${year}-${quarterStarts[currentQuarter - 1]}`,
+    end:   `${year}-${quarterEnds[currentQuarter - 1]}`,
+  };
+
+  // Fetch from Jan 1 of current year to cover all periods
+  const scheduleSince = `${year}-01-01`;
 
   const SCHEDULE_FIELDS = 'gid,name,due_on,completed,completed_at,parent.gid,parent.name,custom_fields.gid,custom_fields.date_value';
 
@@ -230,10 +252,18 @@ export async function buildProductionMetrics() {
   };
   for (const job of jobs) departmentLoad[job.department].push(job);
 
+  const bss = (range) => buildScheduleStats(normalizedIncompleteTasks, completedTasksOnly, range, today);
   const schedule = {
-    thisWeek:    buildScheduleStats(normalizedIncompleteTasks, completedTasksOnly, thisWeekRange, today),
-    lastWeek:    buildScheduleStats(normalizedIncompleteTasks, completedTasksOnly, lastWeekRange, today),
-    monthToDate: buildScheduleStats(normalizedIncompleteTasks, completedTasksOnly, { start: monthStart, end: today }, today),
+    thisWeek:    bss(thisWeekRange),
+    lastWeek:    bss(lastWeekRange),
+    twoWeeksAgo: bss(twoWeeksAgoRange),
+    thisMonth:   bss({ start: monthStart,     end: monthEnd }),
+    lastMonth:   bss({ start: lastMonthStart, end: lastMonthEnd }),
+    thisQuarter: bss(thisQuarterRange),
+    q1:          bss({ start: `${year}-01-01`, end: `${year}-03-31` }),
+    q2:          bss({ start: `${year}-04-01`, end: `${year}-06-30` }),
+    q3:          bss({ start: `${year}-07-01`, end: `${year}-09-30` }),
+    q4:          bss({ start: `${year}-10-01`, end: `${year}-12-31` }),
   };
 
   return {
