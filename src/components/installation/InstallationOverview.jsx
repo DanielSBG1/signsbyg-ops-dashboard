@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import JobsTable from './JobsTable';
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const PERIODS = [
   { id: 'thisWeek',    label: 'This Week'     },
   { id: 'lastWeek',    label: 'Last Week'     },
   { id: 'monthToDate', label: 'Month to Date' },
 ];
+
+const CALENDAR_WEEK_LABELS = ['This Week', 'Next Week', 'In 2 Weeks'];
 
 const STATUS_BADGE = {
   early:       { label: 'Early',       cls: 'bg-success/20 text-success' },
@@ -18,6 +22,36 @@ const STATUS_BADGE = {
   rescheduled: { label: 'Rescheduled', cls: 'bg-warning/20 text-warning' },
   failed:      { label: 'Failed',      cls: 'bg-danger/20 text-danger' },
 };
+
+// Border + dot color for each status (used on calendar job cards)
+const STATUS_CARD = {
+  early:       { borderClass: 'border-success/30',   dotClass: 'bg-success'    },
+  on_time:     { borderClass: 'border-success/30',   dotClass: 'bg-success'    },
+  scheduled:   { borderClass: 'border-white/10',     dotClass: 'bg-accent'     },
+  pending:     { borderClass: 'border-white/[0.07]', dotClass: 'bg-white/20'   },
+  late:        { borderClass: 'border-danger/40',    dotClass: 'bg-danger'     },
+  rescheduled: { borderClass: 'border-warning/30',   dotClass: 'bg-warning'    },
+  failed:      { borderClass: 'border-danger/40',    dotClass: 'bg-danger'     },
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getWeekDays(today) {
+  const d = new Date(today + 'T12:00:00Z');
+  const dow = d.getUTCDay();
+  const diffToMon = dow === 0 ? -6 : 1 - dow;
+  return Array.from({ length: 5 }, (_, i) => {
+    const day = new Date(d);
+    day.setUTCDate(d.getUTCDate() + diffToMon + i);
+    const iso = day.toISOString().slice(0, 10);
+    return {
+      date:   iso,
+      label:  day.toLocaleDateString('en-US', { weekday: 'short',   timeZone: 'UTC' }),
+      dayNum: day.toLocaleDateString('en-US', { day:     'numeric', timeZone: 'UTC' }),
+      month:  day.toLocaleDateString('en-US', { month:   'short',   timeZone: 'UTC' }),
+    };
+  });
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -52,7 +86,7 @@ function AlertCard({ label, value, sub, active, onClick }) {
   );
 }
 
-// ─── KPI card ────────────────────────────────────────────────────────────────
+// ─── KPI card ─────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, color, active, onClick }) {
   const cls = { success: 'text-success', danger: 'text-danger', warning: 'text-warning' }[color] ?? 'text-white';
@@ -75,7 +109,7 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
   );
 }
 
-// ─── Job panel ────────────────────────────────────────────────────────────────
+// ─── Job panel (expandable list from alert / KPI clicks) ──────────────────────
 
 function JobPanel({ jobs, accentColor }) {
   const borderCls = accentColor === 'danger' ? 'border-danger/30' : 'border-accent/20';
@@ -95,9 +129,9 @@ function JobPanel({ jobs, accentColor }) {
       <div className="divide-y divide-white/[0.04]">
         {jobs.map((job, i) => {
           const status = job.status ?? job.state ?? 'pending';
-          const badge = STATUS_BADGE[status] ?? STATUS_BADGE.pending;
-          const crews = Array.isArray(job.crews) ? job.crews.join(', ') : (job.crews ?? null);
-          const meta = [crews, job.section].filter(Boolean).join(' · ');
+          const badge  = STATUS_BADGE[status] ?? STATUS_BADGE.pending;
+          const crews  = Array.isArray(job.crews) ? job.crews.join(', ') : null;
+          const meta   = [crews, job.section].filter(Boolean).join(' · ');
           return (
             <a
               key={job.id ?? i}
@@ -122,57 +156,126 @@ function JobPanel({ jobs, accentColor }) {
   );
 }
 
-// ─── Crew week card ───────────────────────────────────────────────────────────────
+// ─── Calendar: install job card ───────────────────────────────────────────────
 
-function CrewWeekCard({ crew }) {
-  const [expanded, setExpanded] = useState(true);
-  const { name, color, jobs } = crew;
-  if (!jobs || jobs.length === 0) return null;
-  const done = jobs.filter(j => j.state === 'on_time').length;
-  const late = jobs.filter(j => j.state === 'late' || j.state === 'overdue').length;
-
+function InstallJobCard({ job }) {
+  const cfg   = STATUS_CARD[job.status] ?? STATUS_CARD.scheduled;
+  const crews = Array.isArray(job.crews) ? job.crews : [];
+  const isDone = job.status === 'on_time' || job.status === 'early';
   return (
-    <div className="bg-slate-card border border-white/10 rounded-2xl overflow-hidden">
-      <button
-        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.03] transition-colors text-left"
-        onClick={() => setExpanded(v => !v)}
-      >
-        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-        <span className="text-sm font-semibold text-white/90 flex-1">{name}</span>
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-xs text-white/40">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</span>
-          {done > 0 && <span className="text-[10px] font-semibold text-success">{done} done</span>}
-          {late > 0 && <span className="text-[10px] font-semibold text-danger">{late} late</span>}
-        </div>
-        <span className="text-white/25 text-xs ml-1">{expanded ? '▾' : '▸'}</span>
-      </button>
-      {expanded && (
-        <div className="divide-y divide-white/[0.04] border-t border-white/[0.06]">
-          {jobs.map(job => {
-            const badge = STATUS_BADGE[job.state] ?? STATUS_BADGE.in_progress;
-            return (
-              <a
-                key={job.id}
-                href={job.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03] transition-colors"
-              >
-                <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${badge.cls}`}>
-                  {badge.label}
-                </span>
-                <span className="flex-1 text-sm text-white/80 truncate">{job.name}</span>
-                <span className="shrink-0 text-xs text-white/35 tabular-nums">{formatDate(job.installDate)}</span>
-              </a>
-            );
-          })}
+    <a
+      href={job.url}
+      target="_blank"
+      rel="noreferrer"
+      className={`block rounded-xl border ${cfg.borderClass} bg-white/[0.025] hover:bg-white/[0.055] transition-all duration-150 p-3 space-y-2 group`}
+    >
+      <div className="flex items-start gap-2">
+        <span className={`mt-[3px] w-2 h-2 rounded-full shrink-0 ${cfg.dotClass}`} />
+        <span className={`text-sm font-medium leading-snug group-hover:text-white/90 ${isDone ? 'text-white/50 line-through decoration-white/20' : 'text-white'}`}>
+          {job.name}
+        </span>
+      </div>
+      {crews.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap pl-4">
+          {crews.map(crew => (
+            <span key={crew} className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-white/10 text-white/50">
+              {crew}
+            </span>
+          ))}
+          {job.status === 'late' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-danger/20 text-danger font-semibold">Late</span>
+          )}
+          {job.status === 'rescheduled' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-warning/20 text-warning font-semibold">Rescheduled</span>
+          )}
         </div>
       )}
+    </a>
+  );
+}
+
+// ─── Calendar: crew day summary (bottom of day column) ────────────────────────
+
+function CrewDaySummary({ jobs, crewColorMap }) {
+  const crewMap = {};
+  for (const job of jobs) {
+    for (const crew of (job.crews ?? [])) {
+      if (!crewMap[crew]) crewMap[crew] = [];
+      crewMap[crew].push(job);
+    }
+  }
+  const crews = Object.keys(crewMap);
+  if (crews.length === 0) return null;
+  return (
+    <div className="space-y-2.5 pt-3 border-t border-white/[0.06]">
+      <p className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">By crew</p>
+      {crews.map(crew => {
+        const crewJobs = crewMap[crew];
+        const done  = crewJobs.filter(j => j.status === 'on_time' || j.status === 'early').length;
+        const late  = crewJobs.filter(j => j.status === 'late' || j.status === 'failed').length;
+        const sched = crewJobs.filter(j => j.status === 'scheduled' || j.status === 'rescheduled').length;
+        const color = crewColorMap[crew] ?? '#6b7280';
+        return (
+          <div key={crew} className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+              <span className="text-[11px] text-white/50 truncate">{crew}</span>
+            </div>
+            <div className="flex items-center gap-2 pl-3">
+              {done  > 0 && <span className="text-[10px] tabular-nums font-semibold text-success">{done} done</span>}
+              {late  > 0 && <span className="text-[10px] tabular-nums font-semibold text-danger">{late} late</span>}
+              {sched > 0 && <span className="text-[10px] tabular-nums font-semibold text-accent">{sched} scheduled</span>}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-// ─── Section pipeline ───────────────────────────────────────────────────────────────
+// ─── Calendar: day column ─────────────────────────────────────────────────────
+
+function DayColumn({ day, jobs, isToday, crewColorMap }) {
+  const lateCount = jobs.filter(j => j.status === 'late' || j.status === 'failed').length;
+  return (
+    <div className={`rounded-2xl border flex flex-col gap-0 overflow-hidden ${
+      isToday ? 'border-accent/50 bg-accent/[0.04]' : 'border-white/10 bg-slate-card'
+    }`}>
+      <div className={`px-4 pt-4 pb-3 ${isToday ? 'border-b border-accent/20' : 'border-b border-white/[0.06]'}`}>
+        <div className="flex items-center justify-between mb-1">
+          <span className={`text-[11px] font-bold uppercase tracking-widest ${isToday ? 'text-accent' : 'text-white/35'}`}>
+            {day.label}
+          </span>
+          {isToday && <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full font-semibold">Today</span>}
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <span className={`text-3xl font-bold leading-none ${isToday ? 'text-white' : 'text-white/75'}`}>{day.dayNum}</span>
+          <span className="text-sm text-white/25">{day.month}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-[11px] text-white/40">{jobs.length} install{jobs.length !== 1 ? 's' : ''}</span>
+          {lateCount > 0 && (
+            <>
+              <span className="text-white/20">·</span>
+              <span className="text-[11px] text-danger font-semibold">{lateCount} late</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 p-3 space-y-2">
+        {jobs.length === 0
+          ? <p className="text-white/15 text-xs text-center py-6">No installs</p>
+          : jobs.map((job, i) => <InstallJobCard key={job.id ?? i} job={job} />)
+        }
+      </div>
+      <div className="px-4 pb-4">
+        <CrewDaySummary jobs={jobs} crewColorMap={crewColorMap} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Section pipeline ─────────────────────────────────────────────────────────
 
 function SectionPipelinePanel({ bySection }) {
   if (!bySection || bySection.length === 0) return null;
@@ -200,7 +303,7 @@ function SectionPipelinePanel({ bySection }) {
   );
 }
 
-// ─── Crew scorecard ─────────────────────────────────────────────────────────────────
+// ─── Crew scorecard ───────────────────────────────────────────────────────────
 
 function CrewScorecardPanel({ byCrew }) {
   if (!byCrew || byCrew.length === 0) return null;
@@ -251,10 +354,39 @@ export default function InstallationOverview({ data }) {
   const [activeCard,   setActiveCard]   = useState(null);
   const [activeAlert,  setActiveAlert]  = useState(null);
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const schedule       = data.schedule?.[activePeriod] ?? {};
   const scheduledTotal = schedule.scheduled ?? 0;
   const onTimeTotal    = schedule.onTime    ?? 0;
   const atRiskTotal    = schedule.late      ?? 0;
+
+  // 3-week calendar: this week, next week, in 2 weeks
+  const calendarWeeks = useMemo(() =>
+    CALENDAR_WEEK_LABELS.map((label, i) => {
+      const d = new Date(today + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() + i * 7);
+      return { label, days: getWeekDays(d.toISOString().slice(0, 10)) };
+    }),
+  [today]);
+
+  // crew name → color lookup for day column summaries
+  const crewColorMap = useMemo(() => {
+    const map = {};
+    for (const crew of (data.byCrew ?? [])) map[crew.name] = crew.color;
+    return map;
+  }, [data.byCrew]);
+
+  // group jobs by installDate for the calendar
+  const calendarJobsByDay = useMemo(() => {
+    const map = {};
+    for (const week of calendarWeeks)
+      for (const day of week.days) map[day.date] = [];
+    for (const job of data.jobs)
+      if (job.installDate && map[job.installDate] !== undefined)
+        map[job.installDate].push(job);
+    return map;
+  }, [data.jobs, calendarWeeks]);
 
   const lateJobs = useMemo(() =>
     data.jobs.filter(j => j.status === 'late'),
@@ -286,8 +418,6 @@ export default function InstallationOverview({ data }) {
     setActiveCard(null);
     setActiveAlert(prev => prev === alert ? null : alert);
   }
-
-  const thisWeekCrews = data.schedule?.thisWeek?.crews ?? [];
 
   return (
     <div className="space-y-5">
@@ -344,20 +474,44 @@ export default function InstallationOverview({ data }) {
       {/* ── KPI panel ── */}
       {activeCard && <JobPanel jobs={panelJobs} />}
 
-      {/* ── This week by crew ── */}
-      {thisWeekCrews.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-white/40 shrink-0">This Week by Crew</p>
-            <div className="flex-1 h-px bg-white/[0.06]" />
+      {/* ── Legend ── */}
+      <div className="flex items-center gap-4">
+        {[
+          { label: 'On Time',     cls: 'bg-success'     },
+          { label: 'Scheduled',   cls: 'bg-accent'      },
+          { label: 'Rescheduled', cls: 'bg-warning'     },
+          { label: 'Late',        cls: 'bg-danger'      },
+        ].map(({ label, cls }) => (
+          <div key={label} className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${cls}`} />
+            <span className="text-[11px] text-white/40">{label}</span>
           </div>
-          <div className="space-y-3">
-            {thisWeekCrews.map(crew => (
-              <CrewWeekCard key={crew.name} crew={crew} />
+        ))}
+      </div>
+
+      {/* ── 3-week Mon–Fri calendar ── */}
+      {calendarWeeks.map((week, wi) => (
+        <div key={wi} className="space-y-3">
+          <div className="flex items-center gap-3">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-white/40 shrink-0">{week.label}</p>
+            <div className="flex-1 h-px bg-white/[0.06]" />
+            <p className="text-[10px] text-white/20 shrink-0">
+              {week.days[0].dayNum} {week.days[0].month} – {week.days[4].dayNum} {week.days[4].month}
+            </p>
+          </div>
+          <div className="grid grid-cols-5 gap-3 items-start">
+            {week.days.map(day => (
+              <DayColumn
+                key={day.date}
+                day={day}
+                jobs={calendarJobsByDay[day.date] ?? []}
+                isToday={day.date === today}
+                crewColorMap={crewColorMap}
+              />
             ))}
           </div>
         </div>
-      )}
+      ))}
 
       {/* ── Section pipeline + Crew scorecard ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
