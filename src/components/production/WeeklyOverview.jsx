@@ -28,10 +28,11 @@ const PERIODS = [
 ];
 
 const STATE_BADGE = {
-  on_time:     { label: 'On Time',     cls: 'bg-success/20 text-success' },
-  late:        { label: 'Late',        cls: 'bg-danger/20 text-danger' },
-  in_progress: { label: 'In Progress', cls: 'bg-accent/20 text-accent' },
-  overdue:     { label: 'Overdue',     cls: 'bg-orange-400/20 text-orange-400' },
+  on_time:        { label: 'On Time',        cls: 'bg-success/20 text-success' },
+  late:           { label: 'Late',           cls: 'bg-danger/20 text-danger' },
+  in_progress:    { label: 'In Progress',    cls: 'bg-accent/20 text-accent' },
+  overdue:        { label: 'Overdue',        cls: 'bg-orange-400/20 text-orange-400' },
+  projected_late: { label: 'Projected Late', cls: 'bg-orange-400/20 text-orange-400' },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -399,16 +400,27 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   const schedule   = data.schedule?.[activePeriod] ?? {};
   const scheduledTotal = schedule.scheduled ?? 0;
   const onTimeTotal    = schedule.onTime    ?? 0;
-  const atRiskTotal    = schedule.late      ?? 0;
+
+  // Projected-late jobs: in-progress within the period whose sub-tasks are already overdue
+  const projectedLateInPeriod = useMemo(() => {
+    if (!schedule.jobs) return [];
+    return schedule.jobs.filter(j => j.state === 'in_progress' && jobMap[j.gid]?.projectedLate);
+  }, [schedule.jobs, jobMap]);
+
+  const atRiskTotal = (schedule.late ?? 0) + projectedLateInPeriod.length;
 
   // Jobs to show in the inline panel (filtered by which card is open)
   const panelJobs = useMemo(() => {
     if (!activeCard || !schedule.jobs) return [];
     if (activeCard === 'scheduled') return schedule.jobs;
     if (activeCard === 'onTime')    return schedule.jobs.filter(j => j.state === 'on_time');
-    if (activeCard === 'atRisk')    return schedule.jobs.filter(j => j.state === 'overdue' || j.state === 'late');
+    if (activeCard === 'atRisk') {
+      const lateOrOverdue = schedule.jobs.filter(j => j.state === 'overdue' || j.state === 'late');
+      const projLate = projectedLateInPeriod.map(j => ({ ...j, state: 'projected_late' }));
+      return [...lateOrOverdue, ...projLate];
+    }
     return [];
-  }, [activeCard, schedule.jobs]);
+  }, [activeCard, schedule.jobs, projectedLateInPeriod]);
 
   function toggleCard(card) {
     setActiveCard(prev => prev === card ? null : card);
