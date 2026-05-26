@@ -75,6 +75,32 @@ function isAtRisk(job, today) {
   return job.subTasks.some(s => !s.completed && s.due_on && s.due_on <= today);
 }
 
+// ─── Alert card (large red numbers for critical attention items) ──────────────
+
+function AlertCard({ label, value, sub, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left bg-slate-card border rounded-2xl p-6 transition-all duration-150 ${
+        active
+          ? 'border-danger/50 ring-1 ring-danger/20'
+          : value > 0
+            ? 'border-danger/25 hover:border-danger/45'
+            : 'border-white/10 hover:border-white/20'
+      }`}
+    >
+      <p className="text-white/40 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
+      <p className={`text-6xl font-black tabular-nums leading-none ${value > 0 ? 'text-danger' : 'text-white/30'}`}>
+        {value ?? 0}
+      </p>
+      {sub && <p className="text-white/30 text-xs mt-2">{sub}</p>}
+      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-danger' : 'text-white/20'}`}>
+        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
+      </p>
+    </button>
+  );
+}
+
 // ─── KPI card ────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, color, active, onClick }) {
@@ -100,7 +126,8 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
 
 // ─── Inline job panel ─────────────────────────────────────────────────────────
 
-function JobPanel({ jobs, jobMap, onSelectJob }) {
+function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
+  const borderCls = accentColor === 'danger' ? 'border-danger/30' : 'border-accent/20';
   if (jobs.length === 0) {
     return (
       <div className="bg-slate-card border border-white/10 rounded-2xl p-8 text-center text-white/30 text-sm">
@@ -110,7 +137,7 @@ function JobPanel({ jobs, jobMap, onSelectJob }) {
   }
 
   return (
-    <div className="bg-slate-card border border-accent/20 rounded-2xl overflow-hidden">
+    <div className={`bg-slate-card border ${borderCls} rounded-2xl overflow-hidden`}>
       <div className="px-5 py-3 border-b border-white/[0.06] flex items-center justify-between">
         <p className="text-xs text-white/40 font-semibold uppercase tracking-widest">Jobs</p>
         <p className="text-xs text-white/30">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
@@ -323,6 +350,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   const [selectedJob,  setSelectedJob]  = useState(null);
   const [activePeriod, setActivePeriod] = useState('thisWeek');
   const [activeCard,   setActiveCard]   = useState(null); // 'scheduled' | 'onTime' | 'atRisk'
+  const [activeAlert,  setActiveAlert]  = useState(null); // 'rollover' | 'unreviewed'
 
   const today    = new Date().toISOString().slice(0, 10);
   const periodCfg = PERIODS.find(p => p.id === activePeriod) ?? PERIODS[0];
@@ -409,6 +437,25 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) + projectedLateInPeriod.length;
 
+  // Rollover jobs: open jobs whose due date was last week
+  const rolloverJobs = useMemo(() =>
+    (data.schedule?.lastWeek?.jobs ?? []).filter(j => j.state === 'overdue'),
+  [data.schedule]);
+
+  // Unreviewed jobs: jobs with no production stages added yet
+  const unreviewedJobs = useMemo(() =>
+    data.jobs
+      .filter(j => j.subTasks.length === 0)
+      .map(j => ({ gid: j.gid, name: j.name, due_on: j.due_on, state: 'in_progress' })),
+  [data.jobs]);
+
+  // Jobs to show in alert panels
+  const alertPanelJobs = useMemo(() => {
+    if (activeAlert === 'rollover') return rolloverJobs;
+    if (activeAlert === 'unreviewed') return unreviewedJobs;
+    return [];
+  }, [activeAlert, rolloverJobs, unreviewedJobs]);
+
   // Jobs to show in the inline panel (filtered by which card is open)
   const panelJobs = useMemo(() => {
     if (!activeCard || !schedule.jobs) return [];
@@ -423,11 +470,45 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   }, [activeCard, schedule.jobs, projectedLateInPeriod]);
 
   function toggleCard(card) {
+    setActiveAlert(null);
     setActiveCard(prev => prev === card ? null : card);
+  }
+
+  function toggleAlert(alert) {
+    setActiveCard(null);
+    setActiveAlert(prev => prev === alert ? null : alert);
   }
 
   return (
     <div className="space-y-5">
+
+      {/* ── Needs Attention alerts ── */}
+      <div className="grid grid-cols-2 gap-4">
+        <AlertCard
+          label="Rolled Over from Last Week"
+          value={rolloverJobs.length}
+          sub="open jobs past their due date — complete ASAP"
+          active={activeAlert === 'rollover'}
+          onClick={() => toggleAlert('rollover')}
+        />
+        <AlertCard
+          label="Unreviewed / Not Processed"
+          value={unreviewedJobs.length}
+          sub="jobs with no production stages set up yet"
+          active={activeAlert === 'unreviewed'}
+          onClick={() => toggleAlert('unreviewed')}
+        />
+      </div>
+
+      {/* ── Alert panel ── */}
+      {activeAlert && (
+        <JobPanel
+          jobs={alertPanelJobs}
+          jobMap={jobMap}
+          onSelectJob={setSelectedJob}
+          accentColor="danger"
+        />
+      )}
 
       {/* ── Period selector ── */}
       <div className="flex flex-wrap gap-1.5">
