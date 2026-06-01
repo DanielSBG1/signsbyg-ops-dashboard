@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import HealthBadge from './HealthBadge';
 
-// ─── Constants ────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────
 
 const STAGES = [
   { name: 'Design',       key: 'design',       color: '#3b82f6' },
@@ -45,7 +45,7 @@ function formatDate(dateStr) {
   } catch { return dateStr; }
 }
 
-// ─── Department tasks modal ────────────────────────────────────
+// ─── Department tasks modal ────────────────────────────────────────────
 
 const DEPT_SORT_COLS = [
   { key: 'name',     label: 'Job Name' },
@@ -152,7 +152,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
   );
 }
 
-// ─── Cumulative progress section ──────────────────────────────
+// ─── Cumulative progress section ────────────────────────────────────────────
 
 function HealthJobsModal({ segment, onClose, onJobClick }) {
   const [sortCol, setSortCol] = useState('score');
@@ -268,8 +268,6 @@ function CumulativeProgressSection({ data, onJobClick }) {
   );
   const totalDeptTasks = deptSegments.reduce((s, d) => s + d.count, 0);
 
-  // Each job gets exactly one segment (most severe wins):
-  // No Date → Late → Critical → At Risk → Watch → On Track
   const healthSegments = useMemo(() => {
     const buckets = {
       noDate:   { label: 'No Due Date', color: '#6b7280', jobs: [] },
@@ -309,7 +307,6 @@ function CumulativeProgressSection({ data, onJobClick }) {
           )}
         </div>
 
-        {/* Stage distribution — clickable segments */}
         {totalDeptTasks > 0 && (
           <div>
             <div className="flex items-center justify-between text-xs text-white/40 mb-2">
@@ -343,7 +340,6 @@ function CumulativeProgressSection({ data, onJobClick }) {
           </div>
         )}
 
-        {/* Health distribution */}
         {totalJobs > 0 && (
           <div>
             <div className="flex items-center justify-between text-xs text-white/40 mb-2">
@@ -394,7 +390,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
   );
 }
 
-// ─── KPI card ─────────────────────────────────────────────────
+// ─── KPI card ──────────────────────────────────────────────────
 
 function KpiCard({ label, value, colorClass = 'text-white' }) {
   return (
@@ -405,7 +401,7 @@ function KpiCard({ label, value, colorClass = 'text-white' }) {
   );
 }
 
-// ─── Alert panels ─────────────────────────────────────────────
+// ─── Alert panels ──────────────────────────────────────────────────
 
 function AlertPanel({ title, empty, children }) {
   const hasChildren = React.Children.count(children) > 0;
@@ -432,7 +428,7 @@ function AlertRow({ job, onClick }) {
   );
 }
 
-// ─── PM Portfolio ──────────────────────────────────────────────
+// ─── PM Portfolio ──────────────────────────────────────────────────
 
 const TODAY_STR = new Date().toISOString().slice(0, 10);
 
@@ -461,13 +457,15 @@ function buildPmStats(pm, scorecardMap) {
   for (const s of STAGES) stageBreakdown[s.name] = 0;
   let unprocessedCount = 0;
   for (const t of tasks) {
-    // Only count as unprocessed if backend flagged it urgent (empty/untitled section)
     if (t.flag === 'urgent') { unprocessedCount++; continue; }
     const matched = matchStage(t.section);
     if (matched) stageBreakdown[matched.name]++;
   }
   return { name: pm.name, projectGid: pm.projectGid, jobCount, overdueCount, avgHealth, stageBreakdown, unprocessedCount };
 }
+
+const MAIN_PM_NAMES    = ['Nikhil', 'Abhijeet', 'Siddhen'];
+const MINIMAL_PM_NAMES = ['Amanda', 'Antonella', 'Daniel'];
 
 function PmCard({ pm, onClick }) {
   const { name, jobCount, overdueCount, avgHealth, stageBreakdown, unprocessedCount } = pm;
@@ -536,6 +534,53 @@ function PmCard({ pm, onClick }) {
   );
 }
 
+function MiniPmCard({ pm, onClick }) {
+  const { name, jobCount, overdueCount, avgHealth, stageBreakdown, unprocessedCount } = pm;
+
+  return (
+    <div
+      className="bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-3 flex items-center gap-4 cursor-pointer hover:border-white/15 hover:bg-white/[0.05] transition-colors"
+      onClick={onClick}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-white/80">{name}</p>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <span className="text-xs text-white/40">{jobCount} jobs</span>
+          {unprocessedCount > 0 && (
+            <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
+          )}
+          {overdueCount > 0 && (
+            <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
+          )}
+        </div>
+      </div>
+
+      {jobCount > 0 && (
+        <div className="flex h-1.5 w-20 rounded-full overflow-hidden gap-px flex-shrink-0">
+          {STAGES.map(stage => {
+            const count = stageBreakdown[stage.name];
+            if (!count) return null;
+            return (
+              <div key={stage.name} title={`${stage.name}: ${count}`}
+                style={{ width: `${(count / jobCount) * 100}%`, backgroundColor: stage.color }} />
+            );
+          })}
+          {unprocessedCount > 0 && (
+            <div title={`Unprocessed: ${unprocessedCount}`}
+              style={{ width: `${(unprocessedCount / jobCount) * 100}%`, backgroundColor: '#ef4444' }} />
+          )}
+        </div>
+      )}
+
+      {avgHealth !== null && (
+        <span className="text-sm font-bold tabular-nums flex-shrink-0" style={{ color: healthBarColor(avgHealth) }}>
+          {avgHealth}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
   const scorecardMap = useMemo(() => {
     const map = {};
@@ -543,21 +588,37 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
     return map;
   }, [scorecards]);
 
-  const pmStats = auditData.pms.map(pm => buildPmStats(pm, scorecardMap));
+  const allStats = auditData.pms.map(pm => buildPmStats(pm, scorecardMap));
+  const mainStats    = allStats.filter(pm => MAIN_PM_NAMES.includes(pm.name));
+  const minimalStats = allStats.filter(pm => MINIMAL_PM_NAMES.includes(pm.name));
 
   return (
-    <div>
-      <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">PM Portfolio</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {pmStats.map(pm => (
-          <PmCard key={pm.projectGid} pm={pm} onClick={() => onAuditPmClick?.(pm.name)} />
-        ))}
-      </div>
+    <div className="space-y-4">
+      <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">PM Portfolio</h2>
+
+      {mainStats.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {mainStats.map(pm => (
+            <PmCard key={pm.projectGid} pm={pm} onClick={() => onAuditPmClick?.(pm.name)} />
+          ))}
+        </div>
+      )}
+
+      {minimalStats.length > 0 && (
+        <div>
+          <p className="text-[10px] text-white/25 uppercase tracking-widest mb-2">Supporting</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {minimalStats.map(pm => (
+              <MiniPmCard key={pm.projectGid} pm={pm} onClick={() => onAuditPmClick?.(pm.name)} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Main tab ─────────────────────────────────────────────────
+// ─── Main tab ────────────────────────────────────────────────────
 
 export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClick }) {
   const { totals, scorecards } = data;
