@@ -1,19 +1,24 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
-const DEPT_ORDER = ['design', 'permitting', 'production', 'installation', 'invoicing'];
+const DEPT_ORDER = ['design', 'permitting', 'production', 'installation'];
 
 const DEPT_META = {
-  design:       { label: 'Design',       color: '#3b82f6', icon: '✏️' },
-  permitting:   { label: 'Permitting',   color: '#a855f7', icon: '📋' },
-  production:   { label: 'Production',   color: '#f97316', icon: '🏭' },
-  installation: { label: 'Installation', color: '#eab308', icon: '🔧' },
-  invoicing:    { label: 'Invoicing',    color: '#22c55e', icon: '🧾' },
+  design:            { label: 'Design',                        color: '#3b82f6', icon: '✏️' },
+  permitting:        { label: 'Permitting',                    color: '#a855f7', icon: '📋' },
+  production:        { label: 'Production',                    color: '#f97316', icon: '🏭' },
+  installation:      { label: 'Installation',                  color: '#eab308', icon: '🔧' },
+  invoicing_pending: { label: 'Pending to Send Invoice',       color: '#22c55e', icon: '📄' },
+  invoicing_sent:    { label: 'Invoice Sent / Pending Payment', color: '#10b981', icon: '💰' },
 };
+
+// Asana section names for invoicing split
+const INVOICING_PENDING_SECTION = 'Pending to Send Invoice';
+const INVOICING_SENT_SECTION    = 'Invoice Sent/Pending Payment';
 
 const TODAY = new Date().toISOString().slice(0, 10);
 const WEEK_OUT = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
-// ─── Health scoring ────────────────────────────────────────────
+// ─── Health scoring ────────────────────────────────────
 
 function computeHealth(tasks) {
   const total = tasks.length;
@@ -52,7 +57,7 @@ function computeHealth(tasks) {
   return { score, status, label, overdueCount, noDateCount, redoCount, dueSoonCount };
 }
 
-// ─── Color helpers ─────────────────────────────────────────────
+// ─── Color helpers ─────────────────────────────────
 
 function healthColor(score) {
   const t = Math.max(0, Math.min(100, score)) / 100;
@@ -78,7 +83,7 @@ function formatDate(d) {
   catch { return d; }
 }
 
-// ─── Task list panel (shown when a section is clicked) ─────────
+// ─── Task list panel (shown when a section is clicked) ─────
 
 function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
   const SORT_COLS = [
@@ -173,7 +178,7 @@ function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
   );
 }
 
-// ─── Department modal: sections overview + drill-down ──────────
+// ─── Department modal: sections overview + drill-down ──────
 
 const SECTION_COLS = [
   { key: 'name',    label: 'Section',   align: 'left' },
@@ -336,7 +341,7 @@ function TaskModal({ meta, health, tasks, sectionOrder, onJobClick, onClose }) {
   );
 }
 
-// ─── Department module card ────────────────────────────────────
+// ─── Department module card ────────────────────────────
 
 function DeptModule({ deptKey, dept, onJobClick }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -430,20 +435,46 @@ function DeptModule({ deptKey, dept, onJobClick }) {
   );
 }
 
-// ─── Tab ───────────────────────────────────────────────────────
+// ─── Tab ────────────────────────────────────────────
 
 export default function DepartmentLoadTab({ data, onJobClick }) {
   const { departmentLoad } = data;
 
   const depts = DEPT_ORDER.map(key => ({ key, dept: departmentLoad[key] })).filter(d => d.dept);
 
-  // Overall summary across all depts
-  const allTasks     = depts.flatMap(d => d.dept.tasks);
+  // Build two synthetic invoicing departments by splitting on Asana section
+  const invoicingRaw = departmentLoad.invoicing;
+  const invoicingDepts = invoicingRaw ? [
+    {
+      key: 'invoicing_pending',
+      dept: {
+        ...invoicingRaw,
+        tasks: invoicingRaw.tasks.filter(t => t.section === INVOICING_PENDING_SECTION),
+      },
+    },
+    {
+      key: 'invoicing_sent',
+      dept: {
+        ...invoicingRaw,
+        tasks: invoicingRaw.tasks.filter(t => t.section === INVOICING_SENT_SECTION),
+      },
+    },
+  ] : [];
+
+  // Overall summary across all depts (including invoicing)
+  const allTasks     = [
+    ...depts.flatMap(d => d.dept.tasks),
+    ...(invoicingRaw?.tasks ?? []),
+  ];
   const totalOverdue = allTasks.filter(t => t.due_on && t.due_on < TODAY).length;
-  const totalNoDate  = allTasks.filter(t => !t.due_on).length;
-  const totalRedo    = allTasks.filter(t => t.isRedo).length;
-  const atCapacity   = depts.filter(d => computeHealth(d.dept.tasks).status === 'red').length;
-  const onTrack      = depts.filter(d => computeHealth(d.dept.tasks).status === 'green').length;
+  const atCapacity   = [
+    ...depts,
+    ...invoicingDepts,
+  ].filter(d => computeHealth(d.dept.tasks).status === 'red').length;
+  const onTrack      = [
+    ...depts,
+    ...invoicingDepts,
+  ].filter(d => computeHealth(d.dept.tasks).status === 'green').length;
 
   return (
     <div className="space-y-6">
@@ -472,12 +503,24 @@ export default function DepartmentLoadTab({ data, onJobClick }) {
         </div>
       </div>
 
-      {/* Department modules — 2 per row on large screens */}
+      {/* Main department modules */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {depts.map(({ key, dept }) => (
           <DeptModule key={key} deptKey={key} dept={dept} onJobClick={onJobClick} />
         ))}
       </div>
+
+      {/* Invoicing — two split panels */}
+      {invoicingDepts.length > 0 && (
+        <div>
+          <p className="text-[10px] text-white/25 uppercase tracking-widest mb-3">Invoicing</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {invoicingDepts.map(({ key, dept }) => (
+              <DeptModule key={key} deptKey={key} dept={dept} onJobClick={onJobClick} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
