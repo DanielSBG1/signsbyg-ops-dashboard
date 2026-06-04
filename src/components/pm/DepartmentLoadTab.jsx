@@ -18,7 +18,7 @@ const INVOICING_SENT_SECTION    = 'Invoice Sent/Pending Payment';
 const TODAY = new Date().toISOString().slice(0, 10);
 const WEEK_OUT = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
-// ─── Health scoring ────────────────────────────────────
+// ─── Health scoring ────────────────────────────────────────────
 
 function computeHealth(tasks) {
   const total = tasks.length;
@@ -57,7 +57,7 @@ function computeHealth(tasks) {
   return { score, status, label, overdueCount, noDateCount, redoCount, dueSoonCount };
 }
 
-// ─── Color helpers ─────────────────────────────────
+// ─── Color helpers ─────────────────────────────────────────────
 
 function healthColor(score) {
   const t = Math.max(0, Math.min(100, score)) / 100;
@@ -83,7 +83,7 @@ function formatDate(d) {
   catch { return d; }
 }
 
-// ─── Task list panel (shown when a section is clicked) ─────
+// ─── Task list panel (shown when a section is clicked) ─────────
 
 function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
   const SORT_COLS = [
@@ -178,7 +178,7 @@ function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
   );
 }
 
-// ─── Department modal: sections overview + drill-down ──────
+// ─── Department modal: sections overview + drill-down ──────────
 
 const SECTION_COLS = [
   { key: 'name',    label: 'Section',   align: 'left' },
@@ -341,7 +341,7 @@ function TaskModal({ meta, health, tasks, sectionOrder, onJobClick, onClose }) {
   );
 }
 
-// ─── Department module card ────────────────────────────
+// ─── Department module card ────────────────────────────────────
 
 function DeptModule({ deptKey, dept, onJobClick }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -435,7 +435,7 @@ function DeptModule({ deptKey, dept, onJobClick }) {
   );
 }
 
-// ─── Tab ────────────────────────────────────────────
+// ─── Tab ───────────────────────────────────────────────────────
 
 export default function DepartmentLoadTab({ data, onJobClick }) {
   const { departmentLoad } = data;

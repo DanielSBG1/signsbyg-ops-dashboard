@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import JobDrawer from './JobDrawer';
 import { computeProductionHealth, BAND_CONFIG } from '../../utils/health.js';
 
-// ─── Constants ──────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const DEPT_META = [
   { key: 'channel_letters', label: 'Channel Letters', short: 'CL',    color: '#06b6d4' },
@@ -35,7 +35,7 @@ const STATE_BADGE = {
   projected_late: { label: 'Projected Late', cls: 'bg-orange-400/20 text-orange-400' },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getWeekDays(today) {
   const d = new Date(today + 'T12:00:00Z');
@@ -67,6 +67,7 @@ function currentStage(jobGid, jobMap) {
   if (!job) return 'Complete';
   const incomplete = job.subTasks.filter(s => !s.completed);
   if (incomplete.length === 0) return 'Complete';
+  // Return the first incomplete stage (chronological order they appear)
   return incomplete[0].name ?? 'In Progress';
 }
 
@@ -74,7 +75,7 @@ function isAtRisk(job, today) {
   return job.subTasks.some(s => !s.completed && s.due_on && s.due_on <= today);
 }
 
-// ─── Alert card (large red numbers for critical attention items) ─────────────────
+// ─── Alert card (large red numbers for critical attention items) ──────────────
 
 function AlertCard({ label, value, sub, active, onClick }) {
   return (
@@ -100,7 +101,7 @@ function AlertCard({ label, value, sub, active, onClick }) {
   );
 }
 
-// ─── KPI card ──────────────────────────────────────────────────
+// ─── KPI card ────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, color, active, onClick }) {
   const cls = { success: 'text-success', danger: 'text-danger', warning: 'text-warning' }[color] ?? 'text-white';
@@ -123,7 +124,7 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
   );
 }
 
-// ─── Unreviewed job panel (shows promised date + days waiting) ────────────────────
+// ─── Unreviewed job panel (shows promised date + days waiting) ────────────────
 
 function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
   if (jobs.length === 0) {
@@ -140,6 +141,7 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
         <p className="text-xs text-white/40 font-semibold uppercase tracking-widest">Unreviewed Jobs</p>
         <p className="text-xs text-white/30">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
       </div>
+      {/* Column headers */}
       <div className="px-5 py-2 border-b border-white/[0.04] grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center">
         <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest">Job</span>
         <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest text-right">Promised Date</span>
@@ -184,7 +186,7 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
   );
 }
 
-// ─── Inline job panel ────────────────────────────────────────────────
+// ─── Inline job panel ─────────────────────────────────────────────────────────
 
 function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
   const borderCls = accentColor === 'danger' ? 'border-danger/30' : 'border-accent/20';
@@ -239,7 +241,7 @@ function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
   );
 }
 
-// ─── Job card (inside a day column) ───────────────────────────────────────
+// ─── Job card (inside a day column) ──────────────────────────────────────────
 
 function JobCard({ job, today, onClick }) {
   const { band } = job._health;
@@ -304,7 +306,7 @@ function JobCard({ job, today, onClick }) {
   );
 }
 
-// ─── Department stage summary (bottom of each day column) ──────────────────────
+// ─── Department stage summary (bottom of each day column) ────────────────────
 
 function DeptStageSummary({ subTasksByDept }) {
   const hasAny = DEPT_META.some(d => (subTasksByDept[d.key]?.length ?? 0) > 0);
@@ -337,7 +339,7 @@ function DeptStageSummary({ subTasksByDept }) {
   );
 }
 
-// ─── Day column ───────────────────────────────────────────────────────
+// ─── Day column ───────────────────────────────────────────────────────────────
 
 function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   const atRiskCount = jobs.filter(j => j._atRisk || j.status === 'late').length;
@@ -404,7 +406,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   );
 }
 
-// ─── Main component ────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function WeeklyOverview({ data, onSwitchToList }) {
   const [selectedJob,  setSelectedJob]  = useState(null);

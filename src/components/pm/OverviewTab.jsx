@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import HealthBadge from './HealthBadge';
 
-// ─── Constants ───────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────
 
 const STAGES = [
   { name: 'Design',       key: 'design',       color: '#3b82f6' },
@@ -45,7 +45,7 @@ function formatDate(dateStr) {
   } catch { return dateStr; }
 }
 
-// ─── Department tasks modal ────────────────────────────────────────────
+// ─── Department tasks modal ────────────────────────────────────
 
 const DEPT_SORT_COLS = [
   { key: 'name',     label: 'Job Name' },
@@ -152,7 +152,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
   );
 }
 
-// ─── Cumulative progress section ────────────────────────────────────────────
+// ─── Cumulative progress section ──────────────────────────────
 
 function HealthJobsModal({ segment, onClose, onJobClick }) {
   const [sortCol, setSortCol] = useState('score');
@@ -268,6 +268,8 @@ function CumulativeProgressSection({ data, onJobClick }) {
   );
   const totalDeptTasks = deptSegments.reduce((s, d) => s + d.count, 0);
 
+  // Each job gets exactly one segment (most severe wins):
+  // No Date → Late → Critical → At Risk → Watch → On Track
   const healthSegments = useMemo(() => {
     const buckets = {
       noDate:   { label: 'No Due Date', color: '#6b7280', jobs: [] },
@@ -307,6 +309,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
           )}
         </div>
 
+        {/* Stage distribution — clickable segments */}
         {totalDeptTasks > 0 && (
           <div>
             <div className="flex items-center justify-between text-xs text-white/40 mb-2">
@@ -340,6 +343,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
           </div>
         )}
 
+        {/* Health distribution */}
         {totalJobs > 0 && (
           <div>
             <div className="flex items-center justify-between text-xs text-white/40 mb-2">
@@ -390,7 +394,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
   );
 }
 
-// ─── KPI card ──────────────────────────────────────────────────
+// ─── KPI card ─────────────────────────────────────────────────
 
 function KpiCard({ label, value, colorClass = 'text-white' }) {
   return (
@@ -401,7 +405,7 @@ function KpiCard({ label, value, colorClass = 'text-white' }) {
   );
 }
 
-// ─── Alert panels ──────────────────────────────────────────────────
+// ─── Alert panels ─────────────────────────────────────────────
 
 function AlertPanel({ title, empty, children }) {
   const hasChildren = React.Children.count(children) > 0;
@@ -428,7 +432,7 @@ function AlertRow({ job, onClick }) {
   );
 }
 
-// ─── PM Portfolio ──────────────────────────────────────────────────
+// ─── PM Portfolio ──────────────────────────────────────────────
 
 const TODAY_STR = new Date().toISOString().slice(0, 10);
 
@@ -457,6 +461,7 @@ function buildPmStats(pm, scorecardMap) {
   for (const s of STAGES) stageBreakdown[s.name] = 0;
   let unprocessedCount = 0;
   for (const t of tasks) {
+    // Only count as unprocessed if backend flagged it urgent (empty/untitled section)
     if (t.flag === 'urgent') { unprocessedCount++; continue; }
     const matched = matchStage(t.section);
     if (matched) stageBreakdown[matched.name]++;
@@ -542,6 +547,7 @@ function MiniPmCard({ pm, onClick }) {
       className="bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-3 flex items-center gap-4 cursor-pointer hover:border-white/15 hover:bg-white/[0.05] transition-colors"
       onClick={onClick}
     >
+      {/* Name + flags */}
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-white/80">{name}</p>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -555,6 +561,7 @@ function MiniPmCard({ pm, onClick }) {
         </div>
       </div>
 
+      {/* Stage mini-bar */}
       {jobCount > 0 && (
         <div className="flex h-1.5 w-20 rounded-full overflow-hidden gap-px flex-shrink-0">
           {STAGES.map(stage => {
@@ -572,6 +579,7 @@ function MiniPmCard({ pm, onClick }) {
         </div>
       )}
 
+      {/* Health score */}
       {avgHealth !== null && (
         <span className="text-sm font-bold tabular-nums flex-shrink-0" style={{ color: healthBarColor(avgHealth) }}>
           {avgHealth}
@@ -596,6 +604,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">PM Portfolio</h2>
 
+      {/* Main PMs — large cards */}
       {mainStats.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {mainStats.map(pm => (
@@ -604,6 +613,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
         </div>
       )}
 
+      {/* Minimal PMs — compact row */}
       {minimalStats.length > 0 && (
         <div>
           <p className="text-[10px] text-white/25 uppercase tracking-widest mb-2">Supporting</p>
@@ -618,7 +628,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
   );
 }
 
-// ─── Main tab ────────────────────────────────────────────────────
+// ─── Main tab ─────────────────────────────────────────────────
 
 export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClick }) {
   const { totals, scorecards } = data;
