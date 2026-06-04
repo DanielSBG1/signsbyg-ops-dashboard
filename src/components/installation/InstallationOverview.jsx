@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import JobsTable from './JobsTable';
 
-// ─── Constants ─────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const PERIODS = [
   { id: 'thisWeek',    label: 'This Week'     },
@@ -34,7 +34,7 @@ const STATUS_CARD = {
   failed:      { borderClass: 'border-danger/40',    dotClass: 'bg-danger'     },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getWeekDays(today) {
   const d = new Date(today + 'T12:00:00Z');
@@ -60,7 +60,7 @@ function formatDate(dateStr) {
   });
 }
 
-// ─── Alert card ───────────────────────────────────────────────────
+// ─── Alert card ───────────────────────────────────────────────────────────────
 
 function AlertCard({ label, value, sub, active, onClick }) {
   return (
@@ -86,7 +86,7 @@ function AlertCard({ label, value, sub, active, onClick }) {
   );
 }
 
-// ─── KPI card ────────────────────────────────────────────────────
+// ─── KPI card ─────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, color, active, onClick }) {
   const cls = { success: 'text-success', danger: 'text-danger', warning: 'text-warning' }[color] ?? 'text-white';
@@ -156,7 +156,7 @@ function JobPanel({ jobs, accentColor }) {
   );
 }
 
-// ─── Calendar: install job card ─────────────────────────────────────────
+// ─── Calendar: install job card ───────────────────────────────────────────────
 
 function InstallJobCard({ job }) {
   const cfg   = STATUS_CARD[job.status] ?? STATUS_CARD.scheduled;
@@ -194,7 +194,7 @@ function InstallJobCard({ job }) {
   );
 }
 
-// ─── Calendar: crew day summary (bottom of day column) ────────────────────────────
+// ─── Calendar: crew day summary (bottom of day column) ────────────────────────
 
 function CrewDaySummary({ jobs, crewColorMap }) {
   const crewMap = {};
@@ -233,7 +233,7 @@ function CrewDaySummary({ jobs, crewColorMap }) {
   );
 }
 
-// ─── Calendar: day column ──────────────────────────────────────────────
+// ─── Calendar: day column ─────────────────────────────────────────────────────
 
 function DayColumn({ day, jobs, isToday, crewColorMap }) {
   const lateCount = jobs.filter(j => j.status === 'late' || j.status === 'failed').length;
@@ -275,7 +275,7 @@ function DayColumn({ day, jobs, isToday, crewColorMap }) {
   );
 }
 
-// ─── Section pipeline ──────────────────────────────────────────────────
+// ─── Section pipeline ─────────────────────────────────────────────────────────
 
 function SectionPipelinePanel({ bySection }) {
   if (!bySection || bySection.length === 0) return null;
@@ -303,7 +303,7 @@ function SectionPipelinePanel({ bySection }) {
   );
 }
 
-// ─── Crew scorecard ──────────────────────────────────────────────────
+// ─── Crew scorecard ───────────────────────────────────────────────────────────
 
 function CrewScorecardPanel({ byCrew }) {
   if (!byCrew || byCrew.length === 0) return null;
@@ -347,7 +347,7 @@ function CrewScorecardPanel({ byCrew }) {
   );
 }
 
-// ─── Main component ────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function InstallationOverview({ data }) {
   const [activePeriod, setActivePeriod] = useState('thisWeek');
