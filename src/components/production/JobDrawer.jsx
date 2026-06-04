@@ -60,12 +60,20 @@ export default function JobDrawer({ job, onClose }) {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <h2 className="text-base font-semibold leading-snug">{job.name}</h2>
-            <button
-              onClick={onClose}
-              className="text-white/40 hover:text-white text-xl shrink-0 mt-0.5"
-            >
-              ×
-            </button>
+            <div className="flex items-center gap-3 shrink-0 mt-0.5">
+              <a
+                href={`https://app.asana.com/0/0/${job.gid}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/30 hover:text-white/70 text-xs transition-colors"
+              >Open in Asana ↗</a>
+              <button
+                onClick={onClose}
+                className="text-white/40 hover:text-white text-xl"
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           {/* Meta row */}

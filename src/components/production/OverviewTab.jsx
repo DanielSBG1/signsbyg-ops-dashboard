@@ -214,7 +214,7 @@ function HealthJobsModal({ segment, today, onClose, onJobClick }) {
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[1fr_80px_130px_110px] gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
+        <div className="grid grid-cols-[1fr_80px_130px_110px_40px] gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
           {COLS.map(col => (
             <button
               key={col.key}
@@ -228,6 +228,7 @@ function HealthJobsModal({ segment, today, onClose, onJobClick }) {
             </button>
           ))}
           <span className="text-xs uppercase tracking-wider text-white/35">Flags</span>
+          <span />
         </div>
 
         {/* Rows */}
@@ -240,7 +241,7 @@ function HealthJobsModal({ segment, today, onClose, onJobClick }) {
             return (
               <div
                 key={job.gid}
-                className="grid grid-cols-[1fr_80px_130px_110px] gap-4 items-center px-6 py-3 hover:bg-white/[0.04] cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_80px_130px_110px_40px] gap-4 items-center px-6 py-3 hover:bg-white/[0.04] cursor-pointer transition-colors"
                 onClick={() => { onJobClick(job); onClose(); }}
               >
                 <span className="text-sm text-white/90 truncate" title={job.name}>{job.name}</span>
@@ -262,6 +263,13 @@ function HealthJobsModal({ segment, today, onClose, onJobClick }) {
                     <span className="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded-full">⚠ PROJ. LATE</span>
                   )}
                 </div>
+                <a
+                  href={`https://app.asana.com/0/0/${job.gid}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="text-white/30 hover:text-white/70 text-xs transition-colors"
+                >↗</a>
               </div>
             );
           })}
@@ -328,7 +336,7 @@ function StageJobsModal({ segment, today, onClose, onJobClick }) {
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[1fr_110px_65px_120px_80px] gap-3 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
+        <div className="grid grid-cols-[1fr_110px_65px_120px_80px_40px] gap-3 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
           {COLS.map(col => (
             <button
               key={col.key}
@@ -343,6 +351,7 @@ function StageJobsModal({ segment, today, onClose, onJobClick }) {
           ))}
           <span className="text-xs uppercase tracking-wider text-white/35">Flags</span>
           <span className="text-xs uppercase tracking-wider text-white/35">Status</span>
+          <span />
         </div>
 
         {/* Rows */}
@@ -357,7 +366,7 @@ function StageJobsModal({ segment, today, onClose, onJobClick }) {
             return (
               <div
                 key={`${row.job.gid}-${row.stageDueOn ?? 'nodate'}-${i}`}
-                className="grid grid-cols-[1fr_110px_65px_120px_80px] gap-3 items-center px-6 py-3 hover:bg-white/[0.04] cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_110px_65px_120px_80px_40px] gap-3 items-center px-6 py-3 hover:bg-white/[0.04] cursor-pointer transition-colors"
                 onClick={() => { onJobClick(row.job); onClose(); }}
               >
                 <span className="text-sm text-white/90 truncate" title={row.job.name}>{row.job.name}</span>
@@ -379,6 +388,13 @@ function StageJobsModal({ segment, today, onClose, onJobClick }) {
                 <span className={`text-xs ${isOverdue ? 'text-red-400' : 'text-white/20'}`}>
                   {isOverdue ? 'Overdue' : '—'}
                 </span>
+                <a
+                  href={`https://app.asana.com/0/0/${row.job.gid}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="text-white/30 hover:text-white/70 text-xs transition-colors"
+                >↗</a>
               </div>
             );
           })}

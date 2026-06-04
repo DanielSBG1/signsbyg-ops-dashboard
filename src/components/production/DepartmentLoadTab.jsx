@@ -69,6 +69,15 @@ function JobRow({ job, onOpen }) {
           {job.due_on}
         </span>
       )}
+
+      {/* Asana link */}
+      <a
+        href={`https://app.asana.com/0/0/${job.gid}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={e => e.stopPropagation()}
+        className="shrink-0 text-white/30 hover:text-white/70 text-xs transition-colors"
+      >↗</a>
     </div>
   );
 }
