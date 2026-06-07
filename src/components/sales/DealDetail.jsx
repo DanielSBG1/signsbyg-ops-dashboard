@@ -95,6 +95,8 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
     // Metric card click — source already scoped correctly (see source selection above)
     if (funnelFilter.key === 'dealsWon' || funnelFilter.key === 'revenueClosed') {
       filtered = filtered.filter((d) => d.status === 'won' && d.closedInPeriod);
+    } else if (funnelFilter.key === 'coldOutreachRevenue') {
+      filtered = filtered.filter((d) => d.status === 'won' && d.closedInPeriod && d.source === 'cold_outreach');
     } else if (funnelFilter.key === 'dealsCreated') {
       filtered = filtered.filter((d) => d.createdInPeriod);
     }
