@@ -1,4 +1,4 @@
-import { getContactsInRange, getDealsInRange, getDealsClosedInRange, getAllOpenDeals, getOwners, getContactDealAssociationsBatch, getDealsByIds, getDealsEnteredSentStages, getDealsByIdsWithStageHistory } from './_lib/sales/hubspot.js';
+import { getContactsInRange, getDealsInRange, getDealsClosedInRange, getAllOpenDeals, getOwners, getContactDealAssociationsBatch, getDealContactAssociationsBatch, getDealsByIds, getDealsEnteredSentStages, getDealsByIdsWithStageHistory } from './_lib/sales/hubspot.js';
 import { normalizePhone } from './_lib/sales/openphone.js';
 import { getEarliestOutboundForPhone } from './_lib/sales/callsStore.js';
 import { buildGmailActivityMap, GMAIL_ENABLED } from './_lib/sales/gmail.js';
@@ -27,15 +27,18 @@ export default async function handler(req, res) {
 
     // 60-second response cache. Keyed by period+range so different views don't
     // collide. Only caches successful 200 responses (errors fall through).
-    // v17 = cold outreach revenue + per-rep bids / lead-to-bid time
-    const cacheKey = `metricsv17:${period}:${customStart || ''}:${customEnd || ''}`;
+    // v18 = cold outreach on wide periods (sbg_lead_source + targeted deal→contact lookup)
+    const cacheKey = `metricsv18:${period}:${customStart || ''}:${customEnd || ''}`;
     // CDN cache header — Vercel's edge network will serve this response in
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
-    // s-maxage=120: CDN freshness window (matches cron interval).
-    // stale-while-revalidate=600: serve stale up to 10 min while CDN revalidates.
+    // Historical periods (lastmonth, q1-q4 past) use 1-hour CDN freshness — data is immutable.
+    // Active periods use 120s CDN freshness matching the cron interval.
     // nocache=1 (manual refresh): skip CDN and KV caches entirely.
+    const isPeriodClosed = Date.now() - Date.parse(range.end) > 60 * 60 * 1000;
     if (forceRefresh) {
       res.setHeader('Cache-Control', 'no-store');
+    } else if (isPeriodClosed) {
+      res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
     } else {
       res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
     }
@@ -186,49 +189,80 @@ export default async function handler(req, res) {
     const prevDealsSentRaw = filterSentDeals(prevSentFull, prevSentStartMs, prevSentEndMs);
 
     // --- Source override from associated deals ---
-    // For each contact with at least one associated deal, look up the deal's
-    // custom `lead_source` property and use it to override the contact's source
-    // classification. Skipped for wide periods — too many contacts.
+    // Two strategies depending on period width:
+    //
+    // Narrow (≤14 days): full contact→deal lookup. For each contact with a deal,
+    //   fetch associations and then the deal records to find the best lead_source.
+    //
+    // Wide (>14 days): targeted deal→contact reverse-lookup. Instead of O(contacts),
+    //   filter deals.results (already in memory) to those with a non-analytics lead_source
+    //   (cold_outreach, phone, etc.) and fetch ONLY their contact associations.
+    //   Typically 5-30 deal IDs → 1 API call, vs dozens of calls for the full approach.
     const contactSourceOverride = new Map(); // contactId → source key
-    const contactsWithDeals = skipSourceOverride ? [] : contacts.results.filter(
-      (c) => (parseInt(c.properties.num_associated_deals) || 0) > 0
-    );
-    if (contactsWithDeals.length > 0) {
-      const contactIds = contactsWithDeals.map((c) => c.id);
-      const assocMap = await getContactDealAssociationsBatch(contactIds);
-      const allDealIds = new Set();
-      for (const ids of assocMap.values()) for (const id of ids) allDealIds.add(id);
-      const dealsWithSource = await getDealsByIds(
-        [...allDealIds],
-        ['lead_source', 'createdate', 'dealname', 'dealstage', 'pipeline', 'amount', 'hubspot_owner_id', 'closedate']
+    if (!skipSourceOverride) {
+      const contactsWithDeals = contacts.results.filter(
+        (c) => (parseInt(c.properties.num_associated_deals) || 0) > 0
       );
-      const dealLeadSource = new Map();
-      const dealRecordById = new Map();
-      for (const d of dealsWithSource) {
-        const mapped = mapDealLeadSource(d.properties.lead_source);
-        if (mapped) dealLeadSource.set(d.id, { source: mapped, createdate: d.properties.createdate || '' });
-        dealRecordById.set(d.id, d);
-      }
-      for (const [contactId, dealIds] of assocMap.entries()) {
-        // Pick the most-recent associated deal that has a mapped source
-        let best = null;
-        for (const did of dealIds) {
-          const entry = dealLeadSource.get(did);
-          if (!entry) continue;
-          if (!best || entry.createdate > best.createdate) best = entry;
+      if (contactsWithDeals.length > 0) {
+        const contactIds = contactsWithDeals.map((c) => c.id);
+        const assocMap = await getContactDealAssociationsBatch(contactIds);
+        const allDealIds = new Set();
+        for (const ids of assocMap.values()) for (const id of ids) allDealIds.add(id);
+        const dealsWithSource = await getDealsByIds(
+          [...allDealIds],
+          ['lead_source', 'createdate', 'dealname', 'dealstage', 'pipeline', 'amount', 'hubspot_owner_id', 'closedate']
+        );
+        const dealLeadSource = new Map();
+        const dealRecordById = new Map();
+        for (const d of dealsWithSource) {
+          const mapped = mapDealLeadSource(d.properties.lead_source);
+          if (mapped) dealLeadSource.set(d.id, { source: mapped, createdate: d.properties.createdate || '' });
+          dealRecordById.set(d.id, d);
         }
-        if (best) contactSourceOverride.set(contactId, best.source);
+        for (const [contactId, dealIds] of assocMap.entries()) {
+          // Pick the most-recent associated deal that has a mapped source
+          let best = null;
+          for (const did of dealIds) {
+            const entry = dealLeadSource.get(did);
+            if (!entry) continue;
+            if (!best || entry.createdate > best.createdate) best = entry;
+          }
+          if (best) contactSourceOverride.set(contactId, best.source);
+        }
+        // Stash for cohort deals enrichment below
+        var __assocMap = assocMap;
+        var __dealRecordById = dealRecordById;
       }
-      // Stash for cohort deals enrichment below
-      var __assocMap = assocMap;
-      var __dealRecordById = dealRecordById;
+    } else {
+      // Wide period: targeted reverse-association for non-analytics lead sources.
+      // Use period-created deals (already fetched) as the source pool.
+      const nonAnalyticsDealIds = deals.results
+        .filter((d) => mapDealLeadSource(d.properties.lead_source) !== null)
+        .map((d) => d.id);
+      if (nonAnalyticsDealIds.length > 0) {
+        console.log(`[metrics] Wide-period targeted lookup: ${nonAnalyticsDealIds.length} non-analytics deals`);
+        const dealContactMap = await getDealContactAssociationsBatch(nonAnalyticsDealIds);
+        for (const d of deals.results) {
+          const source = mapDealLeadSource(d.properties.lead_source);
+          if (!source) continue;
+          for (const contactId of dealContactMap.get(d.id) ?? []) {
+            if (!contactSourceOverride.has(contactId)) {
+              contactSourceOverride.set(contactId, source);
+            }
+          }
+        }
+      }
     }
 
+    // Phase 1: check contact's own sbg_lead_source field before falling back to
+    // HubSpot analytics source. Free signal — already fetched with every contact,
+    // works for all period widths without any additional API calls.
     function effectiveSource(contact) {
-      return (
-        contactSourceOverride.get(contact.id) ||
-        classifySource(contact.properties.hs_analytics_source, contact.properties.hs_analytics_source_data_1)
-      );
+      const override = contactSourceOverride.get(contact.id);
+      if (override) return override;
+      const sbgMapped = mapDealLeadSource(contact.properties.sbg_lead_source);
+      if (sbgMapped) return sbgMapped;
+      return classifySource(contact.properties.hs_analytics_source, contact.properties.hs_analytics_source_data_1);
     }
 
     const ownerMap = {};
@@ -1458,7 +1492,7 @@ export default async function handler(req, res) {
     };
     // Wide periods (Q1-Q4, year) are cached 30 min so the cron (every 10 min) always
     // finds a warm entry and never leaves a gap. Narrow periods stay at 10 min.
-    const cacheTTL = periodDays > 30 ? 1800 : 600;
+    const cacheTTL = isPeriodClosed && periodDays >= 28 ? 3600 : periodDays > 30 ? 1800 : 600;
     await setCached(cacheKey, responsePayload, cacheTTL);
     return res.status(200).json(responsePayload);
   } catch (err) {

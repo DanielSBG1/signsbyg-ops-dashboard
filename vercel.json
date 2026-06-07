@@ -23,6 +23,7 @@
     { "path": "/api/sales-metrics?period=quarter",                        "schedule": "*/15 * * * *"   },
     { "path": "/api/sales-rep-activity",                                  "schedule": "*/10 * * * *"   },
     { "path": "/api/installation-metrics",                                "schedule": "*/10 * * * *"   },
+    { "path": "/api/sales-metrics?period=lastmonth",                      "schedule": "*/30 * * * *"   },
     { "path": "/api/sales-metrics?period=q1",                             "schedule": "*/30 * * * *"   },
     { "path": "/api/sales-metrics?period=q2",                             "schedule": "2-59/30 * * * *"},
     { "path": "/api/sales-metrics?period=q3",                             "schedule": "4-59/30 * * * *"},

@@ -318,6 +318,33 @@ export async function getClosedWonDealsInRange(startISO, endISO, closedWonStages
   return { results: allResults, total: allResults.length };
 }
 
+// Batch fetch deal→contact associations. Returns Map<dealId, contactId[]>.
+// Used for targeted reverse-association lookup on wide periods — cheaper than
+// fetching all contacts' deal associations when only a few deals need checking.
+export async function getDealContactAssociationsBatch(dealIds) {
+  const map = new Map();
+  if (!dealIds || dealIds.length === 0) return map;
+  const CHUNK = 100;
+  for (let i = 0; i < dealIds.length; i += CHUNK) {
+    const chunk = dealIds.slice(i, i + CHUNK);
+    const res = await rateLimitedFetch(
+      `${HUBSPOT_BASE}/crm/v4/associations/deals/contacts/batch/read`,
+      {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ inputs: chunk.map((id) => ({ id: String(id) })) }),
+      }
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+    for (const r of data.results || []) {
+      const contactIds = (r.to || []).map((t) => String(t.toObjectId));
+      map.set(String(r.from.id), contactIds);
+    }
+  }
+  return map;
+}
+
 // Batch fetch contact→deal associations. Returns Map<contactId, dealId[]>.
 export async function getContactDealAssociationsBatch(contactIds) {
   const map = new Map();
