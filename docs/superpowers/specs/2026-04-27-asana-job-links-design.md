@@ -1,7 +1,7 @@
 # Asana Job Links — Design Spec
 
 **Date:** 2026-04-27
-**Status:** Approved
+**Status:** Implemented
 
 ## Goal
 

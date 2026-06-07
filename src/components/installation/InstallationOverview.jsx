@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import JobsTable from './JobsTable';
+import IntakeCard from './IntakeCard';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -421,6 +422,9 @@ export default function InstallationOverview({ data }) {
 
   return (
     <div className="space-y-5">
+
+      {/* ── Intake health ── */}
+      <IntakeCard unreviewed={data.summary?.unreviewed} />
 
       {/* ── Alert cards ── */}
       <div className="grid grid-cols-2 gap-4">

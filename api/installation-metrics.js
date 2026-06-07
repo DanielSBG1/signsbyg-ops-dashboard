@@ -1,5 +1,5 @@
 import { getTasksInProject, getTaskStories } from './_lib/installation/asana.js';
-import { INSTALL_PROJECT_GID, FIELDS, SECTIONS, CREWS, METROS } from './_lib/installation/constants.js';
+import { INSTALL_PROJECT_GID, FIELDS, SECTIONS, CREWS, METROS, UNREVIEWED_SECTION_GID } from './_lib/installation/constants.js';
 import { getCached, setCached } from './_lib/cache.js';
 
 const CACHE_KEY = 'installation:metrics:v1';
@@ -259,6 +259,33 @@ export default async function handler(req, res) {
     summary.onTimeRate = totalCompleted > 0
       ? Math.round(((summary.early + summary.onTime) / totalCompleted) * 100)
       : 0;
+
+    // --- Unreviewed intake health ---
+    // Target: every job in Unreviewed should move out in < 24h with a date + section set.
+    // Score = % of current Unreviewed jobs that are still under 24h old.
+    const nowMs = Date.now();
+    const unreviewedTasks = enriched.filter(
+      (t) => t.sectionGid === UNREVIEWED_SECTION_GID && !t.completed
+    );
+    const unreviewedAges = unreviewedTasks.map((t) => ({
+      ageHours: (nowMs - new Date(t.createdAt).getTime()) / (60 * 60 * 1000),
+    }));
+    const unreviewedStale = unreviewedAges.filter((a) => a.ageHours > 24).length;
+    const unreviewedFresh = unreviewedAges.length - unreviewedStale;
+    const avgAgeHours = unreviewedAges.length > 0
+      ? Math.round((unreviewedAges.reduce((s, a) => s + a.ageHours, 0) / unreviewedAges.length) * 10) / 10
+      : 0;
+    const maxAgeHours = unreviewedAges.length > 0
+      ? Math.round(Math.max(...unreviewedAges.map((a) => a.ageHours)) * 10) / 10
+      : 0;
+    summary.unreviewed = {
+      count: unreviewedAges.length,
+      fresh: unreviewedFresh,
+      stale: unreviewedStale,
+      avgAgeHours,
+      maxAgeHours,
+      score: unreviewedAges.length > 0 ? Math.round((unreviewedFresh / unreviewedAges.length) * 100) : 100,
+    };
 
     // --- By section ---
     const bySection = SECTIONS.map((s) => ({

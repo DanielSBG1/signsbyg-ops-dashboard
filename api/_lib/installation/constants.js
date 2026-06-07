@@ -22,6 +22,9 @@ export const FIELDS = {
   SURVEY_REQUIRED:   '1213876436984513',
 };
 
+// GID of the "Unreviewed" section — used for intake health metric
+export const UNREVIEWED_SECTION_GID = '1207983418659742';
+
 // Sections in the Installation project (workflow stages)
 export const SECTIONS = [
   { gid: '1207983418659742', name: 'Unreviewed' },
