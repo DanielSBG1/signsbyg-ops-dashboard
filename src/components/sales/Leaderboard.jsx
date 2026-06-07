@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 
 const SORT_OPTIONS = [
-  { key: 'revenueClosed', label: 'Revenue' },
-  { key: 'leadsAssigned', label: 'Leads' },
-  { key: 'dealsWon', label: 'Won' },
-  { key: 'conversionRate', label: 'Conv %' },
-  { key: 'avgResponseMinutes', label: 'Resp Time', ascending: true },
+  { key: 'revenueClosed',       label: 'Revenue' },
+  { key: 'leadsAssigned',       label: 'Leads' },
+  { key: 'dealsWon',            label: 'Won' },
+  { key: 'conversionRate',      label: 'Conv %' },
+  { key: 'avgResponseMinutes',  label: 'Resp Time',  ascending: true },
+  { key: 'coldLeads',           label: 'Cold Leads' },
+  { key: 'bidsSent',            label: 'Bids Sent' },
+  { key: 'bidsRevenue',         label: 'Bid Value' },
+  { key: 'avgTimeToBidMinutes', label: '→ Bid Time', ascending: true },
 ];
 
 function fmt(v, key) {
   if (v == null || v === undefined) return '—';
-  if (key === 'revenueClosed' || key === 'cohortRevenue' || key === 'activityRevenue' || key === 'cohortAvgDealSize')
+  if (key === 'revenueClosed' || key === 'cohortRevenue' || key === 'activityRevenue' || key === 'cohortAvgDealSize' || key === 'bidsRevenue')
     return `$${Number(v).toLocaleString()}`;
-  if (key === 'avgResponseMinutes') {
+  if (key === 'avgResponseMinutes' || key === 'avgTimeToBidMinutes') {
     if (v == null) return '—';
     if (v < 60) return `${v}m`;
     return `${Math.floor(v / 60)}h ${v % 60}m`;
@@ -24,8 +28,8 @@ function fmt(v, key) {
 
 function primaryLabel(rep, sortKey) {
   const v = rep[sortKey];
-  if (sortKey === 'avgResponseMinutes') return fmt(v, 'avgResponseMinutes');
-  if (sortKey === 'revenueClosed') return fmt(v, 'revenueClosed');
+  if (sortKey === 'avgResponseMinutes' || sortKey === 'avgTimeToBidMinutes') return fmt(v, sortKey);
+  if (sortKey === 'revenueClosed' || sortKey === 'bidsRevenue') return fmt(v, sortKey);
   if (sortKey === 'conversionRate') return fmt(v, 'conversionRate');
   return v ?? 0;
 }
@@ -199,6 +203,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
                   <StatRow label="FB Leads" value={hoveredRep.fbLeads} />
                   <StatRow label="Organic" value={hoveredRep.organicLeads} />
                   <StatRow label="Referral" value={hoveredRep.referralLeads} />
+                  <StatRow label="Cold Leads" value={hoveredRep.coldLeads ?? '—'} />
                 </div>
               </section>
 
@@ -218,6 +223,15 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
               </section>
 
               <section>
+                <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1.5">Cold Outreach & Bids</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                  <StatRow label="Bids Sent" value={hoveredRep.bidsSent ?? '—'} />
+                  <StatRow label="Bid Value" value={fmt(hoveredRep.bidsRevenue, 'bidsRevenue')} />
+                  <StatRow label="Avg → Bid" value={fmt(hoveredRep.avgTimeToBidMinutes, 'avgTimeToBidMinutes')} />
+                </div>
+              </section>
+
+              <section>
                 <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1.5">Speed to Lead</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                   <StatRow label="Avg Response" value={fmt(hoveredRep.avgResponseMinutes, 'avgResponseMinutes')} />
@@ -227,7 +241,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
             </div>
 
             <div className="mt-3 pt-3 border-t border-white/8 text-[10px] text-white/25 text-center">
-              {sortKey === 'leadsAssigned' || sortKey === 'avgResponseMinutes'
+              {['leadsAssigned', 'avgResponseMinutes', 'coldLeads'].includes(sortKey)
                 ? 'Click to see contacts ↓'
                 : 'Click to see deals ↓'}
             </div>

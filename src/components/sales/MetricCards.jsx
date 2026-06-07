@@ -58,13 +58,14 @@ function Card({ label, value, trend, format, compareLabel, tooltip, onClick, isA
 
 // Maps each card's filterKey to the funnelFilter row (determines DealDetail vs LeadDetail)
 const CARD_FILTERS = [
-  { filterKey: 'totalLeads',    row: 'leads', label: 'Total Leads',    value: (s) => s.totalLeads,                         trend: (s) => s.trends.totalLeads,      tooltip: 'All contacts created in this period (any lifecycle stage)' },
-  { filterKey: 'facebookLeads', row: 'leads', label: 'FB Leads',       value: (s) => s.facebookLeads,                      trend: (s) => s.trends.facebookLeads,   tooltip: 'Contacts with original source = Facebook/Paid Social' },
-  { filterKey: 'coldOutreach',  row: 'leads', label: 'Cold Outreach',  value: (s) => s.coldOutreachLeads ?? s.otherLeads,  trend: (s) => s.trends.coldOutreachLeads ?? s.trends.otherLeads, tooltip: 'Contacts sourced via email prospecting or cold outreach' },
-  { filterKey: 'dealsWon',      row: 'won',   label: 'Deals Won',      value: (s) => s.dealsWon,                           trend: (s) => s.trends.dealsWon,        tooltip: 'Deals closed-won in this period' },
-  { filterKey: 'dealsSent',     row: 'sent',  label: 'Deals Sent',     value: (s) => s.dealsSent ?? '—',                  trend: (s) => s.trends.dealsSent ?? 0,  tooltip: 'Deals that entered any bid/proposal sent stage in this period (all pipelines: Retail, GC, Wholesale, PM)' },
-  { filterKey: 'dealsCreated',  row: 'deals', label: 'Deals Created',  value: (s) => s.dealsCreated ?? '—',               trend: (s) => s.trends.dealsCreated ?? 0, tooltip: 'New deals opened in this period' },
-  { filterKey: 'revenueClosed', row: 'won',   label: 'Revenue Closed', value: (s) => s.revenueClosed,                     trend: (s) => s.trends.revenueClosed,   format: 'currency', tooltip: 'Sum of amounts on deals closed-won in this period' },
+  { filterKey: 'totalLeads',         row: 'leads', label: 'Total Leads',    value: (s) => s.totalLeads,                         trend: (s) => s.trends.totalLeads,             tooltip: 'All contacts created in this period (any lifecycle stage)' },
+  { filterKey: 'facebookLeads',      row: 'leads', label: 'FB Leads',       value: (s) => s.facebookLeads,                      trend: (s) => s.trends.facebookLeads,          tooltip: 'Contacts with original source = Facebook/Paid Social' },
+  { filterKey: 'coldOutreach',       row: 'leads', label: 'Cold Outreach',  value: (s) => s.coldOutreachLeads ?? s.otherLeads,  trend: (s) => s.trends.coldOutreachLeads ?? s.trends.otherLeads, tooltip: 'Contacts sourced via email prospecting or cold outreach' },
+  { filterKey: 'dealsWon',           row: 'won',   label: 'Deals Won',      value: (s) => s.dealsWon,                           trend: (s) => s.trends.dealsWon,               tooltip: 'Deals closed-won in this period' },
+  { filterKey: 'dealsSent',          row: 'sent',  label: 'Deals Sent',     value: (s) => s.dealsSent ?? '—',                  trend: (s) => s.trends.dealsSent ?? 0,         tooltip: 'Deals that entered Proposal Sent & Awaiting Response in this period' },
+  { filterKey: 'dealsCreated',       row: 'deals', label: 'Deals Created',  value: (s) => s.dealsCreated ?? '—',               trend: (s) => s.trends.dealsCreated ?? 0,      tooltip: 'New deals opened in this period' },
+  { filterKey: 'revenueClosed',      row: 'won',   label: 'Revenue Closed', value: (s) => s.revenueClosed,                     trend: (s) => s.trends.revenueClosed,          format: 'currency', tooltip: 'Sum of amounts on deals closed-won in this period' },
+  { filterKey: 'coldOutreachRevenue',row: 'won',   label: 'Cold Rev',       value: (s) => s.coldOutreachRevenue ?? 0,          trend: (s) => s.trends.coldOutreachRevenue ?? 0, format: 'currency', tooltip: 'Revenue from won deals where the lead source is Cold Outreach (new jobs only)' },
 ];
 
 export default function MetricCards({ summary, period, onCardClick, activeCard }) {
@@ -72,7 +73,7 @@ export default function MetricCards({ summary, period, onCardClick, activeCard }
   const compareLabel = COMPARE_LABELS[period] || 'vs prior period';
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
       {CARD_FILTERS.map((c) => (
         <Card
           key={c.filterKey}

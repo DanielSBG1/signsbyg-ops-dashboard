@@ -27,8 +27,8 @@ export default async function handler(req, res) {
 
     // 60-second response cache. Keyed by period+range so different views don't
     // collide. Only caches successful 200 responses (errors fall through).
-    // v16 = source-aware SLA thresholds (sbg_lead_source custom field)
-    const cacheKey = `metricsv16:${period}:${customStart || ''}:${customEnd || ''}`;
+    // v17 = cold outreach revenue + per-rep bids / lead-to-bid time
+    const cacheKey = `metricsv17:${period}:${customStart || ''}:${customEnd || ''}`;
     // CDN cache header — Vercel's edge network will serve this response in
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
     // s-maxage=120: CDN freshness window (matches cron interval).
@@ -367,6 +367,13 @@ export default async function handler(req, res) {
     const prevWonDeals = prevClosedDeals.results.filter((d) => CLOSED_WON_STAGES.includes(d.properties.dealstage));
     const revenue = wonDeals.reduce((sum, d) => sum + (parseFloat(d.properties.amount) || 0), 0);
     const prevRevenue = prevWonDeals.reduce((sum, d) => sum + (parseFloat(d.properties.amount) || 0), 0);
+
+    // Cold outreach revenue: won deals where deal lead_source maps to cold_outreach
+    const coldWonDeals = wonDeals.filter((d) => mapDealLeadSource(d.properties.lead_source) === 'cold_outreach');
+    const prevColdWonDeals = prevWonDeals.filter((d) => mapDealLeadSource(d.properties.lead_source) === 'cold_outreach');
+    const coldOutreachRevenue = coldWonDeals.reduce((sum, d) => sum + (parseFloat(d.properties.amount) || 0), 0);
+    const prevColdOutreachRevenue = prevColdWonDeals.reduce((sum, d) => sum + (parseFloat(d.properties.amount) || 0), 0);
+
     function trendPct(current, previous) {
       if (previous === 0) return current > 0 ? 100 : 0;
       return Math.round(((current - previous) / previous) * 100);
@@ -380,6 +387,7 @@ export default async function handler(req, res) {
       dealsSent: dealsSentRaw.results.length,
       dealsCreated: deals.results.length,
       revenueClosed: revenue,
+      coldOutreachRevenue,
       trends: {
         totalLeads: trendPct(contacts.total, prevContacts.total),
         facebookLeads: trendPct(fbContacts.length, prevFbContacts.length),
@@ -388,6 +396,7 @@ export default async function handler(req, res) {
         dealsSent: trendPct(dealsSentRaw.results.length, prevDealsSentRaw.results.length),
         dealsCreated: trendPct(deals.results.length, prevDeals.results.length),
         revenueClosed: trendPct(revenue, prevRevenue),
+        coldOutreachRevenue: trendPct(coldOutreachRevenue, prevColdOutreachRevenue),
       },
     };
 
@@ -478,6 +487,40 @@ export default async function handler(req, res) {
       if (d.properties.hubspot_owner_id) allRepIds.add(d.properties.hubspot_owner_id);
     }
 
+    // --- Per-rep bids data ---
+    // Built from dealsSentRaw which already carries full stage history (propertiesWithHistory.dealstage).
+    // For each deal that entered a bid-sent stage in the period, record: count, revenue, and the
+    // time delta from deal createdate → first bid-sent stage entry (for avg lead-to-bid time).
+    const repBidsMap = new Map(); // repId → { bidsSent, bidsRevenue, bidTimeSumMs, bidTimeCount }
+    for (const d of dealsSentRaw.results) {
+      const repId = d.properties.hubspot_owner_id;
+      if (!repId) continue;
+      if (!repBidsMap.has(repId)) {
+        repBidsMap.set(repId, { bidsSent: 0, bidsRevenue: 0, bidTimeSumMs: 0, bidTimeCount: 0 });
+      }
+      const entry = repBidsMap.get(repId);
+      entry.bidsSent++;
+      entry.bidsRevenue += parseFloat(d.properties.amount) || 0;
+
+      // Find the earliest bid-sent stage entry within the period to compute lead→bid time
+      const createMs = Date.parse(d.properties.createdate || '');
+      if (createMs) {
+        const history = d.propertiesWithHistory?.dealstage || [];
+        let earliestBidMs = null;
+        for (const h of history) {
+          if (!sentStageIdSet.has(h.value)) continue;
+          const ts = h.timestamp ? new Date(h.timestamp).getTime() : NaN;
+          if (!isNaN(ts) && ts >= sentRangeStartMs && ts <= sentRangeEndMs) {
+            if (earliestBidMs === null || ts < earliestBidMs) earliestBidMs = ts;
+          }
+        }
+        if (earliestBidMs !== null && earliestBidMs > createMs) {
+          entry.bidTimeSumMs += earliestBidMs - createMs;
+          entry.bidTimeCount++;
+        }
+      }
+    }
+
     // Source buckets used to break down rep leads by origin (FB/Meta vs organic-inbound)
     const ORGANIC_SOURCES = new Set(['organic', 'direct']);
     const REFERRAL_SOURCES = new Set(['referrals']);
@@ -493,6 +536,9 @@ export default async function handler(req, res) {
       );
       const repReferralContacts = repContacts.filter((c) =>
         REFERRAL_SOURCES.has(effectiveSource(c))
+      );
+      const repColdContacts = repContacts.filter(
+        (c) => effectiveSource(c) === 'cold_outreach'
       );
       const repDeals = deals.results.filter((d) => d.properties.hubspot_owner_id === repId);
       const repWon = wonDeals.filter((d) => d.properties.hubspot_owner_id === repId);
@@ -540,6 +586,11 @@ export default async function handler(req, res) {
         if (lifecycle === 'customer') cohortWon++;
       }
 
+      const repBids = repBidsMap.get(repId) || { bidsSent: 0, bidsRevenue: 0, bidTimeSumMs: 0, bidTimeCount: 0 };
+      const avgTimeToBidMinutes = repBids.bidTimeCount > 0
+        ? Math.round(repBids.bidTimeSumMs / repBids.bidTimeCount / 60000)
+        : null;
+
       // Skip reps with zero activity across all columns
       if (repContacts.length === 0 && repDeals.length === 0 && repWon.length === 0) continue;
 
@@ -550,6 +601,7 @@ export default async function handler(req, res) {
         fbLeads: repFbContacts.length,
         organicLeads: repOrganicContacts.length,  // organic + direct
         referralLeads: repReferralContacts.length,
+        coldLeads: repColdContacts.length,
         dealsCreated: repDeals.length,    // activity: deals CREATED in period (not necessarily from period's leads)
         dealsWon: repWon.length,           // activity: deals WON in period
         cohortDeals,                       // cohort funnel: of period's leads, how many became deals (ever)
@@ -557,6 +609,9 @@ export default async function handler(req, res) {
         avgResponseMinutes,                // mean minutes from contact created → first contacted
         revenueClosed: repRevenue,
         conversionRate: repContacts.length > 0 ? Math.round((repDeals.length / repContacts.length) * 100) : 0,
+        bidsSent: repBids.bidsSent,
+        bidsRevenue: repBids.bidsRevenue,
+        avgTimeToBidMinutes,
       });
     }
 
@@ -575,6 +630,7 @@ export default async function handler(req, res) {
         fbLeads: 0,
         organicLeads: 0,
         referralLeads: 0,
+        coldLeads: 0,
         dealsCreated: unassignedDealsCreated.length,
         dealsWon: unassignedDealsWon.length,
         cohortDeals: 0,
@@ -582,6 +638,9 @@ export default async function handler(req, res) {
         avgResponseMinutes: null,
         revenueClosed: unassignedDealsWon.reduce((s, d) => s + (parseFloat(d.properties.amount) || 0), 0),
         conversionRate: 0,
+        bidsSent: 0,
+        bidsRevenue: 0,
+        avgTimeToBidMinutes: null,
       });
     }
 
