@@ -97,7 +97,7 @@ function classifyTask(task, todayISO, rescheduleCount = 0) {
     if (rescheduleCount >= 1) return 'rescheduled';
     if (completedAt < installDate) return 'early';
     if (completedAt === installDate) return 'on_time';
-    return 'failed';  // completed after install date with no tracked reschedule
+    return 'bled_over';  // completed after install date with no tracked reschedule
   }
 
   if (installDate < todayISO) return 'late';
@@ -250,6 +250,7 @@ export default async function handler(req, res) {
       early: enriched.filter((t) => t.status === 'early').length,
       onTime: enriched.filter((t) => t.status === 'on_time').length,
       failed: enriched.filter((t) => t.status === 'failed').length,
+      bledOver: enriched.filter((t) => t.status === 'bled_over').length,
       // rescheduleWindow: how many tasks in the story-fetch window had reschedules
       rescheduleWindow: storyTargets.filter((t) => (rescheduleMap.get(t.id) ?? 0) >= 1).length,
     };
