@@ -276,78 +276,6 @@ function DayColumn({ day, jobs, isToday, crewColorMap }) {
   );
 }
 
-// ─── Section pipeline ─────────────────────────────────────────────────────────
-
-function SectionPipelinePanel({ bySection }) {
-  if (!bySection || bySection.length === 0) return null;
-  const max = Math.max(...bySection.map(s => s.count), 1);
-  return (
-    <div className="bg-slate-card border border-white/10 rounded-2xl p-6">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-5">Pipeline by Section</p>
-      <div className="space-y-3">
-        {bySection.map(s => (
-          <div key={s.gid} className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-white/60">{s.name}</span>
-              <span className="text-xs font-semibold text-white/70 tabular-nums">{s.count}</span>
-            </div>
-            <div className="h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-accent/60 transition-all duration-300"
-                style={{ width: `${Math.round((s.count / max) * 100)}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Crew scorecard ───────────────────────────────────────────────────────────
-
-function CrewScorecardPanel({ byCrew }) {
-  if (!byCrew || byCrew.length === 0) return null;
-  return (
-    <div className="bg-slate-card border border-white/10 rounded-2xl overflow-hidden">
-      <div className="px-6 py-4 border-b border-white/[0.06]">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30">Crew Performance</p>
-      </div>
-      <div className="px-6 py-2 border-b border-white/[0.04] grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4">
-        {['Crew', 'Open', 'Done', 'Rescheduled', 'On Time', 'Rate'].map(h => (
-          <span key={h} className="text-[10px] text-white/25 font-semibold uppercase tracking-widest text-right first:text-left">{h}</span>
-        ))}
-      </div>
-      <div className="divide-y divide-white/[0.04]">
-        {byCrew.map(c => {
-          const rateColor = c.completed > 0
-            ? c.onTimeRate >= 80 ? 'text-success' : c.onTimeRate >= 60 ? 'text-warning' : 'text-danger'
-            : 'text-white/25';
-          return (
-            <div key={c.name} className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 items-center px-6 py-3 hover:bg-white/[0.03]">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                <span className="text-sm font-medium text-white/80 truncate">{c.name}</span>
-              </div>
-              <span className="text-sm font-semibold tabular-nums text-white text-right">{c.open}</span>
-              <span className="text-sm tabular-nums text-white/60 text-right">{c.completed}</span>
-              <span className="text-sm tabular-nums text-right">
-                {c.rescheduled > 0
-                  ? <span className="text-warning font-medium">{c.rescheduled}</span>
-                  : <span className="text-white/25">—</span>}
-              </span>
-              <span className="text-sm tabular-nums text-white/60 text-right">{c.onTime}</span>
-              <span className={`text-sm font-bold tabular-nums text-right ${rateColor}`}>
-                {c.completed > 0 ? `${c.onTimeRate}%` : '—'}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function InstallationOverview({ data }) {
@@ -516,12 +444,6 @@ export default function InstallationOverview({ data }) {
           </div>
         </div>
       ))}
-
-      {/* ── Section pipeline + Crew scorecard ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <SectionPipelinePanel bySection={data.bySection} />
-        <CrewScorecardPanel byCrew={data.byCrew} />
-      </div>
 
       {/* ── Jobs table ── */}
       <JobsTable jobs={data.jobs} />

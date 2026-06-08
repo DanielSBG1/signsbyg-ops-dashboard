@@ -1,19 +1,30 @@
 import React from 'react';
 
-export default function CrewScorecard({ byCrew }) {
+export default function CrewScorecard({ byCrew, unassignedCount, onUnassignedClick }) {
   if (!byCrew || byCrew.length === 0) return null;
 
   return (
     <div className="bg-slate-card border border-white/5 rounded-2xl p-6 overflow-x-auto">
-      <h2 className="text-lg font-semibold mb-4">Crew Scorecard</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold">Crew Scorecard</h2>
+        {unassignedCount > 0 && (
+          <button
+            onClick={onUnassignedClick}
+            className="px-3 py-1 rounded-full text-xs font-bold bg-danger/20 text-danger border border-danger/30 hover:bg-danger/30 transition-colors"
+          >
+            {unassignedCount} unassigned &rarr;
+          </button>
+        )}
+      </div>
       <table className="w-full text-sm">
         <thead>
           <tr className="text-white/40 text-xs uppercase tracking-wider">
             <th className="text-left pb-3 px-3">Crew</th>
             <th className="text-right pb-3 px-3">Open</th>
-            <th className="text-right pb-3 px-3">Completed</th>
-            <th className="text-right pb-3 px-3">Rescheduled</th>
+            <th className="text-right pb-3 px-3">Done</th>
             <th className="text-right pb-3 px-3">On-Time</th>
+            <th className="text-right pb-3 px-3">Resch.</th>
+            <th className="text-right pb-3 px-3">Failed</th>
             <th className="text-right pb-3 px-3">On-Time %</th>
           </tr>
         </thead>
@@ -26,12 +37,13 @@ export default function CrewScorecard({ byCrew }) {
               </td>
               <td className="py-3 px-3 text-right tabular-nums">{c.open}</td>
               <td className="py-3 px-3 text-right tabular-nums text-white/60">{c.completed}</td>
+              <td className="py-3 px-3 text-right tabular-nums text-success">{c.onTime || 0}</td>
               <td className="py-3 px-3 text-right tabular-nums">
-                {c.rescheduled > 0
-                  ? <span className="text-warning font-medium">{c.rescheduled}</span>
-                  : <span className="text-white/30">—</span>}
+                <span className={c.rescheduled > 0 ? 'text-warning' : 'text-white/30'}>{c.rescheduled || 0}</span>
               </td>
-              <td className="py-3 px-3 text-right tabular-nums text-white/60">{c.onTime}</td>
+              <td className="py-3 px-3 text-right tabular-nums">
+                <span className={c.failed > 0 ? 'text-danger' : 'text-white/30'}>{c.failed || 0}</span>
+              </td>
               <td className="py-3 px-3 text-right tabular-nums">
                 <span className={`font-semibold ${
                   c.onTimeRate >= 80 ? 'text-success' :

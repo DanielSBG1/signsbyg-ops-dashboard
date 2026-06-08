@@ -4,14 +4,14 @@ export default function SummaryCards({ summary }) {
   if (!summary) return null;
 
   const cards = [
-    { label: 'Open Jobs',       value: summary.open,       sub: `${summary.total} total` },
-    { label: 'Scheduled',       value: summary.scheduled,  sub: 'future date set' },
-    { label: 'Pending Date',    value: summary.pending,    sub: 'no date yet' },
-    { label: 'Late',            value: summary.late,       sub: 'past date, open',      color: 'text-danger' },
-    { label: 'On-Time Rate',    value: `${summary.onTimeRate}%`, sub: 'of completed',    color: summary.onTimeRate >= 80 ? 'text-success' : summary.onTimeRate >= 60 ? 'text-warning' : 'text-danger' },
-    { label: 'Early',           value: summary.early,      sub: 'finished ahead',       color: 'text-success' },
-    { label: 'On Time',         value: summary.onTime,     sub: 'finished on day',      color: 'text-success' },
-    { label: 'Failed',          value: summary.failed,     sub: 'late or rescheduled',  color: 'text-danger' },
+    { label: 'Open Jobs',       value: summary.open,            sub: `${summary.total} total` },
+    { label: 'Scheduled',       value: summary.scheduled,       sub: 'on track' },
+    { label: 'At Risk',         value: summary.atRisk,          sub: 'future date, resched.',   color: summary.atRisk > 0 ? 'text-warning' : 'text-white' },
+    { label: 'Pending Date',    value: summary.pending,         sub: 'no date yet' },
+    { label: 'Late',            value: summary.late,            sub: 'past date, open',         color: 'text-danger' },
+    { label: 'On-Time Rate',    value: `${summary.onTimeRate}%`, sub: 'first-try hits',         color: summary.onTimeRate >= 80 ? 'text-success' : summary.onTimeRate >= 60 ? 'text-warning' : 'text-danger' },
+    { label: 'Rescheduled 1x',  value: summary.rescheduledOnce, sub: 'yellow flag',             color: summary.rescheduledOnce > 0 ? 'text-warning' : 'text-white' },
+    { label: 'Rescheduled 2x+', value: summary.rescheduledMulti, sub: 'red flag',               color: summary.rescheduledMulti > 0 ? 'text-danger' : 'text-white' },
   ];
 
   return (
