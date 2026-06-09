@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 const STATUS_STYLES = {
   early:       'bg-success/20 text-success',
   on_time:     'bg-success/20 text-success',
   scheduled:   'bg-accent/20 text-accent',
+  at_risk:     'bg-warning/20 text-warning',
   pending:     'bg-white/10 text-white/40',
   late:        'bg-danger/20 text-danger',
   rescheduled: 'bg-warning/20 text-warning',
+  bled_over:   'bg-danger/20 text-danger',
   failed:      'bg-danger/20 text-danger',
 };
 
@@ -14,40 +16,75 @@ const STATUS_LABELS = {
   early:       'Early',
   on_time:     'On Time',
   scheduled:   'Scheduled',
+  at_risk:     'At Risk',
   pending:     'No Date',
   late:        'Late',
   rescheduled: 'Rescheduled',
+  bled_over:   'Bled Over',
   failed:      'Failed',
 };
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
-  });
+const COLUMNS = [
+  { key: 'name',        label: 'Job',          align: 'left' },
+  { key: 'status',      label: 'Status',       align: 'left' },
+  { key: 'section',     label: 'Section',      align: 'left' },
+  { key: 'createdAt',   label: 'Created',      align: 'left' },
+  { key: 'installDate', label: 'Install Date', align: 'left' },
+  { key: 'reschedules', label: 'Resch.',       align: 'center' },
+  { key: 'crews',       label: 'Crew',         align: 'left' },
+  { key: 'metro',       label: 'Metro',        align: 'left' },
+  { key: 'pm',          label: 'PM',           align: 'left' },
+];
+
+function getSortValue(job, key) {
+  if (key === 'crews') return (job.crews || []).join(', ');
+  if (key === 'reschedules') return job.reschedules || 0;
+  return job[key] || '';
 }
 
 export default function JobsTable({ jobs }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [crewFilter,   setCrewFilter]   = useState('all');
   const [search,       setSearch]       = useState('');
+  const [sortKey,      setSortKey]      = useState('createdAt');
+  const [sortDir,      setSortDir]      = useState('desc');
 
   if (!jobs) return null;
 
   const statuses = [...new Set(jobs.map(j => j.status))];
   const crews    = [...new Set(jobs.flatMap(j => j.crews))].filter(Boolean);
 
-  let filtered = jobs;
-  if (statusFilter !== 'all') filtered = filtered.filter(j => j.status === statusFilter);
-  if (crewFilter   !== 'all') filtered = filtered.filter(j => j.crews.includes(crewFilter));
-  if (search) {
-    const s = search.toLowerCase();
-    filtered = filtered.filter(j =>
-      (j.name        || '').toLowerCase().includes(s) ||
-      (j.address     || '').toLowerCase().includes(s) ||
-      (j.contactName || '').toLowerCase().includes(s)
-    );
-  }
+  const handleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+  };
+
+  const filtered = useMemo(() => {
+    let result = jobs;
+    if (statusFilter !== 'all') result = result.filter(j => j.status === statusFilter);
+    if (crewFilter   !== 'all') result = result.filter(j => j.crews.includes(crewFilter));
+    if (search) {
+      const s = search.toLowerCase();
+      result = result.filter(j =>
+        (j.name        || '').toLowerCase().includes(s) ||
+        (j.address     || '').toLowerCase().includes(s) ||
+        (j.contactName || '').toLowerCase().includes(s)
+      );
+    }
+    return [...result].sort((a, b) => {
+      const av = getSortValue(a, sortKey);
+      const bv = getSortValue(b, sortKey);
+      if (typeof av === 'number' && typeof bv === 'number') {
+        return sortDir === 'asc' ? av - bv : bv - av;
+      }
+      const cmp = String(av).localeCompare(String(bv));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [jobs, statusFilter, crewFilter, search, sortKey, sortDir]);
 
   return (
     <div className="bg-slate-card border border-white/10 rounded-2xl overflow-hidden">
@@ -85,34 +122,63 @@ export default function JobsTable({ jobs }) {
         </div>
       </div>
 
-      {/* Column headers */}
-      <div className="px-6 py-2 border-b border-white/[0.04] grid grid-cols-[1fr_100px_140px_130px_130px_100px_100px] gap-4">
-        {['Job', 'Status', 'Section', 'Install Date', 'Crew', 'Metro', 'PM'].map(h => (
-          <span key={h} className="text-[10px] text-white/25 font-semibold uppercase tracking-widest">{h}</span>
-        ))}
-      </div>
-
-      {/* Rows */}
-      <div className="divide-y divide-white/[0.04]">
-        {filtered.slice(0, 200).map(j => (
-          <div key={j.id} className="px-6 py-3 grid grid-cols-[1fr_100px_140px_130px_130px_100px_100px] gap-4 items-center hover:bg-white/[0.03] transition-colors">
-            <div className="min-w-0">
-              <a href={j.url} target="_blank" rel="noreferrer"
-                className="text-sm font-medium text-white hover:text-accent transition-colors truncate block">
-                {j.name}
-              </a>
-              {j.address && <p className="text-[11px] text-white/35 truncate mt-0.5">{j.address}</p>}
-            </div>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-white/10 text-white/40'}`}>
-              {STATUS_LABELS[j.status] || j.status}
-            </span>
-            <span className="text-xs text-white/50 truncate">{j.section || '—'}</span>
-            <span className="text-xs text-white/70 tabular-nums">{formatDate(j.installDate)}</span>
-            <span className="text-xs text-white/60 truncate">{j.crews.join(', ') || '—'}</span>
-            <span className="text-xs text-white/50 truncate">{j.metro || '—'}</span>
-            <span className="text-xs text-white/50 truncate">{j.pm || '—'}</span>
-          </div>
-        ))}
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-white/40 text-xs uppercase tracking-wider border-b border-white/[0.04]">
+              {COLUMNS.map(col => (
+                <th
+                  key={col.key}
+                  onClick={() => handleSort(col.key)}
+                  className={`py-2 px-3 cursor-pointer hover:text-white/70 transition-colors select-none font-semibold ${
+                    col.align === 'center' ? 'text-center' : 'text-left'
+                  }`}
+                >
+                  {col.label}
+                  {sortKey === col.key && (
+                    <span className="ml-1">{sortDir === 'desc' ? '↓' : '↑'}</span>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.04]">
+            {filtered.slice(0, 200).map(j => (
+              <tr key={j.id} className="hover:bg-white/[0.03] transition-colors">
+                <td className="py-3 px-3 min-w-0">
+                  <a href={j.url} target="_blank" rel="noreferrer"
+                    className="text-sm font-medium text-white hover:text-accent transition-colors truncate block">
+                    {j.name}
+                  </a>
+                  {j.address && <p className="text-[11px] text-white/35 truncate mt-0.5">{j.address}</p>}
+                </td>
+                <td className="py-3 px-3">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-white/10 text-white/40'}`}>
+                    {STATUS_LABELS[j.status] || j.status}
+                  </span>
+                </td>
+                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.section || '—'}</td>
+                <td className="py-3 px-3 text-white/60 tabular-nums text-xs">
+                  {j.createdAt
+                    ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
+                    : '—'}
+                </td>
+                <td className="py-3 px-3 text-xs text-white/70 tabular-nums">{j.installDate || '—'}</td>
+                <td className="py-3 px-3 text-center tabular-nums text-xs">
+                  {j.reschedules > 0 ? (
+                    <span className={`font-bold ${j.reschedules >= 2 ? 'text-danger' : 'text-warning'}`}>{j.reschedules}</span>
+                  ) : (
+                    <span className="text-white/20">0</span>
+                  )}
+                </td>
+                <td className="py-3 px-3 text-xs text-white/60 truncate">{(j.crews || []).join(', ') || '—'}</td>
+                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.metro || '—'}</td>
+                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.pm || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {filtered.length === 0 && (

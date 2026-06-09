@@ -72,9 +72,19 @@ export async function getSubtasks(taskGid, optFields) {
   });
 }
 
+/** Returns stories for a task — used for reschedule detection. */
+export async function getTaskStories(taskGid) {
+  return asanaGetAll(`/tasks/${taskGid}/stories`, {
+    opt_fields: 'resource_subtype,created_at,old_date_value.due_on,new_date_value.due_on',
+    limit: 100,
+  });
+}
+
 // Production Due Date custom field GID
 const PROD_DUE_DATE_GID = '1210757373140456';
 
+/** Updates a task's due_on, Production Due Date custom field, and optionally start_on.
+ *  Asana tasks require PUT (not PATCH) — PATCH returns "No matching route". */
 export async function updateTaskDueDate(taskGid, dateISO, startDateISO) {
   const dateValue = dateISO ? { date: dateISO } : null;
   const body = {
