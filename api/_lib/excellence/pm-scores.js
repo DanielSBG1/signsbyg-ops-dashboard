@@ -24,7 +24,7 @@ export async function computePmOperationalScore() {
   const overdueRate = withDue.length > 0 ? overdueCount / withDue.length : 0;
 
   // 4. Stuck job rate: jobs with no modified_at in last 7 days
-  const stuckCount   = scorecards.filter(j => (j.modified_at ?? '').slice(0, 10) < sevenAgo).length;
+  const stuckCount   = scorecards.filter(j => j.modified_at && j.modified_at.slice(0, 10) < sevenAgo).length;
   const stuckRate    = scorecards.length > 0 ? stuckCount / scorecards.length : 0;
 
   // 5. Job setup completeness: jobs that have a due_on set
@@ -36,7 +36,7 @@ export async function computePmOperationalScore() {
 
   const kpis = [
     kpi('taskOnTimeRate',     'Task On-Time Rate',      rateScore(taskOnTimeRate),              `${Math.round(taskOnTimeRate * 100)}%`,      0.20),
-    kpi('jobHealthScore',     'Job Health Score',        Math.min(100, Math.round(avgHealth)),   `${Math.round(avgHealth)}/100`,              0.15),
+    kpi('jobHealthScore',     'Job Health Score',        Math.min(100, Math.max(0, Math.round(avgHealth))),   `${Math.round(avgHealth)}/100`,              0.15),
     kpi('overdueSubtaskRate', 'Overdue Subtask Rate',    invertedRateScore(overdueRate, 0.10),   `${Math.round(overdueRate * 100)}%`,         0.20),
     kpi('stuckJobRate',       'Stuck Job Rate',          invertedRateScore(stuckRate, 0.10),     `${Math.round(stuckRate * 100)}%`,           0.15),
     kpi('jobSetupComplete',   'Job Setup Completeness',  rateScore(setupCompletion),             `${Math.round(setupCompletion * 100)}%`,     0.15),
