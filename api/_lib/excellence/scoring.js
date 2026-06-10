@@ -10,6 +10,7 @@ export function rateScore(rate) {
 /**
  * Normalize a 0–1 rate where LOWER is better → 0–100 score.
  * threshold: rate that scores ~50 (e.g. 0.10 = 10% rework → 50pts).
+ * Zero boundary: rate >= threshold*2 scores 0.
  */
 export function invertedRateScore(rate, threshold = 0.10) {
   const r = rate ?? 0;
@@ -23,6 +24,7 @@ export function invertedRateScore(rate, threshold = 0.10) {
  * target: value that earns 100 (ideal). bad: value that earns 0.
  */
 export function timeScore(value, target, bad) {
+  if (bad === target) return 100; // degenerate range — treat as perfect
   const v = value ?? bad;
   if (v <= target) return 100;
   if (v >= bad) return 0;
