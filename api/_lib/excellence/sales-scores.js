@@ -43,7 +43,7 @@ export async function computeSalesOperationalScore(period = 'month') {
         { propertyName: 'dealstage', operator: 'NOT_IN', values: [...CLOSED_WON_STAGES, ...CLOSED_LOST_STAGES] },
         { propertyName: 'createdate', operator: 'GTE', value: daysAgo(180) },
       ],
-      properties: ['dealstage', 'createdate', 'amount', 'pipeline'],
+      properties: ['dealstage', 'createdate', 'amount', 'pipeline', 'hs_lastmodifieddate'],
       limit: 500,
     }),
   ]);
