@@ -1,5 +1,5 @@
 // src/sections/ExcellenceSection.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useExcellenceScores } from '../hooks/useExcellenceScores.js';
 import TeamScorecard  from '../components/excellence/TeamScorecard.jsx';
 import TeamDrillDown  from '../components/excellence/TeamDrillDown.jsx';
@@ -23,6 +23,13 @@ export default function ExcellenceSection() {
   const { data, loading, error, refresh } = useExcellenceScores(period);
 
   const teams = data?.teams ?? {};
+
+  // Reset drill-down if active team disappears from data (e.g., sparse API response)
+  useEffect(() => {
+    if (activeTeam && data && !data.teams?.[activeTeam]) {
+      setActiveTeam(null);
+    }
+  }, [data, activeTeam]);
 
   function toggleTeam(id) {
     setActiveTeam(prev => prev === id ? null : id);
@@ -84,7 +91,7 @@ export default function ExcellenceSection() {
         )}
         {error && (
           <div className="bg-danger/10 border border-danger/30 rounded-xl px-4 py-3 text-sm text-danger">
-            Error loading scores: {error}
+            Error loading scores: {error?.message ?? String(error)}
           </div>
         )}
 
