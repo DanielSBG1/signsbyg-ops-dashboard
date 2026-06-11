@@ -1,6 +1,6 @@
 // src/components/excellence/TeamScorecard.jsx
 import React from 'react';
-import { gradeColor } from '../../lib/excellenceUtils.js';
+import { gradeColor, scoreColor } from '../../lib/excellenceUtils.js';
 
 const GRADE_BG = { A: 'border-success/40 bg-success/5', B: 'border-accent/40 bg-accent/5', C: 'border-warning/40 bg-warning/5', D: 'border-orange-400/40 bg-orange-400/5', F: 'border-danger/40 bg-danger/5' };
 
@@ -43,9 +43,9 @@ export default function TeamScorecard({ team, isActive, onClick }) {
       {/* KPI pills */}
       <div className="space-y-1">
         {pills.map(p => (
-          <div key={p.key} className="flex items-center justify-between">
+          <div key={p.key ?? p.label} className="flex items-center justify-between">
             <span className="text-[10px] text-white/40 truncate">{p.label}</span>
-            <span className={`text-[10px] font-semibold tabular-nums ml-2 ${p.score >= 75 ? 'text-success' : p.score >= 50 ? 'text-warning' : 'text-danger'}`}>
+            <span className={`text-[10px] font-semibold tabular-nums ml-2 ${scoreColor(p.score)}`}>
               {p.score}
             </span>
           </div>
