@@ -137,7 +137,7 @@ export default function JobsTable({ jobs }) {
                 >
                   {col.label}
                   {sortKey === col.key && (
-                    <span className="ml-1">{sortDir === 'desc' ? '↓' : '↑'}</span>
+                    <span className="ml-1">{sortDir === 'desc' ? '\u2193' : '\u2191'}</span>
                   )}
                 </th>
               ))}
@@ -158,13 +158,13 @@ export default function JobsTable({ jobs }) {
                     {STATUS_LABELS[j.status] || j.status}
                   </span>
                 </td>
-                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.section || '—'}</td>
+                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.section || '\u2014'}</td>
                 <td className="py-3 px-3 text-white/60 tabular-nums text-xs">
                   {j.createdAt
                     ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
-                    : '—'}
+                    : '\u2014'}
                 </td>
-                <td className="py-3 px-3 text-xs text-white/70 tabular-nums">{j.installDate || '—'}</td>
+                <td className="py-3 px-3 text-xs text-white/70 tabular-nums">{j.installDate || '\u2014'}</td>
                 <td className="py-3 px-3 text-center tabular-nums text-xs">
                   {j.reschedules > 0 ? (
                     <span className={`font-bold ${j.reschedules >= 2 ? 'text-danger' : 'text-warning'}`}>{j.reschedules}</span>
@@ -172,9 +172,9 @@ export default function JobsTable({ jobs }) {
                     <span className="text-white/20">0</span>
                   )}
                 </td>
-                <td className="py-3 px-3 text-xs text-white/60 truncate">{(j.crews || []).join(', ') || '—'}</td>
-                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.metro || '—'}</td>
-                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.pm || '—'}</td>
+                <td className="py-3 px-3 text-xs text-white/60 truncate">{(j.crews || []).join(', ') || '\u2014'}</td>
+                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.metro || '\u2014'}</td>
+                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.pm || '\u2014'}</td>
               </tr>
             ))}
           </tbody>
