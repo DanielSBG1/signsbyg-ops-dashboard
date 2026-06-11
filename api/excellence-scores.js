@@ -36,11 +36,11 @@ async function buildExcellenceScores(period = 'month') {
 
   // --- Culture scores (parallel, one per team) ---
   const [pmCulture, salesCulture, prodCulture, installCulture, adminCulture] = await Promise.all([
-    computeCultureScore('pm',           activityProxy(pmOps)),
-    computeCultureScore('sales',        activityProxy(salesOps)),
-    computeCultureScore('production',   activityProxy(prodOps)),
-    computeCultureScore('installation', activityProxy(installOps)),
-    computeCultureScore('admin',        activityProxy(adminOps)),
+    computeCultureScore('pm',           activityProxy(pmOps)).catch(e => { console.error('[excellence] culture-pm:', e.message); return { score: 50, kpis: [] }; }),
+    computeCultureScore('sales',        activityProxy(salesOps)).catch(e => { console.error('[excellence] culture-sales:', e.message); return { score: 50, kpis: [] }; }),
+    computeCultureScore('production',   activityProxy(prodOps)).catch(e => { console.error('[excellence] culture-production:', e.message); return { score: 50, kpis: [] }; }),
+    computeCultureScore('installation', activityProxy(installOps)).catch(e => { console.error('[excellence] culture-installation:', e.message); return { score: 50, kpis: [] }; }),
+    computeCultureScore('admin',        activityProxy(adminOps)).catch(e => { console.error('[excellence] culture-admin:', e.message); return { score: 50, kpis: [] }; }),
   ]);
 
   // Reviews score: 50 (neutral) until Google Reviews integration is built in V2
