@@ -5,6 +5,7 @@ const PmSection           = lazy(() => import('./sections/PmSection'));
 const ProductionSection   = lazy(() => import('./sections/ProductionSection'));
 const InstallationSection = lazy(() => import('./sections/InstallationSection'));
 const SalesSection        = lazy(() => import('./sections/SalesSection'));
+const ExcellenceSection   = lazy(() => import('./sections/ExcellenceSection'));
 const MarketingSection    = lazy(() => import('./sections/MarketingSection'));
 
 function SectionFallback() {
@@ -31,6 +32,7 @@ export default function App() {
           {section === 'pm'           && <PmSection />}
           {section === 'production'   && <ProductionSection />}
           {section === 'installation' && <InstallationSection />}
+          {section === 'excellence'    && <ExcellenceSection />}
           {section === 'marketing'    && <MarketingSection />}
         </Suspense>
       </main>
