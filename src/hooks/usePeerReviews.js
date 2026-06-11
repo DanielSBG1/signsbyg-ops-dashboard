@@ -15,6 +15,7 @@ export function usePeerReviews() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ team, communication, accountability, attitude, processAdherence, reviewer }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!json.ok) throw new Error(json.error ?? 'Submit failed');
       setSubmitted(true);
