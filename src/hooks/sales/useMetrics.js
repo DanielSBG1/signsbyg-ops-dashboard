@@ -14,11 +14,6 @@ const STALE_MAX_BY_PERIOD = {
 };
 const STALE_MAX_DEFAULT = 2 * 60 * 60 * 1000; // 2 hours for active periods
 
-// Periods to pre-warm in the background after initial data loads.
-// Staggered to avoid bursting all at once. Skips the current period (already loaded)
-// and custom ranges (no fixed key to pre-warm).
-const PREWARM_PERIODS = ['week', 'month', 'lastmonth'];
-
 // --- localStorage helpers ---
 function lsKey(period, start, end) {
   return `sbg_m2_${period}_${start || ''}_${end || ''}`;
@@ -104,33 +99,33 @@ export function useMetrics(enabled = true) {
     return () => clearInterval(intervalRef.current);
   }, [fetchMetrics, enabled]);
 
-  // Pre-warm localStorage for nearby periods after initial data loads.
-  // Staggered so they don't compete with the current period's initial render.
-  // These hit CDN/KV (fast, ~200ms) and populate localStorage so switching
-  // to those periods is instant instead of showing a spinner.
+  // Pre-warm the server KV cache AND populate localStorage so that switching
+  // to any period is instant — even on first visit.
+  // Wave 1 (500ms): today/week/month — most-used
+  // Wave 2 (3s): quarterly periods — warmed before the user clicks them
+  // Skips periods that already have a fresh localStorage entry (fresher than half the TTL).
   useEffect(() => {
     if (!enabled || !data) return;
-    const currentQuarter = `q${Math.floor(new Date().getMonth() / 3) + 1}`;
-    const toWarm = [...PREWARM_PERIODS, currentQuarter].filter((p) => p !== period);
-    const timers = toWarm.map((p, i) =>
-      setTimeout(() => {
-        const cachedKey = lsKey(p, '', '');
-        const maxAge = STALE_MAX_BY_PERIOD[p] ?? STALE_MAX_DEFAULT;
-        // Skip if localStorage already has a fresh entry for this period
-        try {
-          const raw = localStorage.getItem(cachedKey);
-          if (raw) {
-            const { t } = JSON.parse(raw);
-            if (Date.now() - t < maxAge / 2) return; // fresher than half the TTL — skip
-          }
-        } catch {}
-        fetch(`/api/sales-metrics?period=${p}`)
-          .then((r) => (r.ok ? r.json() : null))
-          .then((json) => { if (json) lsWrite(cachedKey, json); })
-          .catch(() => {});
-      }, 3000 + i * 2500), // stagger: 3s, 5.5s, 8s, 10.5s
-    );
-    return () => timers.forEach(clearTimeout);
+    const allPeriods = ['today', 'week', 'lastweek', 'month', 'quarter', 'q1', 'q2', 'q3', 'q4'];
+    function warmPeriod(p) {
+      if (p === period) return; // already loaded
+      const cachedKey = lsKey(p, '', '');
+      const maxAge = STALE_MAX_BY_PERIOD[p] ?? STALE_MAX_DEFAULT;
+      try {
+        const raw = localStorage.getItem(cachedKey);
+        if (raw) {
+          const { t } = JSON.parse(raw);
+          if (Date.now() - t < maxAge / 2) return; // still fresh enough — skip
+        }
+      } catch {}
+      fetch(`/api/sales-metrics?period=${p}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => { if (json) lsWrite(cachedKey, json); })
+        .catch(() => {});
+    }
+    const t1 = setTimeout(() => { for (const p of allPeriods.slice(0, 4)) warmPeriod(p); }, 500);
+    const t2 = setTimeout(() => { for (const p of allPeriods.slice(4)) warmPeriod(p); }, 3000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, data ? 'has-data' : 'no-data']);
 
