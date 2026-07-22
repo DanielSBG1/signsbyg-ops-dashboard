@@ -326,13 +326,17 @@ export default async function handler(req, res) {
       monthToDate,
     };
 
+    // Slim response by default — full jobs array only with ?include=jobs
+    const includeJobs = req.query.include === 'jobs';
+
     const result = {
       summary,
       bySection,
       byCrew,
       byMetro,
       schedule,
-      jobs,
+      jobs: includeJobs ? jobs : [],
+      jobsOmitted: !includeJobs,
       meta: {
         sections: SECTIONS,
         crews: CREWS,

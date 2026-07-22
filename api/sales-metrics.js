@@ -1468,6 +1468,25 @@ export default async function handler(req, res) {
       s.pipelineValue = a.totalValue;
     }
 
+    // --- Payload size optimization ---
+    // Default response is a slim summary (~50-100 KB). Drill-down deal arrays
+    // (cohortDeals, periodDeals, dealsSentDeals, pipelineHealth.buckets, individual
+    // SLA leads, and contact leads) are only included when ?include=deals is set.
+    // The cron pre-warms WITHOUT deals, so cached responses are slim. The frontend
+    // fetches with ?include=deals only when a drill-down panel is opened.
+    const includeDrillDown = req.query.include === 'deals';
+
+    // Strip deal-level arrays from pipelineHealth for slim response
+    const pipelineHealthSlim = includeDrillDown ? pipelineHealth : {
+      ...pipelineHealth,
+      byPipeline: Object.fromEntries(
+        Object.entries(pipelineHealth.byPipeline).map(([k, v]) => [k, {
+          ...v,
+          buckets: { hot: [], active: [], aging: [], cold: [] },
+        }])
+      ),
+    };
+
     const responsePayload = {
       period: { start: range.start, end: range.end, label: range.label },
       summary,
@@ -1475,20 +1494,21 @@ export default async function handler(req, res) {
       funnelActivity,
       reps,
       pipeline,
-      pipelineHealth,
+      pipelineHealth: pipelineHealthSlim,
       sources,
-      // Omit individual contact records for wide periods (>14 days) — too many
-      // to display usefully and a significant payload cost. Counts (leadCounts)
-      // are always included so the summary cards stay accurate.
-      // Contact records are omitted for wide periods (>14 days) to limit payload size.
-      // SLA phone/Gmail signals still run for all periods (budget-capped at OP_BUDGET_MS).
-      leads: skipSourceOverride ? [] : leads,
-      leadsOmitted: skipSourceOverride,
+      leads: includeDrillDown ? (skipSourceOverride ? [] : leads) : [],
+      leadsOmitted: !includeDrillDown || skipSourceOverride,
       leadCounts,
-      cohortDeals,
-      periodDeals,
-      dealsSentDeals,
-      sla,
+      cohortDeals: includeDrillDown ? cohortDeals : [],
+      periodDeals: includeDrillDown ? periodDeals : [],
+      dealsSentDeals: includeDrillDown ? dealsSentDeals : [],
+      sla: includeDrillDown ? sla : {
+        ...sla,
+        breachingLeads: [],
+        withinLeads: [],
+        overLeads: [],
+        safeLeads: [],
+      },
     };
     // Wide periods (Q1-Q4, year) are cached 30 min so the cron (every 10 min) always
     // finds a warm entry and never leaves a gap. Narrow periods stay at 10 min.
