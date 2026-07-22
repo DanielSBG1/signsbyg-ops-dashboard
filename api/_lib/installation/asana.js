@@ -13,7 +13,7 @@ async function rateLimitedFetch(url, options = {}, retries = 3) {
   const res = await fetch(url, {
     ...options,
     headers: {
-      Authorization: `Bearer ${process.env.ASANA_ACCESS_TOKEN}`,
+      Authorization: `Bearer ${process.env.ASANA_TOKEN}`,
       'Content-Type': 'application/json',
       ...(options.headers || {}),
     },

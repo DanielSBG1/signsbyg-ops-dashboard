@@ -1,50 +1,23 @@
-// File-based cache for Install Date reschedule counts per task.
-// Structure: { taskGid: { count, lastCheckedAt, lastModifiedAt } }
+// Vercel KV-backed cache for Install Date reschedule counts per task.
+// Structure stored in KV: { [taskGid]: { count, lastModifiedAt } }
 //
-// Rationale:
-// - First build is slow for large task sets with rate limiting.
-// - Completed tasks never recompute (reschedule count is frozen).
-// - Open tasks only recompute when their Asana `modified_at` is newer than
-//   what we last saw, so most refreshes hit only a handful of tasks.
+// Previous version used filesystem (fs.writeFileSync) which fails on
+// Vercel's read-only serverless filesystem — cache was lost every
+// invocation, causing full story refetches on every cron run.
+//
+// Now uses Vercel KV (Redis) with a long TTL. Completed tasks never
+// recompute. Open tasks only recompute when modified_at advances.
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { getCached, setCached } from '../cache.js';
 import { getTaskStories } from './asana.js';
 import { FIELDS } from './constants.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const CACHE_DIR = path.join(__dirname, '..', '..', '.cache');
-const CACHE_FILE = path.join(CACHE_DIR, 'reschedules.json');
+const KV_KEY = 'installation:reschedules:v3';
+const KV_TTL = 60 * 60 * 24 * 7; // 7 days — reschedule data is stable
 
 const CORRECTION_WINDOW_MS  = 60 * 60 * 1000; // 1 hour
-const MIN_LEAD_TIME_H        = 48;
+const MIN_LEAD_TIME_H       = 48;
 const RESCHEDULE_THRESHOLD_H = 48;
-
-function ensureDir() {
-  if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
-}
-
-function loadCache() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(CACHE_FILE)) return {};
-    return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
-  } catch (err) {
-    console.warn('Reschedule cache load failed, starting fresh:', err.message);
-    return {};
-  }
-}
-
-function saveCache(cache) {
-  try {
-    ensureDir();
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
-  } catch (err) {
-    console.warn('Reschedule cache save failed:', err.message);
-  }
-}
 
 // Count reschedules using the 3-rule heuristic:
 //   1. Correction window: changes within 1h of initial scheduling → not a reschedule
@@ -88,7 +61,7 @@ function countReschedulesFromStories(stories) {
 }
 
 /**
- * Get reschedule counts for a list of tasks using the persisted cache.
+ * Get reschedule counts for a list of tasks using Vercel KV cache.
  * Returns { [taskGid]: count }.
  *
  * Strategy:
@@ -96,7 +69,7 @@ function countReschedulesFromStories(stories) {
  * - Otherwise → fetch stories and update cache
  */
 export async function getRescheduleCounts(tasks, { onProgress } = {}) {
-  const cache = loadCache();
+  const cache = (await getCached(KV_KEY)) || {};
   const result = {};
   const tasksToFetch = [];
 
@@ -116,7 +89,9 @@ export async function getRescheduleCounts(tasks, { onProgress } = {}) {
   }
 
   if (tasksToFetch.length > 0) {
-    console.log(`[rescheduleCache] Fetching stories for ${tasksToFetch.length} tasks...`);
+    console.log(`[rescheduleCache] Fetching stories for ${tasksToFetch.length} tasks (${Object.keys(result).length} cached)...`);
+  } else {
+    console.log(`[rescheduleCache] All ${Object.keys(result).length} tasks cached — no stories to fetch`);
   }
 
   let done = 0;
@@ -127,7 +102,6 @@ export async function getRescheduleCounts(tasks, { onProgress } = {}) {
       const count = countReschedulesFromStories(stories);
       cache[gid] = {
         count,
-        lastCheckedAt: new Date().toISOString(),
         lastModifiedAt: t.modified_at || null,
       };
       result[gid] = count;
@@ -140,8 +114,8 @@ export async function getRescheduleCounts(tasks, { onProgress } = {}) {
     if (onProgress && done % 20 === 0) onProgress(done, tasksToFetch.length);
   }
 
-  // Save cache once at the end to reduce disk churn.
-  saveCache(cache);
+  // Save to KV once at the end
+  await setCached(KV_KEY, cache, KV_TTL);
 
   return result;
 }

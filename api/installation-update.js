@@ -1,7 +1,7 @@
 import { updateTaskInstallDate } from './_lib/installation/asana.js';
 import { setCached } from './_lib/cache.js';
 
-const CACHE_KEY = 'installation:metrics:v2';
+const CACHE_KEY = 'installation:metrics:v3';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

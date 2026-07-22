@@ -3,7 +3,7 @@ import { getRescheduleCounts } from './_lib/installation/rescheduleCache.js';
 import { INSTALL_PROJECT_GID, FIELDS, SECTIONS, CREWS, METROS, UNREVIEWED_SECTION_GID } from './_lib/installation/constants.js';
 import { getCached, setCached } from './_lib/cache.js';
 
-const CACHE_KEY = 'installation:metrics:v2';
+const CACHE_KEY = 'installation:metrics:v3';
 const CACHE_TTL = 120; // seconds
 
 function getField(task, fieldGid) {
@@ -130,7 +130,10 @@ export default async function handler(req, res) {
     }
     console.log(`[Cache MISS] ${CACHE_KEY}`);
 
-    const tasks = await getTasksInProject(INSTALL_PROJECT_GID);
+    // Only fetch tasks completed in the last 90 days (+ all open tasks).
+    // This avoids pulling years of old completed tasks on every refresh.
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const tasks = await getTasksInProject(INSTALL_PROJECT_GID, { completed_since: ninetyDaysAgo });
     const today = new Date().toISOString().split('T')[0];
 
     // Fetch reschedule counts (cached — slow first time, fast after)
