@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import useVisibleInterval from './useVisibleInterval.js';
 
 const POLL_MS = 120_000; // match cache TTL
 
@@ -22,11 +23,8 @@ export function useProductionData() {
     }
   }, []);
 
-  useEffect(() => {
-    refresh();
-    const id = setInterval(refresh, POLL_MS);
-    return () => clearInterval(id);
-  }, [refresh]);
+  useEffect(() => { refresh(); }, [refresh]);
+  useVisibleInterval(refresh, POLL_MS);
 
   return { data, loading, error, refresh };
 }

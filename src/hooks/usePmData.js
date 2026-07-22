@@ -1,15 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import useVisibleInterval from './useVisibleInterval.js';
 
 const POLL_MS = 120_000; // match cache TTL
-const STORAGE_KEY = 'pm:metrics';
 
 export function usePmData() {
-  const [data, setData] = useState(() => {
-    try {
-      const cached = localStorage.getItem(STORAGE_KEY);
-      return cached ? JSON.parse(cached) : null;
-    } catch { return null; }
-  });
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,7 +16,6 @@ export function usePmData() {
       if (!json.ok) throw new Error(json.error ?? 'API error');
       setData(json.data);
       setError(null);
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(json.data)); } catch {}
     } catch (e) {
       setError(e.message);
     } finally {
@@ -29,11 +23,8 @@ export function usePmData() {
     }
   }, []);
 
-  useEffect(() => {
-    refresh();
-    const id = setInterval(refresh, POLL_MS);
-    return () => clearInterval(id);
-  }, [refresh]);
+  useEffect(() => { refresh(); }, [refresh]);
+  useVisibleInterval(refresh, POLL_MS);
 
   return { data, loading, error, refresh };
 }
