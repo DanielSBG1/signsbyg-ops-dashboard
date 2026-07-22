@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import useVisibleInterval from '../useVisibleInterval.js';
 
 const REFRESH_INTERVAL = 15 * 60 * 1000;
 const STALE_MAX_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -17,7 +18,9 @@ function lsRead(key) {
 }
 function lsWrite(key, data) {
   try {
-    localStorage.setItem(key, JSON.stringify({ d: data, t: Date.now() }));
+    const json = JSON.stringify({ d: data, t: Date.now() });
+    if (json.length > 200_000) return;
+    localStorage.setItem(key, json);
   } catch {}
 }
 
@@ -132,11 +135,7 @@ export function useCalls(enabled = true) {
     fetchCalls();
   }, [fetchCalls]);
 
-  useEffect(() => {
-    if (!enabled) return;
-    intervalRef.current = setInterval(fetchCalls, REFRESH_INTERVAL);
-    return () => clearInterval(intervalRef.current);
-  }, [fetchCalls, enabled]);
+  useVisibleInterval(fetchCalls, REFRESH_INTERVAL, enabled);
 
   return {
     data,

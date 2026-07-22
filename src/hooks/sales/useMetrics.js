@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import useVisibleInterval from '../useVisibleInterval.js';
 
 const REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
 
@@ -30,7 +31,10 @@ function lsRead(key, period) {
 }
 function lsWrite(key, data) {
   try {
-    localStorage.setItem(key, JSON.stringify({ d: data, t: Date.now() }));
+    const json = JSON.stringify({ d: data, t: Date.now() });
+    // Skip if payload > 200KB — prevents filling localStorage quota with megabyte payloads
+    if (json.length > 200_000) return;
+    localStorage.setItem(key, json);
   } catch {}
 }
 
@@ -66,13 +70,12 @@ export function useMetrics(enabled = true) {
     }
     setError(null);
     try {
-      let url = `/api/sales-metrics?period=${period}`;
+      let baseUrl = `/api/sales-metrics?period=${period}`;
       if (period === 'custom' && customRange.start && customRange.end) {
-        url += `&start=${customRange.start}&end=${customRange.end}`;
+        baseUrl += `&start=${customRange.start}&end=${customRange.end}`;
       }
-      // Manual refresh: bust CDN cache with a timestamp so the edge re-validates,
-      // but do NOT send nocache=1 — the server still uses KV (pre-warmed by cron)
-      // so it returns in ~200ms instead of triggering a full 30–60s HubSpot recompute.
+      // Phase 1: slim summary (no drill-down deal arrays — ~50-100 KB vs 1.4 MB)
+      let url = baseUrl;
       if (force) url += `&_=${Date.now()}`;
       const res = await fetch(url, { signal: controller.signal });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -80,6 +83,21 @@ export function useMetrics(enabled = true) {
       lsWrite(key, json);
       setData(json);
       setLastRefreshed(new Date());
+
+      // Phase 2: fetch drill-down data in background (deal arrays, SLA leads, etc.)
+      // Merge into existing data so drill-down panels work when opened.
+      if (!controller.signal.aborted) {
+        let dealsUrl = `${baseUrl}&include=deals`;
+        if (force) dealsUrl += `&_=${Date.now()}`;
+        fetch(dealsUrl, { signal: controller.signal })
+          .then((r) => r.ok ? r.json() : null)
+          .then((full) => {
+            if (full && !controller.signal.aborted) {
+              setData((prev) => prev ? { ...prev, ...full } : full);
+            }
+          })
+          .catch(() => {}); // non-critical — drill-downs just won't work until next refresh
+      }
     } catch (err) {
       if (err.name === 'AbortError') return; // period switched mid-flight, ignore
       if (!stale) setError(err.message);
@@ -93,11 +111,7 @@ export function useMetrics(enabled = true) {
     fetchMetrics();
   }, [fetchMetrics]);
 
-  useEffect(() => {
-    if (!enabled) return;
-    intervalRef.current = setInterval(fetchMetrics, REFRESH_INTERVAL);
-    return () => clearInterval(intervalRef.current);
-  }, [fetchMetrics, enabled]);
+  useVisibleInterval(fetchMetrics, REFRESH_INTERVAL, enabled);
 
   // Pre-warm the server KV cache AND populate localStorage so that switching
   // to any period is instant — even on first visit.

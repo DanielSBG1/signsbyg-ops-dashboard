@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import useVisibleInterval from '../useVisibleInterval.js';
 
 const LS_PREFIX = 'sbg_ra_v4';
 const STALE_MAX_MS = 10 * 60 * 1000;  // 10 minutes
@@ -68,17 +69,13 @@ export function useRepActivity(enabled = true, period = 'today', customRange = n
   }, [enabled, period, customStart, customEnd]);
 
   useEffect(() => {
-    // Clear stale data from a different period immediately
     setData(null);
     setLoading(true);
     fetchRepActivity();
-
-    intervalRef.current = setInterval(fetchRepActivity, REFRESH_INTERVAL_MS);
-    return () => {
-      clearInterval(intervalRef.current);
-      if (abortRef.current) abortRef.current.abort();
-    };
+    return () => { if (abortRef.current) abortRef.current.abort(); };
   }, [fetchRepActivity]);
+
+  useVisibleInterval(fetchRepActivity, REFRESH_INTERVAL_MS, enabled);
 
   return { data, loading, error };
 }

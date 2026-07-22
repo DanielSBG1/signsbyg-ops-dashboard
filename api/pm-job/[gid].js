@@ -26,6 +26,8 @@ export default async function handler(req, res) {
     return;
   }
 
+  res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+
   try {
     // Fetch main task and its immediate subtasks in parallel
     const [mainTask, rawSubtasks] = await Promise.all([
