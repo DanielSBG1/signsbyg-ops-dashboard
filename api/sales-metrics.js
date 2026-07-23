@@ -1493,7 +1493,16 @@ export default async function handler(req, res) {
       funnel,
       funnelActivity,
       reps,
-      pipeline,
+      // Strip deal-level arrays from pipeline for slim response (saves ~400 KB).
+      // The dedicated /api/sales-pipeline endpoint serves the full data.
+      pipeline: includeDrillDown ? pipeline : Object.fromEntries(
+        Object.entries(pipeline).map(([k, v]) => [k, {
+          ...v,
+          stages: v.stages.map(s => ({ id: s.id, label: s.label, count: s.count, value: s.value, deals: [] })),
+          dealList: [],
+          staleList: [],
+        }])
+      ),
       pipelineHealth: pipelineHealthSlim,
       sources,
       leads: includeDrillDown ? (skipSourceOverride ? [] : leads) : [],
