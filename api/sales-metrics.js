@@ -21,14 +21,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { period = 'today', start: customStart, end: customEnd, nocache } = req.query;
+    const { period = 'today', start: customStart, end: customEnd, nocache, include } = req.query;
     const forceRefresh = nocache === '1';
+    const includeDrillDown = include === 'deals';
     const range = getDateRange(period, customStart, customEnd);
 
-    // 60-second response cache. Keyed by period+range so different views don't
-    // collide. Only caches successful 200 responses (errors fall through).
-    // v18 = cold outreach on wide periods (sbg_lead_source + targeted deal→contact lookup)
-    const cacheKey = `metricsv18:${period}:${customStart || ''}:${customEnd || ''}`;
+    // 60-second response cache. Keyed by period+range+include so slim and full
+    // responses don't collide. v18 = cold outreach on wide periods.
+    const baseCacheKey = `metricsv18:${period}:${customStart || ''}:${customEnd || ''}`;
+    const cacheKey = includeDrillDown ? `${baseCacheKey}:full` : baseCacheKey;
     // CDN cache header — Vercel's edge network will serve this response in
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
     // Historical periods (lastmonth, q1-q4 past) use 1-hour CDN freshness — data is immutable.
@@ -1474,7 +1475,6 @@ export default async function handler(req, res) {
     // SLA leads, and contact leads) are only included when ?include=deals is set.
     // The cron pre-warms WITHOUT deals, so cached responses are slim. The frontend
     // fetches with ?include=deals only when a drill-down panel is opened.
-    const includeDrillDown = req.query.include === 'deals';
 
     // Strip deal-level arrays from pipelineHealth for slim response
     const pipelineHealthSlim = includeDrillDown ? pipelineHealth : {

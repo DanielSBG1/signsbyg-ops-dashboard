@@ -123,12 +123,15 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
 
   try {
-    const hit = await getCached(CACHE_KEY);
+    const includeJobs = req.query.include === 'jobs';
+    const effectiveCacheKey = includeJobs ? `${CACHE_KEY}:full` : CACHE_KEY;
+
+    const hit = await getCached(effectiveCacheKey);
     if (hit) {
-      console.log(`[Cache HIT] ${CACHE_KEY}`);
+      console.log(`[Cache HIT] ${effectiveCacheKey}`);
       return res.status(200).json(hit);
     }
-    console.log(`[Cache MISS] ${CACHE_KEY}`);
+    console.log(`[Cache MISS] ${effectiveCacheKey}`);
 
     // Only fetch tasks completed in the last 90 days (+ all open tasks).
     // This avoids pulling years of old completed tasks on every refresh.
@@ -326,9 +329,6 @@ export default async function handler(req, res) {
       monthToDate,
     };
 
-    // Slim response by default — full jobs array only with ?include=jobs
-    const includeJobs = req.query.include === 'jobs';
-
     const result = {
       summary,
       bySection,
@@ -343,7 +343,7 @@ export default async function handler(req, res) {
       },
       refreshedAt: new Date().toISOString(),
     };
-    await setCached(CACHE_KEY, result, CACHE_TTL);
+    await setCached(effectiveCacheKey, result, CACHE_TTL);
     return res.status(200).json(result);
   } catch (err) {
     console.error('Installation metrics error:', err);
