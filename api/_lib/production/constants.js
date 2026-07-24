@@ -1,5 +1,9 @@
 export const PRODUCTION_PROJECT_GID = '1204877952044255';
 
+// Section GIDs for production workflow status
+export const STAGING_SECTION_GID = '1216705802624362';    // Staging Area — treat as complete
+export const UNREVIEWED_SECTION_GID = '1207351345119276'; // Unreviewed — needs triage
+
 // GID of the "Production Due Date" custom field — authoritative expected completion date
 export const PRODUCTION_DUE_DATE_CF_GID = '1210757373140456';
 
@@ -11,7 +15,7 @@ export const PROD_SUBTASK_FIELDS = [
   'gid', 'name', 'due_on', 'start_on', 'completed', 'created_at',
   'parent.gid', 'parent.name', 'assignee.name',
   'custom_fields.gid', 'custom_fields.date_value',
-  'memberships.section.name',
+  'memberships.section.name', 'memberships.section.gid',
 ].join(',');
 
 // opt_fields for sub-sub-task queries

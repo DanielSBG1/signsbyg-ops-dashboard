@@ -1,4 +1,4 @@
-import { DEPT_SECTION_MAP, REDO_PREFIX, PRODUCTION_PROJECT_GID, PROD_SUBTASK_FIELDS, SUBSUBTASK_FIELDS, PRODUCTION_DUE_DATE_CF_GID, PROMISED_DATE_CF_GID } from './constants.js';
+import { DEPT_SECTION_MAP, REDO_PREFIX, PRODUCTION_PROJECT_GID, PROD_SUBTASK_FIELDS, SUBSUBTASK_FIELDS, PRODUCTION_DUE_DATE_CF_GID, PROMISED_DATE_CF_GID, STAGING_SECTION_GID, UNREVIEWED_SECTION_GID } from './constants.js';
 import { getProjectTasks, getTasksCompletedSince, getSubtasks } from './asana.js';
 import { pLimit } from '../concurrency.js';
 
@@ -137,6 +137,26 @@ export function inferDepartment(task) {
 }
 
 /**
+ * Returns true if the task is in the Staging Area section.
+ * Jobs in Staging are treated as complete even if Asana hasn't marked them done.
+ */
+export function isInStaging(task) {
+  return task.memberships?.some(m => m.section?.gid === STAGING_SECTION_GID) ?? false;
+}
+
+/**
+ * Returns true if the task has been reviewed — it left Unreviewed AND has both
+ * a production due date (custom field) and a native due_on date.
+ */
+export function isReviewed(task) {
+  const inUnreviewed = task.memberships?.some(m => m.section?.gid === UNREVIEWED_SECTION_GID) ?? false;
+  if (inUnreviewed) return false;
+  const hasProductionDueDate = !!extractProductionDueDate(task);
+  const hasNativeDueDate = !!task.due_on;
+  return hasProductionDueDate && hasNativeDueDate;
+}
+
+/**
  * Fetches all active production jobs and derives status, redo type, and department.
  * Called by the production-metrics API handler (wrapped in cache).
  */
@@ -224,13 +244,17 @@ export async function buildProductionMetrics() {
   );
 
   // 4. Build job records
-  const jobs = incompleteTasks
+  //    Jobs in the Staging Area are treated as complete even if Asana
+  //    hasn't marked them done — they're finished with production.
+  const allJobRecords = incompleteTasks
     .filter(t => t.parent?.gid)
     .map(t => {
       const subTasks = subSubTaskMap[t.gid] ?? [];
       const count = parentSubtaskCount[t.parent.gid] ?? 1;
       const due_on = extractProductionDueDate(t);
-      const status = deriveStatus(due_on, today);
+      const staged = isInStaging(t);
+      const status = staged ? 'staged' : deriveStatus(due_on, today);
+      const reviewed = isReviewed(t);
       return {
         gid:  t.gid,
         name: t.parent.name,
@@ -239,12 +263,18 @@ export async function buildProductionMetrics() {
         createdAt:    t.created_at ? t.created_at.slice(0, 10) : null,
         promisedDate: extractPromisedDate(t),
         status,
-        projectedLate: status !== 'late' && isProjectedLate(subTasks, today),
+        staged,
+        reviewed,
+        projectedLate: !staged && status !== 'late' && isProjectedLate(subTasks, today),
         redoType: detectRedoType(subTasks, count),
         department: inferDepartment(t),
         subTasks,
       };
     });
+
+  // Separate staged jobs from active jobs — staged are effectively complete
+  const stagedJobs = allJobRecords.filter(j => j.staged);
+  const jobs = allJobRecords.filter(j => !j.staged);
 
   // 5. Sort: late first → soonest due → no date last
   jobs.sort((a, b) => {
@@ -289,8 +319,12 @@ export async function buildProductionMetrics() {
       projectedLate: jobs.filter(j => j.projectedLate).length,
       redos: jobs.filter(j => j.redoType !== null).length,
       completedThisWeek,
+      staged: stagedJobs.length,
+      reviewed: jobs.filter(j => j.reviewed).length,
+      unreviewed: jobs.filter(j => !j.reviewed).length,
     },
     jobs,
+    stagedJobs,
     departmentLoad,
     schedule,
   };
