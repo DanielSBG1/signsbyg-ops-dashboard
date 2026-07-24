@@ -22,6 +22,7 @@ function getPeriods() {
 
 const TABS = [
   { value: 'sales', label: 'Sales' },
+  { value: 'rep', label: 'Rep Scorecards' },
   { value: 'calls', label: 'Calls' },
   { value: 'handoffs', label: 'Handoffs' },
   { value: 'pipeline', label: 'Pipeline Health' },

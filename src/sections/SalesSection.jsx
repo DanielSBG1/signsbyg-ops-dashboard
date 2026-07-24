@@ -21,6 +21,7 @@ import StageConversion from '../components/sales/StageConversion';
 const PipelineHealthPage = lazy(() => import('../components/sales/PipelineHealthPage'));
 const CallsPage          = lazy(() => import('../components/sales/CallsPage'));
 const Handoffs           = lazy(() => import('../components/sales/Handoffs'));
+const RepScorecard       = lazy(() => import('../components/sales/RepScorecard'));
 
 function TabFallback() {
   return (
@@ -36,6 +37,7 @@ export default function SalesSection() {
   const [filterRepStatusHint, setFilterRepStatusHint] = useState(null);
   const [leaderboardSortKey, setLeaderboardSortKey] = useState('revenueClosed');
   const [funnelFilter, setFunnelFilter] = useState(null);
+  const [selectedRepTab, setSelectedRepTab] = useState(null);
   const detailRef = useRef(null);
 
   useEffect(() => {
@@ -43,14 +45,19 @@ export default function SalesSection() {
       setTimeout(() => detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
     }
   }, [funnelFilter, filterRep]);
-  const [visitedTabs, setVisitedTabs] = useState({ sales: true, pipeline: true });
+  const [visitedTabs, setVisitedTabs] = useState({ sales: true, pipeline: true, rep: true });
 
   function handleTabChange(t) {
     setTab(t);
     if (!visitedTabs[t]) setVisitedTabs(v => ({ ...v, [t]: true }));
   }
 
-  const metricsEnabled  = visitedTabs.sales || visitedTabs.pipeline;
+  const handleViewScorecard = (repId) => {
+    handleTabChange('rep');
+    setSelectedRepTab(repId);
+  };
+
+  const metricsEnabled  = visitedTabs.sales || visitedTabs.pipeline || visitedTabs.rep;
   const handoffsEnabled = visitedTabs.handoffs;
   const callsEnabled    = visitedTabs.calls;
 
@@ -137,6 +144,7 @@ export default function SalesSection() {
                       ? null : 'qualified';
                     setFilterRepStatusHint(hint);
                   }}
+                  onViewScorecard={handleViewScorecard}
                 />
                 <RepActivity reps={metrics.data.reps} data={repActivity.data} />
                 <PipelineHealthSummary
@@ -185,6 +193,17 @@ export default function SalesSection() {
               </>
             ) : null}
           </>
+        )}
+
+        {tab === 'rep' && (
+          <Suspense fallback={<div className="text-center py-20 text-white/40">Loading scorecards...</div>}>
+            <RepScorecard
+              reps={metrics.data?.reps}
+              selectedRepId={selectedRepTab}
+              onSelectRep={setSelectedRepTab}
+              periodDeals={metrics.data?.periodDeals}
+            />
+          </Suspense>
         )}
 
         {tab === 'handoffs' && (

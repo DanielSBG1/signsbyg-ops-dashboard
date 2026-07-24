@@ -30,7 +30,7 @@ function TrendBadge({ value, compareLabel, tooltip }) {
   );
 }
 
-function Card({ label, value, trend, format, compareLabel, tooltip, onClick, isActive }) {
+function Card({ label, value, trend, format, compareLabel, tooltip, onClick, isActive, subline }) {
   let displayValue = value;
   if (format === 'currency') {
     displayValue = `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -51,6 +51,7 @@ function Card({ label, value, trend, format, compareLabel, tooltip, onClick, isA
     >
       <span className="text-xs uppercase tracking-wider text-white/40 font-medium" title={tooltip}>{label}</span>
       <span className="text-3xl font-bold tracking-tight">{displayValue}</span>
+      {subline && <span className="text-[10px] text-white/30 -mt-1">{subline}</span>}
       <TrendBadge value={trend} compareLabel={compareLabel} tooltip={tooltip} />
     </button>
   );
@@ -58,11 +59,11 @@ function Card({ label, value, trend, format, compareLabel, tooltip, onClick, isA
 
 // Maps each card's filterKey to the funnelFilter row (determines DealDetail vs LeadDetail)
 const CARD_FILTERS = [
-  { filterKey: 'totalLeads',         row: 'leads', label: 'Total Leads',    value: (s) => s.totalLeads,                         trend: (s) => s.trends.totalLeads,             tooltip: 'All contacts created in this period (any lifecycle stage)' },
+  { filterKey: 'totalLeads',         row: 'leads', label: 'Total Leads',    value: (s) => s.totalLeads,                         trend: (s) => s.trends.totalLeads,             tooltip: 'Leads with associated deals or active lifecycle in this period' },
   { filterKey: 'facebookLeads',      row: 'leads', label: 'FB Leads',       value: (s) => s.facebookLeads,                      trend: (s) => s.trends.facebookLeads,          tooltip: 'Contacts with original source = Facebook/Paid Social' },
   { filterKey: 'coldOutreach',       row: 'leads', label: 'Cold Outreach',  value: (s) => s.coldOutreachLeads ?? s.otherLeads,  trend: (s) => s.trends.coldOutreachLeads ?? s.trends.otherLeads, tooltip: 'Contacts sourced via email prospecting or cold outreach' },
   { filterKey: 'dealsWon',           row: 'won',   label: 'Deals Won',      value: (s) => s.dealsWon,                           trend: (s) => s.trends.dealsWon,               tooltip: 'Deals closed-won in this period' },
-  { filterKey: 'dealsSent',          row: 'sent',  label: 'Deals Sent',     value: (s) => s.dealsSent ?? '—',                  trend: (s) => s.trends.dealsSent ?? 0,         tooltip: 'Deals that entered Proposal Sent & Awaiting Response in this period' },
+  { filterKey: 'dealsSent',          row: 'sent',  label: 'Deals Sent',     value: (s) => s.dealsSent ?? '—',                  trend: (s) => s.trends.dealsSent ?? 0,         tooltip: 'Deals that entered Proposal Sent & Awaiting Response in this period', subline: (s) => s.samePeriodDealsSent != null ? `${s.samePeriodDealsSent} same-period` : null },
   { filterKey: 'dealsCreated',       row: 'deals', label: 'Deals Created',  value: (s) => s.dealsCreated ?? '—',               trend: (s) => s.trends.dealsCreated ?? 0,      tooltip: 'New deals opened in this period' },
   { filterKey: 'revenueClosed',      row: 'won',   label: 'Revenue Closed', value: (s) => s.revenueClosed,                     trend: (s) => s.trends.revenueClosed,          format: 'currency', tooltip: 'Sum of amounts on deals closed-won in this period' },
   { filterKey: 'coldOutreachRevenue',row: 'won',   label: 'Cold Rev',       value: (s) => s.coldOutreachRevenue ?? 0,          trend: (s) => s.trends.coldOutreachRevenue ?? 0, format: 'currency', tooltip: 'Revenue from won deals where the lead source is Cold Outreach (new jobs only)' },
@@ -83,6 +84,7 @@ export default function MetricCards({ summary, period, onCardClick, activeCard }
           format={c.format}
           compareLabel={compareLabel}
           tooltip={c.tooltip}
+          subline={c.subline?.(summary)}
           isActive={activeCard === c.filterKey}
           onClick={() => onCardClick?.({ type: 'metric', key: c.filterKey, row: c.row, label: c.label })}
         />

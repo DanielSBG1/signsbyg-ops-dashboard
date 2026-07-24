@@ -8,6 +8,7 @@ const SORT_OPTIONS = [
   { key: 'avgResponseMinutes',  label: 'Resp Time',  ascending: true },
   { key: 'coldLeads',           label: 'Cold Leads' },
   { key: 'bidsSent',            label: 'Bids Sent' },
+  { key: 'samePeriodBidsSent',  label: 'SP Bids' },
   { key: 'bidsRevenue',         label: 'Bid Value' },
   { key: 'avgTimeToBidMinutes', label: '→ Bid Time', ascending: true },
 ];
@@ -23,6 +24,8 @@ function fmt(v, key) {
   }
   if (key === 'conversionRate' || key === 'cohortWinRate' || key === 'activityWinRate')
     return v == null ? '—' : `${v}%`;
+  if (key === 'samePeriodBidsSent')
+    return Number(v).toLocaleString();
   return Number(v).toLocaleString();
 }
 
@@ -31,6 +34,7 @@ function primaryLabel(rep, sortKey) {
   if (sortKey === 'avgResponseMinutes' || sortKey === 'avgTimeToBidMinutes') return fmt(v, sortKey);
   if (sortKey === 'revenueClosed' || sortKey === 'bidsRevenue') return fmt(v, sortKey);
   if (sortKey === 'conversionRate') return fmt(v, 'conversionRate');
+  if (sortKey === 'samePeriodBidsSent') return Number(v ?? 0).toLocaleString();
   return v ?? 0;
 }
 
@@ -43,7 +47,7 @@ function StatRow({ label, value }) {
   );
 }
 
-export default function Leaderboard({ reps, onRepClick, selectedRep }) {
+export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScorecard }) {
   const [sortKey, setSortKey] = useState('revenueClosed');
   const [hoveredId, setHoveredId] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -87,6 +91,9 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
   const MEDALS = ['🥇', '🥈', '🥉'];
   const hoveredRep = hoveredId ? sorted.find((r) => r.id === hoveredId) : null;
 
+  const podiumReps = sorted.slice(0, 3);
+  const remainingReps = sorted.slice(3);
+
   return (
     <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
       {/* Header */}
@@ -110,9 +117,70 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
         </div>
       </div>
 
-      {/* Rep rows */}
+      {/* Podium — top 3 reps */}
+      {podiumReps.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {podiumReps.map((rep, idx) => {
+            const isSelected = selectedRep === rep.id;
+            return (
+              <div
+                key={rep.id}
+                onClick={() => onRepClick?.(rep.id === selectedRep ? null : rep.id, sortKey)}
+                onMouseEnter={(e) => {
+                  setHoveredId(rep.id);
+                  setTooltipPos({ x: e.clientX, y: e.clientY });
+                }}
+                onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
+                onMouseLeave={() => setHoveredId(null)}
+                className={`bg-white/[0.05] rounded-xl p-4 text-center cursor-pointer transition-all duration-150 ${
+                  isSelected ? 'ring-1 ring-accent/40 bg-accent/15' : 'hover:bg-white/[0.08]'
+                }`}
+              >
+                <span className="text-2xl leading-none">{MEDALS[idx]}</span>
+                <div className="text-sm font-semibold text-white truncate mt-2">{rep.name}</div>
+                <div className="text-2xl font-bold tabular-nums text-white mt-1">
+                  {primaryLabel(rep, sortKey)}
+                </div>
+
+                {/* Mini stats 2x2 */}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-3">
+                  <div>
+                    <div className="text-[10px] text-white/30">Leads</div>
+                    <div className="text-xs text-white/60">{rep.leadsAssigned}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-white/30">Won</div>
+                    <div className="text-xs text-white/60">{rep.dealsWon}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-white/30">Bids</div>
+                    <div className="text-xs text-white/60">{rep.bidsSent}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-white/30">Revenue</div>
+                    <div className="text-xs text-white/60">${Number(rep.revenueClosed ?? 0).toLocaleString()}</div>
+                  </div>
+                </div>
+
+                {/* View Scorecard link */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewScorecard?.(rep.id);
+                  }}
+                  className="text-[10px] text-accent hover:underline mt-3 inline-block"
+                >
+                  View Scorecard →
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Remaining rep rows (idx >= 3) */}
       <div className="space-y-0.5">
-        {sorted.map((rep, idx) => {
+        {remainingReps.map((rep, idx) => {
           const rawVal = rep[sortKey] ?? 0;
           // Ascending sorts (resp time): invert bar so lower value = fuller bar = better
           const barPct = maxVal > 0
@@ -122,6 +190,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
             : 0;
           const isSelected = selectedRep === rep.id;
           const color = barColor(rep);
+          const rank = idx + 3; // offset by podium count
 
           return (
             <div
@@ -142,11 +211,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
               <div className="flex items-center gap-2.5">
                 {/* Rank badge */}
                 <div className="w-6 shrink-0 text-center">
-                  {idx < 3 ? (
-                    <span className="text-base leading-none">{MEDALS[idx]}</span>
-                  ) : (
-                    <span className="text-white/20 text-[10px] font-mono">#{idx + 1}</span>
-                  )}
+                  <span className="text-white/20 text-[10px] font-mono">#{rank + 1}</span>
                 </div>
 
                 {/* Left: name + stats */}
@@ -164,6 +229,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
                     <span><span className="text-white/45">{rep.leadsAssigned}</span>L</span>
                     <span><span className="text-white/45">{rep.dealsCreated}</span>D</span>
                     <span><span className="text-white/45">{rep.dealsWon}</span>W</span>
+                    <span>SP:<span className="text-white/45">{rep.samePeriodBidsSent ?? 0}</span></span>
                     {sortKey !== 'conversionRate' && <span><span className="text-white/45">{fmt(rep.conversionRate, 'conversionRate')}</span></span>}
                     {rep.avgResponseMinutes != null && sortKey !== 'avgResponseMinutes' && (
                       <span><span className="text-white/45">{fmt(rep.avgResponseMinutes, 'avgResponseMinutes')}</span></span>
@@ -226,6 +292,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep }) {
                 <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1.5">Cold Outreach & Bids</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                   <StatRow label="Bids Sent" value={hoveredRep.bidsSent ?? '—'} />
+                  <StatRow label="Same-Period Bids" value={hoveredRep.samePeriodBidsSent ?? '—'} />
                   <StatRow label="Bid Value" value={fmt(hoveredRep.bidsRevenue, 'bidsRevenue')} />
                   <StatRow label="Avg → Bid" value={fmt(hoveredRep.avgTimeToBidMinutes, 'avgTimeToBidMinutes')} />
                 </div>

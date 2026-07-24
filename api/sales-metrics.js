@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
     // 60-second response cache. Keyed by period+range+include so slim and full
     // responses don't collide. v18 = cold outreach on wide periods.
-    const baseCacheKey = `metricsv18:${period}:${customStart || ''}:${customEnd || ''}`;
+    const baseCacheKey = `metricsv19:${period}:${customStart || ''}:${customEnd || ''}`;
     const cacheKey = includeDrillDown ? `${baseCacheKey}:full` : baseCacheKey;
     // CDN cache header — Vercel's edge network will serve this response in
     // <50ms worldwide once cached. Set early so it applies to every 200 path.
@@ -414,17 +414,31 @@ export default async function handler(req, res) {
       return Math.round(((current - previous) / previous) * 100);
     }
 
+    // --- Lead definition: only contacts with a deal/lead association or active lifecycle qualify ---
+    // A new contact alone isn't a lead. Must have num_associated_deals > 0 OR lifecycle
+    // indicating engagement (lead, MQL, SQL, opportunity, customer).
+    const LEAD_LIFECYCLES = ['lead', 'marketingqualifiedlead', 'salesqualifiedlead', 'opportunity', 'customer'];
+    function isQualifiedLead(c) {
+      const numDeals = parseInt(c.properties.num_associated_deals) || 0;
+      const lifecycle = (c.properties.lifecyclestage || '').toLowerCase();
+      return numDeals > 0 || LEAD_LIFECYCLES.includes(lifecycle);
+    }
+    const qualifiedLeadCount = contacts.results.filter(isQualifiedLead).length;
+    const prevQualifiedLeadCount = prevContacts.results.filter(isQualifiedLead).length;
+
     const summary = {
-      totalLeads: contacts.total,
+      totalLeads: qualifiedLeadCount,
+      totalContacts: contacts.total, // raw count for transparency
       facebookLeads: fbContacts.length,
       coldOutreachLeads: coldContacts.length,
       dealsWon: wonDeals.length,
       dealsSent: dealsSentRaw.results.length,
+      samePeriodDealsSent: summarysamePeriodDealsSent,
       dealsCreated: deals.results.length,
       revenueClosed: revenue,
       coldOutreachRevenue,
       trends: {
-        totalLeads: trendPct(contacts.total, prevContacts.total),
+        totalLeads: trendPct(qualifiedLeadCount, prevQualifiedLeadCount),
         facebookLeads: trendPct(fbContacts.length, prevFbContacts.length),
         coldOutreachLeads: trendPct(coldContacts.length, prevColdContacts.length),
         dealsWon: trendPct(wonDeals.length, prevWonDeals.length),
@@ -526,16 +540,24 @@ export default async function handler(req, res) {
     // Built from dealsSentRaw which already carries full stage history (propertiesWithHistory.dealstage).
     // For each deal that entered a bid-sent stage in the period, record: count, revenue, and the
     // time delta from deal createdate → first bid-sent stage entry (for avg lead-to-bid time).
-    const repBidsMap = new Map(); // repId → { bidsSent, bidsRevenue, bidTimeSumMs, bidTimeCount }
+    const repBidsMap = new Map(); // repId → { bidsSent, samePeriodBidsSent, bidsRevenue, bidTimeSumMs, bidTimeCount }
+    let summarysamePeriodDealsSent = 0;
     for (const d of dealsSentRaw.results) {
       const repId = d.properties.hubspot_owner_id;
       if (!repId) continue;
       if (!repBidsMap.has(repId)) {
-        repBidsMap.set(repId, { bidsSent: 0, bidsRevenue: 0, bidTimeSumMs: 0, bidTimeCount: 0 });
+        repBidsMap.set(repId, { bidsSent: 0, samePeriodBidsSent: 0, bidsRevenue: 0, bidTimeSumMs: 0, bidTimeCount: 0 });
       }
       const entry = repBidsMap.get(repId);
       entry.bidsSent++;
       entry.bidsRevenue += parseFloat(d.properties.amount) || 0;
+
+      // Same-period bids: deal was ALSO created in this period
+      const dealCreateMs = Date.parse(d.properties.createdate || '');
+      if (dealCreateMs && dealCreateMs >= sentRangeStartMs && dealCreateMs <= sentRangeEndMs) {
+        entry.samePeriodBidsSent++;
+        summarysamePeriodDealsSent++;
+      }
 
       // Find the earliest bid-sent stage entry within the period to compute lead→bid time
       const createMs = Date.parse(d.properties.createdate || '');
@@ -621,10 +643,13 @@ export default async function handler(req, res) {
         if (lifecycle === 'customer') cohortWon++;
       }
 
-      const repBids = repBidsMap.get(repId) || { bidsSent: 0, bidsRevenue: 0, bidTimeSumMs: 0, bidTimeCount: 0 };
+      const repBids = repBidsMap.get(repId) || { bidsSent: 0, samePeriodBidsSent: 0, bidsRevenue: 0, bidTimeSumMs: 0, bidTimeCount: 0 };
       const avgTimeToBidMinutes = repBids.bidTimeCount > 0
         ? Math.round(repBids.bidTimeSumMs / repBids.bidTimeCount / 60000)
         : null;
+
+      // Filtered lead count — only contacts with deals/leads qualify
+      const repQualifiedLeads = repContacts.filter(isQualifiedLead).length;
 
       // Skip reps with zero activity across all columns
       if (repContacts.length === 0 && repDeals.length === 0 && repWon.length === 0) continue;
@@ -632,7 +657,8 @@ export default async function handler(req, res) {
       reps.push({
         id: repId,
         name: ownerMap[repId] || `Owner ${repId}`,
-        leadsAssigned: repContacts.length,
+        leadsAssigned: repQualifiedLeads,
+        contactsAssigned: repContacts.length, // raw count for transparency
         fbLeads: repFbContacts.length,
         organicLeads: repOrganicContacts.length,  // organic + direct
         referralLeads: repReferralContacts.length,
@@ -643,8 +669,9 @@ export default async function handler(req, res) {
         cohortWon,                         // cohort funnel: of period's leads, how many became customers (ever)
         avgResponseMinutes,                // mean minutes from contact created → first contacted
         revenueClosed: repRevenue,
-        conversionRate: repContacts.length > 0 ? Math.round((repDeals.length / repContacts.length) * 100) : 0,
+        conversionRate: repQualifiedLeads > 0 ? Math.round((repDeals.length / repQualifiedLeads) * 100) : 0,
         bidsSent: repBids.bidsSent,
+        samePeriodBidsSent: repBids.samePeriodBidsSent,
         bidsRevenue: repBids.bidsRevenue,
         avgTimeToBidMinutes,
       });
