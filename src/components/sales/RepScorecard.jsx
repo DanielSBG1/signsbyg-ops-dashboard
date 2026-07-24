@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 /* ── Formatting helpers ─────────────────────────────────── */
 
@@ -17,6 +17,12 @@ function fmtTime(minutes) {
 function fmtPercent(v) {
   if (v == null) return '0%';
   return `${v}%`;
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
 }
 
 function responseTimeColor(minutes) {
@@ -53,22 +59,6 @@ function StatModule({ label, value, valueClass, subline, subline2 }) {
   );
 }
 
-/* ── Stage label helper ─────────────────────────────────── */
-
-const STAGE_LABELS = {
-  appointmentScheduled: 'Appointment',
-  qualifiedToBuy: 'Qualified',
-  presentationScheduled: 'Presentation',
-  decisionMakerBoughtIn: 'Decision Maker',
-  contractSent: 'Contract Sent',
-  closedWon: 'Won',
-  closedLost: 'Lost',
-};
-
-function stageLabel(stage) {
-  return STAGE_LABELS[stage] || stage || '—';
-}
-
 /* ── Status badge ───────────────────────────────────────── */
 
 function StatusBadge({ status }) {
@@ -91,6 +81,23 @@ function StatusBadge({ status }) {
   );
 }
 
+/* ── Sortable column header ─────────────────────────────── */
+
+function SortHeader({ label, sortKey, currentSort, currentDir, onSort, align }) {
+  const isActive = currentSort === sortKey;
+  const arrow = isActive ? (currentDir === 'asc' ? ' ↑' : ' ↓') : '';
+  return (
+    <th
+      className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-white/60 transition-colors ${
+        align === 'right' ? 'text-right' : 'text-left'
+      } ${isActive ? 'text-accent' : ''}`}
+      onClick={() => onSort(sortKey)}
+    >
+      {label}{arrow}
+    </th>
+  );
+}
+
 /* ── Main component ─────────────────────────────────────── */
 
 export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodDeals }) {
@@ -104,16 +111,62 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
     return periodDeals.filter((d) => d.ownerId === rep.id);
   }, [periodDeals, rep]);
 
-  const [showAllDeals, setShowAllDeals] = React.useState(false);
+  const [showAllDeals, setShowAllDeals] = useState(false);
+  const [sortKey, setSortKey] = useState('createdate');
+  const [sortDir, setSortDir] = useState('desc');
 
-  // Reset expanded state when rep changes
-  React.useEffect(() => {
+  // Reset state when rep changes
+  useEffect(() => {
     setShowAllDeals(false);
+    setSortKey('createdate');
+    setSortDir('desc');
   }, [selectedRepId]);
 
+  function handleSort(key) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      // Default direction: desc for most, asc for name
+      setSortDir(key === 'name' ? 'asc' : 'desc');
+    }
+  }
+
+  const sortedDeals = useMemo(() => {
+    const deals = [...repDeals];
+    deals.sort((a, b) => {
+      let av, bv;
+      switch (sortKey) {
+        case 'name':
+          av = (a.name || '').toLowerCase();
+          bv = (b.name || '').toLowerCase();
+          return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+        case 'stage':
+          av = (a.stageLabel || a.stage || '').toLowerCase();
+          bv = (b.stageLabel || b.stage || '').toLowerCase();
+          return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+        case 'amount':
+          av = a.amount || 0;
+          bv = b.amount || 0;
+          return sortDir === 'asc' ? av - bv : bv - av;
+        case 'status':
+          const order = { won: 0, open: 1, lost: 2 };
+          av = order[a.status] ?? 1;
+          bv = order[b.status] ?? 1;
+          return sortDir === 'asc' ? av - bv : bv - av;
+        case 'createdate':
+        default:
+          av = a.createdate || '';
+          bv = b.createdate || '';
+          return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+    });
+    return deals;
+  }, [repDeals, sortKey, sortDir]);
+
   const visibleDeals = useMemo(
-    () => (showAllDeals ? repDeals : repDeals.slice(0, 10)),
-    [repDeals, showAllDeals],
+    () => (showAllDeals ? sortedDeals : sortedDeals.slice(0, 10)),
+    [sortedDeals, showAllDeals],
   );
 
   if (!reps || reps.length === 0) {
@@ -158,7 +211,6 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
         <>
           {/* Stat modules grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* 1 – Bids Sent */}
             <StatModule
               label="BIDS SENT"
               value={rep.bidsSent ?? 0}
@@ -166,40 +218,30 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
               subline={`${rep.samePeriodBidsSent ?? 0} same-period`}
               subline2="Deals created & bid sent in this period"
             />
-
-            {/* 2 – Leads Generated */}
             <StatModule
               label="LEADS GENERATED"
               value={rep.leadsAssigned ?? 0}
               subline={`${rep.fbLeads ?? 0} FB / ${rep.organicLeads ?? 0} Organic / ${rep.referralLeads ?? 0} Referral / ${rep.coldLeads ?? 0} Cold`}
               subline2={`${rep.contactsAssigned ?? 0} total contacts`}
             />
-
-            {/* 3 – Deals Won */}
             <StatModule
               label="DEALS WON"
               value={rep.dealsWon ?? 0}
               valueClass={(rep.dealsWon ?? 0) > 0 ? 'text-success' : 'text-white'}
               subline={`${rep.dealsCreated ?? 0} created in period`}
             />
-
-            {/* 4 – Revenue Closed */}
             <StatModule
               label="REVENUE CLOSED"
               value={fmtCurrency(rep.revenueClosed)}
               valueClass="text-success"
               subline={`Avg deal: ${fmtCurrency(rep.cohortAvgDealSize || rep.activityAvgDealSize)}`}
             />
-
-            {/* 5 – Avg Response Time */}
             <StatModule
               label="AVG RESPONSE TIME"
               value={fmtTime(rep.avgResponseMinutes)}
               valueClass={responseTimeColor(rep.avgResponseMinutes)}
               subline="From lead creation to first contact"
             />
-
-            {/* 6 – Conversion Rate */}
             <StatModule
               label="CONVERSION RATE"
               value={fmtPercent(rep.conversionRate)}
@@ -218,16 +260,17 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
             </span>
           </div>
 
-          {/* ── Period deals table ─────────────────── */}
+          {/* ── Period deals table (sortable) ──────── */}
           {repDeals.length > 0 && (
             <div className="bg-white/5 rounded-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-[10px] uppercase tracking-wider text-white/30 border-b border-white/5">
-                    <th className="text-left px-4 py-3 font-medium">Deal</th>
-                    <th className="text-left px-4 py-3 font-medium">Stage</th>
-                    <th className="text-right px-4 py-3 font-medium">Amount</th>
-                    <th className="text-right px-4 py-3 font-medium">Status</th>
+                    <SortHeader label="Deal" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
+                    <SortHeader label="Stage" sortKey="stage" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
+                    <SortHeader label="Date" sortKey="createdate" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
+                    <SortHeader label="Amount" sortKey="amount" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} align="right" />
+                    <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} align="right" />
                   </tr>
                 </thead>
                 <tbody>
@@ -236,8 +279,15 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
                       key={deal.id || idx}
                       className="border-b border-white/5 last:border-0 hover:bg-white/3 transition-colors"
                     >
-                      <td className="px-4 py-3 text-white/80">{truncate(deal.name)}</td>
-                      <td className="px-4 py-3 text-white/50">{stageLabel(deal.stage)}</td>
+                      <td className="px-4 py-3 text-white/80">
+                        {deal.hubspotUrl ? (
+                          <a href={deal.hubspotUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors" title={deal.name}>
+                            {truncate(deal.name)}
+                          </a>
+                        ) : truncate(deal.name)}
+                      </td>
+                      <td className="px-4 py-3 text-white/50">{deal.stageLabel || deal.stage || '—'}</td>
+                      <td className="px-4 py-3 text-white/40 tabular-nums text-xs">{fmtDate(deal.createdate)}</td>
                       <td className="px-4 py-3 text-white/80 tabular-nums text-right font-medium">
                         {fmtCurrency(deal.amount)}
                       </td>
