@@ -180,7 +180,7 @@ Data source: existing GMB integration in the marketing section.
 ## New API Routes
 
 | Route | Purpose |
-|-------|---------|
+|-------|--------|
 | `api/excellence-scores.js` | Aggregates all team scores for the period — calls other APIs or shared lib |
 | `api/excellence-peer-review.js` | GET/POST peer review submissions (Vercel KV) |
 | `api/_lib/excellence/scoring.js` | Score computation logic — weights applied, grade assigned |
@@ -191,7 +191,7 @@ Data source: existing GMB integration in the marketing section.
 ## Frontend Components
 
 | Component | Purpose |
-|-----------|---------|
+|-----------|--------|
 | `src/sections/ExcellenceSection.jsx` | Top-level section — wires period selector, scorecards, trend chart |
 | `src/components/excellence/ReviewsBanner.jsx` | Customer reviews strip at top |
 | `src/components/excellence/TeamScorecard.jsx` | Individual team score card with grade + KPI pills |
