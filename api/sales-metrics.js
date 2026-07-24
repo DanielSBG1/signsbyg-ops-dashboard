@@ -414,6 +414,12 @@ export default async function handler(req, res) {
       return Math.round(((current - previous) / previous) * 100);
     }
 
+    // --- Same-period bids summary count (computed early so summary can reference it) ---
+    const summarysamePeriodDealsSent = (dealsSentRaw.results || []).filter(d => {
+      const createMs = Date.parse(d.properties?.createdate || '');
+      return createMs && createMs >= sentRangeStartMs && createMs <= sentRangeEndMs;
+    }).length;
+
     // --- Lead definition: only contacts with a deal/lead association or active lifecycle qualify ---
     // A new contact alone isn't a lead. Must have num_associated_deals > 0 OR lifecycle
     // indicating engagement (lead, MQL, SQL, opportunity, customer).
@@ -541,7 +547,6 @@ export default async function handler(req, res) {
     // For each deal that entered a bid-sent stage in the period, record: count, revenue, and the
     // time delta from deal createdate → first bid-sent stage entry (for avg lead-to-bid time).
     const repBidsMap = new Map(); // repId → { bidsSent, samePeriodBidsSent, bidsRevenue, bidTimeSumMs, bidTimeCount }
-    let summarysamePeriodDealsSent = 0;
     for (const d of dealsSentRaw.results) {
       const repId = d.properties.hubspot_owner_id;
       if (!repId) continue;
@@ -556,7 +561,6 @@ export default async function handler(req, res) {
       const dealCreateMs = Date.parse(d.properties.createdate || '');
       if (dealCreateMs && dealCreateMs >= sentRangeStartMs && dealCreateMs <= sentRangeEndMs) {
         entry.samePeriodBidsSent++;
-        summarysamePeriodDealsSent++;
       }
 
       // Find the earliest bid-sent stage entry within the period to compute lead→bid time
