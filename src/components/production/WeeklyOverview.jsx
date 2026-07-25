@@ -506,10 +506,10 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       .map(j => ({ gid: j.gid, name: j.name, due_on: j.due_on, state: 'overdue' })),
   [data.jobs, today]);
 
-  // Unreviewed jobs: jobs with no production stages added yet
+  // Unreviewed jobs: still in the Unreviewed section (not yet triaged)
   const unreviewedJobs = useMemo(() => {
     return data.jobs
-      .filter(j => j.subTasks.length === 0)
+      .filter(j => !j.reviewed)
       .map(j => {
         const ref = j.createdAt ?? j.startDate ?? null;
         const daysWaiting = ref
@@ -527,12 +527,38 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       .sort((a, b) => b.daysWaiting - a.daysWaiting);
   }, [data.jobs, today]);
 
+  // Not-processed jobs: reviewed (left Unreviewed section) but ≤1 subtask.
+  // A single subtask typically means Fernando was assigned to create the
+  // production breakdown ("crear subtareas para...") — the job hasn't been
+  // broken into actual production stages yet.
+  const notProcessedJobs = useMemo(() => {
+    return data.jobs
+      .filter(j => j.reviewed && j.subTasks.length <= 1)
+      .map(j => {
+        const ref = j.createdAt ?? j.startDate ?? null;
+        const daysWaiting = ref
+          ? Math.max(0, Math.floor((new Date(today) - new Date(ref)) / 86400000))
+          : 0;
+        return {
+          gid: j.gid,
+          name: j.name,
+          due_on: j.due_on,
+          promisedDate: j.promisedDate ?? null,
+          daysWaiting,
+          state: 'in_progress',
+          subTaskCount: j.subTasks.length,
+        };
+      })
+      .sort((a, b) => b.daysWaiting - a.daysWaiting);
+  }, [data.jobs, today]);
+
   // Jobs to show in alert panels
   const alertPanelJobs = useMemo(() => {
     if (activeAlert === 'rollover') return rolloverJobs;
     if (activeAlert === 'unreviewed') return unreviewedJobs;
+    if (activeAlert === 'notprocessed') return notProcessedJobs;
     return [];
-  }, [activeAlert, rolloverJobs, unreviewedJobs]);
+  }, [activeAlert, rolloverJobs, unreviewedJobs, notProcessedJobs]);
 
   // Jobs to show in the inline panel (filtered by which card is open)
   const panelJobs = useMemo(() => {
@@ -561,20 +587,27 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     <div className="space-y-5">
 
       {/* ── Needs Attention alerts ── */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <AlertCard
           label="Late Open Orders"
           value={rolloverJobs.length}
-          sub="jobs still in production past their due date — should be zero"
+          sub="past due date — should be zero"
           active={activeAlert === 'rollover'}
           onClick={() => toggleAlert('rollover')}
         />
         <AlertCard
-          label="Unreviewed / Not Processed"
+          label="Unreviewed"
           value={unreviewedJobs.length}
-          sub="jobs with no production stages set up yet"
+          sub="jobs not yet triaged from intake"
           active={activeAlert === 'unreviewed'}
           onClick={() => toggleAlert('unreviewed')}
+        />
+        <AlertCard
+          label="Not Processed"
+          value={notProcessedJobs.length}
+          sub="reviewed but no production breakdown yet (≤1 subtask)"
+          active={activeAlert === 'notprocessed'}
+          onClick={() => toggleAlert('notprocessed')}
         />
       </div>
 
@@ -590,6 +623,13 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       {activeAlert === 'unreviewed' && (
         <UnreviewedJobPanel
           jobs={unreviewedJobs}
+          jobMap={jobMap}
+          onSelectJob={setSelectedJob}
+        />
+      )}
+      {activeAlert === 'notprocessed' && (
+        <UnreviewedJobPanel
+          jobs={notProcessedJobs}
           jobMap={jobMap}
           onSelectJob={setSelectedJob}
         />
