@@ -126,44 +126,143 @@ function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className
   );
 }
 
-// ─── Score Card (clickable) ──────────────────────────────────
-function ScoreCard({ member, active, onClick }) {
-  const barTotal = member.onTime + member.late;
-  const onTimePct = barTotal > 0 ? Math.round((member.onTime / barTotal) * 100) : 0;
+// ─── Leaderboard sort options ────────────────────────────────
+const LEADERBOARD_SORTS = [
+  { key: 'onTimeRate',  label: 'On-Time %' },
+  { key: 'completed',   label: 'Completed' },
+  { key: 'open',        label: 'Open' },
+  { key: 'overdue',     label: 'Overdue', ascending: false },
+  { key: 'onTime',      label: 'On Time' },
+  { key: 'late',        label: 'Late', ascending: false },
+  { key: 'total',       label: 'Total' },
+];
+
+const MEDALS = ['🥇', '🥈', '🥉'];
+
+function leaderboardBarColor(member) {
+  if (member.onTimeRate >= 80) return 'bg-success';
+  if (member.onTimeRate >= 50) return 'bg-warning';
+  return 'bg-danger';
+}
+
+function fmtLeaderboardValue(member, key) {
+  if (key === 'onTimeRate') return `${member[key]}%`;
+  return member[key] ?? 0;
+}
+
+// ─── Leaderboard Component ───────────────────────────────────
+function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, onMemberClick }) {
+  const sortOpt = LEADERBOARD_SORTS.find(o => o.key === sortKey);
+
+  const sorted = useMemo(() => {
+    return [...members].sort((a, b) => {
+      const av = a[sortKey] ?? 0;
+      const bv = b[sortKey] ?? 0;
+      return sortOpt?.ascending === false ? av - bv : bv - av;
+    });
+  }, [members, sortKey, sortOpt]);
+
+  const maxVal = Math.max(...sorted.map(m => m[sortKey] ?? 0), 1);
+
+  if (sorted.length === 0) return null;
 
   return (
-    <button
-      onClick={onClick}
-      className={`bg-white/5 rounded-xl p-4 text-center min-w-[140px] flex-shrink-0 transition-all ${
-        active ? 'ring-1 ring-accent/50 bg-accent/5' : 'hover:bg-white/[0.07]'
-      }`}
-    >
-      <p className="text-xs font-semibold text-white/70 truncate mb-1">{member.display}</p>
-      <p className={`text-2xl font-bold tabular-nums ${rateColorClass(member.onTimeRate)}`}>
-        {member.onTimeRate}%
-      </p>
-      <p className="text-[10px] text-white/30 mb-2">
-        {member.completed}/{member.total} done
-      </p>
-      <div className="h-1.5 rounded-full overflow-hidden flex bg-white/5">
-        {barTotal === 0 ? (
-          <div className="flex-1" />
-        ) : (
-          <>
-            {member.onTime > 0 && (
-              <div className="bg-success/70 transition-all" style={{ width: `${onTimePct}%` }} />
-            )}
-            {member.late > 0 && (
-              <div className="bg-danger/70 transition-all" style={{ width: `${100 - onTimePct}%` }} />
-            )}
-          </>
-        )}
+    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+      {/* Header + sort pills */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 className="text-lg font-semibold">Production Team Leaderboard</h2>
+        <div className="flex items-center gap-1.5">
+          <span className="text-white/30 text-xs mr-1">Sort:</span>
+          {LEADERBOARD_SORTS.map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => onSortChange(opt.key)}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                sortKey === opt.key
+                  ? 'bg-accent text-white'
+                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="flex justify-center gap-2 mt-1 text-[9px] text-white/30">
-        <span>{member.onTime} on-time</span>
-        <span>{member.late} late</span>
+
+      {/* Podium — top 3 */}
+      {sorted.length >= 3 && (
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {sorted.slice(0, 3).map((m, idx) => (
+            <div
+              key={m.key}
+              className="bg-white/[0.05] rounded-xl p-4 text-center cursor-pointer hover:bg-white/[0.08] transition-colors"
+              onClick={() => onMemberClick(m.key)}
+            >
+              <span className="text-2xl">{MEDALS[idx]}</span>
+              <p className="text-sm font-semibold text-white mt-1 truncate">{m.display}</p>
+              <p className={`text-2xl font-bold tabular-nums mt-1 ${rateColorClass(m.onTimeRate)}`}>
+                {fmtLeaderboardValue(m, sortKey)}
+              </p>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[10px]">
+                <div><span className="text-white/30">Done</span> <span className="text-white/60">{m.completed}</span></div>
+                <div><span className="text-white/30">Open</span> <span className="text-white/60">{m.open}</span></div>
+                <div><span className="text-white/30">On Time</span> <span className="text-success/70">{m.onTime}</span></div>
+                <div><span className="text-white/30">Late</span> <span className="text-danger/70">{m.late}</span></div>
+              </div>
+              <button
+                className="text-[10px] text-accent hover:underline mt-2"
+                onClick={(e) => { e.stopPropagation(); onViewProfile(m.key); }}
+              >
+                View Stats →
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Remaining rows */}
+      <div className="space-y-0.5">
+        {sorted.slice(sorted.length >= 3 ? 3 : 0).map((m, idx) => {
+          const rank = (sorted.length >= 3 ? 3 : 0) + idx;
+          const rawVal = m[sortKey] ?? 0;
+          const barPct = maxVal > 0 ? (rawVal / maxVal) * 100 : 0;
+          const color = leaderboardBarColor(m);
+
+          return (
+            <div
+              key={m.key}
+              className="group relative rounded-lg px-3 py-2 cursor-pointer transition-all bg-white/[0.03] hover:bg-white/[0.07]"
+              onClick={() => onMemberClick(m.key)}
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 shrink-0 text-center">
+                  <span className="text-white/20 text-[10px] font-mono">#{rank + 1}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium text-white/60 truncate leading-none mb-1.5">{m.display}</div>
+                  <div className="h-1 bg-white/8 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${color}`}
+                      style={{ width: `${Math.max(barPct, barPct > 0 ? 1.5 : 0)}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-white/25 leading-none">
+                    <span><span className="text-white/45">{m.completed}</span> done</span>
+                    <span><span className="text-white/45">{m.open}</span> open</span>
+                    {m.overdue > 0 && <span className="text-danger">{m.overdue} overdue</span>}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <span className={`text-xl font-bold tabular-nums leading-none ${rateColorClass(m.onTimeRate)}`}>
+                    {fmtLeaderboardValue(m, sortKey)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -375,6 +474,8 @@ export default function SubtasksTab({ data }) {
     return [...roster, ...(other ? [other] : []), ...(unassigned ? [unassigned] : [])];
   }, [data, today, periodRange]);
 
+  const [leaderboardSort, setLeaderboardSort] = useState('onTimeRate');
+
   const [expandedKeys, setExpandedKeys] = useState(() => {
     const initial = new Set();
     members.slice(0, 3).forEach(m => initial.add(m.key));
@@ -457,20 +558,14 @@ export default function SubtasksTab({ data }) {
         ))}
       </div>
 
-      {/* ── Scoreboard (clickable) ─────────────────────────── */}
-      <div>
-        <p className="text-[10px] uppercase tracking-wider text-white/40 mb-3">On-Time Completion — click to jump to member</p>
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-          {members.map(m => (
-            <ScoreCard
-              key={m.key}
-              member={m}
-              active={expandedKeys.has(m.key)}
-              onClick={() => handleScoreCardClick(m.key)}
-            />
-          ))}
-        </div>
-      </div>
+      {/* ── Leaderboard ─────────────────────────────────────── */}
+      <ProductionLeaderboard
+        members={members}
+        sortKey={leaderboardSort}
+        onSortChange={setLeaderboardSort}
+        onViewProfile={(key) => setProfileKey(key)}
+        onMemberClick={(key) => handleScoreCardClick(key)}
+      />
 
       {/* ── Team member sections (sortable columns) ────────── */}
       <div className="space-y-3">
