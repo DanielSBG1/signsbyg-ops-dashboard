@@ -69,8 +69,11 @@ function computeMemberStats(subtasks, today) {
 
   const overdue = open.filter(s => s.due_on && s.due_on < today);
 
-  const onTimeRate = completed.length > 0
-    ? Math.round((onTime.length / completed.length) * 100)
+  // On-time rate includes overdue open tasks as failures — having overdue
+  // tasks should bring down your score, not be invisible.
+  const denominator = completed.length + overdue.length;
+  const onTimeRate = denominator > 0
+    ? Math.round((onTime.length / denominator) * 100)
     : 0;
 
   return {
