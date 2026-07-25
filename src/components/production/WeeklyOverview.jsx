@@ -341,20 +341,30 @@ function DeptStageSummary({ subTasksByDept }) {
               </div>
             </button>
             {isExpanded && (
-              <div className="ml-3 mt-1 space-y-1 border-l border-white/[0.06] pl-2">
+              <div className="ml-3 mt-1 space-y-1.5 border-l border-white/[0.06] pl-2">
                 {tasks.map((t, i) => (
-                  <div key={t.gid || i} className="flex items-center gap-2 text-[10px]">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.completed ? 'bg-success' : 'bg-danger'}`} />
-                    <span className={`truncate ${t.completed ? 'text-white/30 line-through' : 'text-white/70'}`} title={t.name}>
-                      {t.name}
-                    </span>
-                    {t.assignee && (
-                      <span className="text-white/25 shrink-0">— {t.assignee}</span>
-                    )}
-                    {t.completed && t.completed_at && (
-                      <span className="text-success/60 shrink-0">✓</span>
-                    )}
-                  </div>
+                  <a
+                    key={t.gid || i}
+                    href={t.gid ? `https://app.asana.com/0/0/${t.gid}` : undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block hover:bg-white/[0.04] rounded px-1 -mx-1 py-1 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start gap-2 text-[11px]">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${t.completed ? 'bg-success' : 'bg-danger'}`} />
+                      <div className="min-w-0 flex-1">
+                        <span className={`block text-wrap break-words ${t.completed ? 'text-white/30 line-through' : 'text-white/70 hover:text-accent'}`}>
+                          {t.name}
+                        </span>
+                        {t.assignee && (
+                          <span className="text-white/25 text-[10px]">{t.assignee}</span>
+                        )}
+                      </div>
+                      {t.completed && t.completed_at && (
+                        <span className="text-success/60 shrink-0 text-[10px]">✓</span>
+                      )}
+                    </div>
+                  </a>
                 ))}
               </div>
             )}
