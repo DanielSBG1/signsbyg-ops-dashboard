@@ -1552,7 +1552,11 @@ export default async function handler(req, res) {
     };
     // Wide periods (Q1-Q4, year) are cached 30 min so the cron (every 10 min) always
     // finds a warm entry and never leaves a gap. Narrow periods stay at 10 min.
-    const cacheTTL = isPeriodClosed && periodDays >= 28 ? 3600 : periodDays > 30 ? 1800 : 600;
+    // Cache TTLs — must be longer than the cron interval to avoid cold-cache hits.
+    // Active periods: 900s (15 min) > 10-min cron = always warm.
+    // Wide active periods (month/quarter): 1800s (30 min).
+    // Closed/historical periods: 3600s (1 hour).
+    const cacheTTL = isPeriodClosed && periodDays >= 28 ? 3600 : periodDays > 30 ? 1800 : 900;
     await setCached(cacheKey, responsePayload, cacheTTL);
     return res.status(200).json(responsePayload);
   } catch (err) {
