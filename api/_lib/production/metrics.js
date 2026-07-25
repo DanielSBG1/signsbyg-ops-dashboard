@@ -145,15 +145,13 @@ export function isInStaging(task) {
 }
 
 /**
- * Returns true if the task has been reviewed — it left Unreviewed AND has both
- * a production due date (custom field) and a native due_on date.
+ * Returns true if the task has been reviewed — it left the Unreviewed section.
+ * Moving a job out of Unreviewed into any work section (Channel Letters,
+ * Fabrication, Outsourced, etc.) counts as reviewed.
  */
 export function isReviewed(task) {
   const inUnreviewed = task.memberships?.some(m => m.section?.gid === UNREVIEWED_SECTION_GID) ?? false;
-  if (inUnreviewed) return false;
-  const hasProductionDueDate = !!extractProductionDueDate(task);
-  const hasNativeDueDate = !!task.due_on;
-  return hasProductionDueDate && hasNativeDueDate;
+  return !inUnreviewed;
 }
 
 /**
