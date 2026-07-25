@@ -273,9 +273,70 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
   );
 }
 
+// ─── Period helpers ──────────────────────────────────────────
+function getMondayOf(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function getPeriodRange(periodId, today) {
+  const monday = getMondayOf(today);
+  const year = today.slice(0, 4);
+  const month = today.slice(5, 7);
+  const qStart = ['01', '04', '07', '10'][Math.ceil(Number(month) / 3) - 1];
+  const qEnd = ['03', '06', '09', '12'][Math.ceil(Number(month) / 3) - 1];
+  const qEndDay = new Date(Number(year), Number(qEnd), 0).getDate();
+
+  switch (periodId) {
+    case 'thisWeek':    return { start: monday, end: addDays(monday, 6) };
+    case 'lastWeek':    return { start: addDays(monday, -7), end: addDays(monday, -1) };
+    case '2weeksAgo':   return { start: addDays(monday, -14), end: addDays(monday, -8) };
+    case 'thisMonth':   return { start: `${year}-${month}-01`, end: today };
+    case 'lastMonth': {
+      const lm = Number(month) === 1 ? 12 : Number(month) - 1;
+      const ly = Number(month) === 1 ? Number(year) - 1 : Number(year);
+      const lmEnd = new Date(ly, lm, 0).getDate();
+      return { start: `${ly}-${String(lm).padStart(2,'0')}-01`, end: `${ly}-${String(lm).padStart(2,'0')}-${lmEnd}` };
+    }
+    case 'thisQuarter': return { start: `${year}-${qStart}-01`, end: `${year}-${qEnd}-${String(qEndDay).padStart(2,'0')}` };
+    case 'all':
+    default:            return null; // no filter
+  }
+}
+
+const PERIODS = [
+  { id: 'all',        label: 'All Time' },
+  { id: 'thisWeek',   label: 'This Week' },
+  { id: 'lastWeek',   label: 'Last Week' },
+  { id: '2weeksAgo',  label: '2 Weeks Ago' },
+  { id: 'thisMonth',  label: 'This Month' },
+  { id: 'lastMonth',  label: 'Last Month' },
+  { id: 'thisQuarter',label: 'This Quarter' },
+];
+
+// Filter subtasks: include if due_on OR completed_at falls in the range
+function subtaskInRange(st, range) {
+  if (!range) return true; // all time
+  const due = st.due_on || '';
+  const done = st.completed_at ? st.completed_at.slice(0, 10) : '';
+  return (due >= range.start && due <= range.end) || (done >= range.start && done <= range.end);
+}
+
 // ─── Main Component ──────────────────────────────────────────
 export default function SubtasksTab({ data }) {
   const today = useMemo(() => todayStr(), []);
+  const [activePeriod, setActivePeriod] = useState('all');
+
+  const periodRange = useMemo(() => getPeriodRange(activePeriod, today), [activePeriod, today]);
 
   const members = useMemo(() => {
     if (!data?.jobs) return [];
@@ -284,8 +345,11 @@ export default function SubtasksTab({ data }) {
       (job.subTasks || []).map(st => ({ ...st, _parentName: job.name })),
     );
 
+    // Filter by period
+    const filtered = allSubtasks.filter(st => subtaskInRange(st, periodRange));
+
     const grouped = {};
-    for (const st of allSubtasks) {
+    for (const st of filtered) {
       const { key, display } = resolveAssignee(st.assignee);
       if (!grouped[key]) grouped[key] = { key, display, subtasks: [] };
       grouped[key].subtasks.push(st);
@@ -306,7 +370,7 @@ export default function SubtasksTab({ data }) {
     const unassigned = result.find(r => r.key === '__unassigned__');
 
     return [...roster, ...(other ? [other] : []), ...(unassigned ? [unassigned] : [])];
-  }, [data, today]);
+  }, [data, today, periodRange]);
 
   const [expandedKeys, setExpandedKeys] = useState(() => {
     const initial = new Set();
@@ -373,6 +437,23 @@ export default function SubtasksTab({ data }) {
 
   return (
     <div className="space-y-6">
+      {/* ── Period selector ────────────────────────────────── */}
+      <div className="flex flex-wrap gap-1.5">
+        {PERIODS.map(p => (
+          <button
+            key={p.id}
+            onClick={() => setActivePeriod(p.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              activePeriod === p.id
+                ? 'bg-accent text-white'
+                : 'bg-white/5 text-white/50 hover:bg-white/10'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       {/* ── Scoreboard (clickable) ─────────────────────────── */}
       <div>
         <p className="text-[10px] uppercase tracking-wider text-white/40 mb-3">On-Time Completion — click to jump to member</p>
