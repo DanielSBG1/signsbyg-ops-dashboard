@@ -226,14 +226,16 @@ export async function buildProductionMetrics() {
     if (pgid) parentSubtaskCount[pgid] = (parentSubtaskCount[pgid] ?? 0) + 1;
   }
 
-  // 3. Fetch sub-sub-tasks for every production sub-task (max 5 concurrent)
+  // 3. Fetch sub-sub-tasks for active production sub-tasks (skip staged)
+  //    Each call is a lightweight GET — bump concurrency to 10 for speed.
   const subSubTaskMap = {};
+  const tasksNeedingSubs = incompleteTasks.filter(t => !isInStaging(t));
+  const subLimit = pLimit(10);
   await Promise.all(
-    incompleteTasks.map(t =>
-      limit(() =>
+    tasksNeedingSubs.map(t =>
+      subLimit(() =>
         getSubtasks(t.gid, SUBSUBTASK_FIELDS).then(subs => {
           subSubTaskMap[t.gid] = subs.map(s => ({
-            gid: s.gid,
             name: s.name,
             due_on: s.due_on ?? null,
             completed: s.completed,
