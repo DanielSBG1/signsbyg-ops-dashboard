@@ -311,6 +311,7 @@ function JobCard({ job, today, onClick }) {
 function DeptStageSummary({ subTasksByDept }) {
   const hasAny = DEPT_META.some(d => (subTasksByDept[d.key]?.length ?? 0) > 0);
   const [expandedDept, setExpandedDept] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
   if (!hasAny) return null;
 
   return (
@@ -343,28 +344,86 @@ function DeptStageSummary({ subTasksByDept }) {
             {isExpanded && (
               <div className="ml-3 mt-1 space-y-1.5 border-l border-white/[0.06] pl-2">
                 {tasks.map((t, i) => (
-                  <a
-                    key={t.gid || i}
-                    href={t.gid ? `https://app.asana.com/0/0/${t.gid}` : undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block hover:bg-white/[0.04] rounded px-1 -mx-1 py-1 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start gap-2 text-[11px]">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${t.completed ? 'bg-success' : 'bg-danger'}`} />
-                      <div className="min-w-0 flex-1">
-                        <span className={`block text-wrap break-words ${t.completed ? 'text-white/30 line-through' : 'text-white/70 hover:text-accent'}`}>
-                          {t.name}
-                        </span>
-                        {t.assignee && (
-                          <span className="text-white/25 text-[10px]">{t.assignee}</span>
+                  <div key={t.gid || i}>
+                    <button
+                      className="w-full text-left block hover:bg-white/[0.04] rounded px-1 -mx-1 py-1 transition-colors cursor-pointer"
+                      onClick={() => setSelectedTask(selectedTask?.gid === t.gid ? null : t)}
+                    >
+                      <div className="flex items-start gap-2 text-[11px]">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${t.completed ? 'bg-success' : 'bg-danger'}`} />
+                        <div className="min-w-0 flex-1">
+                          <span className={`block text-wrap break-words ${t.completed ? 'text-white/30 line-through' : 'text-white/70'}`}>
+                            {t.name}
+                          </span>
+                          {t.assignee && (
+                            <span className="text-white/25 text-[10px]">{t.assignee}</span>
+                          )}
+                        </div>
+                        {t.completed && t.completed_at && (
+                          <span className="text-success/60 shrink-0 text-[10px]">✓</span>
                         )}
                       </div>
-                      {t.completed && t.completed_at && (
-                        <span className="text-success/60 shrink-0 text-[10px]">✓</span>
-                      )}
-                    </div>
-                  </a>
+                    </button>
+                    {/* Inline detail dialog */}
+                    {selectedTask?.gid === t.gid && (
+                      <div className="ml-4 mt-1 mb-2 bg-white/[0.06] border border-white/10 rounded-lg p-3 space-y-2">
+                        {t._parentName && (
+                          <div>
+                            <span className="text-[9px] uppercase tracking-wider text-white/30">Main Job</span>
+                            <p className="text-[11px] text-white/80 font-medium">{t._parentName}</p>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px]">
+                          <div>
+                            <span className="text-white/30">Status: </span>
+                            <span className={t.completed ? 'text-success' : 'text-danger'}>
+                              {t.completed ? 'Complete' : 'Open'}
+                            </span>
+                          </div>
+                          {t.assignee && (
+                            <div>
+                              <span className="text-white/30">Assigned: </span>
+                              <span className="text-white/60">{t.assignee}</span>
+                            </div>
+                          )}
+                          {t.due_on && (
+                            <div>
+                              <span className="text-white/30">Due: </span>
+                              <span className="text-white/60">{t.due_on}</span>
+                            </div>
+                          )}
+                          {t.completed_at && (
+                            <div>
+                              <span className="text-white/30">Done: </span>
+                              <span className="text-white/60">{t.completed_at.slice(0, 10)}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                          {t.gid && (
+                            <a
+                              href={`https://app.asana.com/0/0/${t.gid}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-accent hover:underline"
+                            >
+                              Open subtask in Asana ↗
+                            </a>
+                          )}
+                          {t._parentGid && (
+                            <a
+                              href={`https://app.asana.com/0/0/${t._parentGid}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-white/40 hover:text-white/70 hover:underline"
+                            >
+                              Open main job ↗
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -515,7 +574,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     for (const job of annotatedJobs) {
       for (const st of job.subTasks) {
         if (st.due_on && validDates.has(st.due_on)) {
-          map[st.due_on][job.department].push(st);
+          map[st.due_on][job.department].push({ ...st, _parentName: job.name, _parentGid: job.gid });
         }
       }
     }
