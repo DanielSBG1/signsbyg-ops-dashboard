@@ -527,13 +527,23 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       .sort((a, b) => b.daysWaiting - a.daysWaiting);
   }, [data.jobs, today]);
 
-  // Not-processed jobs: reviewed (left Unreviewed section) but ≤1 subtask.
-  // A single subtask typically means Fernando was assigned to create the
-  // production breakdown ("crear subtareas para...") — the job hasn't been
-  // broken into actual production stages yet.
+  // Not-processed jobs: reviewed but only has 1 subtask assigned to Fernando.
+  // Fernando gets a single "crear subtareas" task to build the production
+  // breakdown. If the only subtask is his, the job hasn't been processed yet.
+  // Jobs with 0 subtasks OR 1 subtask assigned to someone else (e.g. Eduardo
+  // doing fabrication) are NOT counted — those are either empty or already
+  // in production with a real task.
   const notProcessedJobs = useMemo(() => {
     return data.jobs
-      .filter(j => j.reviewed && j.subTasks.length <= 1)
+      .filter(j => {
+        if (!j.reviewed) return false;
+        if (j.subTasks.length === 0) return true; // no subtasks at all
+        if (j.subTasks.length === 1) {
+          const assignee = (j.subTasks[0].assignee || '').toLowerCase();
+          return assignee.includes('fernando');
+        }
+        return false;
+      })
       .map(j => {
         const ref = j.createdAt ?? j.startDate ?? null;
         const daysWaiting = ref
