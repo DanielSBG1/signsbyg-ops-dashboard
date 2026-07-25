@@ -1,4 +1,6 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
+
+const TeamMemberProfile = lazy(() => import('./TeamMemberProfile'));
 
 // ─── Team roster (display order) ─────────────────────────────
 const TEAM_ROSTER = [
@@ -163,7 +165,7 @@ function ScoreCard({ member, active, onClick }) {
 }
 
 // ─── Member Section (sortable columns) ──────────────────────
-function MemberSection({ member, expanded, onToggle, today, sectionRef }) {
+function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewProfile }) {
   const [sortKey, setSortKey] = useState('due_on');
   const [sortDir, setSortDir] = useState('asc');
 
@@ -221,6 +223,12 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef }) {
             {member.overdue} overdue
           </span>
         )}
+        <span
+          className="text-[10px] text-accent hover:underline cursor-pointer shrink-0"
+          onClick={(e) => { e.stopPropagation(); onViewProfile?.(); }}
+        >
+          View Stats →
+        </span>
         <span className="flex-1" />
         <span className={`text-xs font-semibold tabular-nums ${rateColorClass(member.onTimeRate)}`}>
           {member.onTimeRate}%
@@ -306,6 +314,10 @@ export default function SubtasksTab({ data }) {
     return initial;
   });
 
+  // Profile view state — when set, shows the chess.com-style stats page
+  const [profileKey, setProfileKey] = useState(null);
+  const profileMember = profileKey ? members.find(m => m.key === profileKey) : null;
+
   // Refs for scrolling to sections when score card is clicked
   const sectionRefs = useRef({});
   const [scrollTarget, setScrollTarget] = useState(null);
@@ -343,6 +355,18 @@ export default function SubtasksTab({ data }) {
     return <div className="text-center py-20 text-white/30 text-sm">Loading subtask data...</div>;
   }
 
+  // Show profile view when a member is selected
+  if (profileMember) {
+    return (
+      <Suspense fallback={<div className="text-center py-20 text-white/40">Loading stats...</div>}>
+        <TeamMemberProfile
+          memberData={profileMember}
+          onClose={() => setProfileKey(null)}
+        />
+      </Suspense>
+    );
+  }
+
   if (members.length === 0) {
     return <div className="text-center py-20 text-white/30 text-sm">No subtask data available.</div>;
   }
@@ -372,6 +396,7 @@ export default function SubtasksTab({ data }) {
             member={m}
             expanded={expandedKeys.has(m.key)}
             onToggle={() => toggleSection(m.key)}
+            onViewProfile={() => setProfileKey(m.key)}
             today={today}
             sectionRef={el => { sectionRefs.current[m.key] = el; }}
           />
