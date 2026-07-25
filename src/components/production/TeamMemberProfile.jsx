@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
@@ -98,12 +98,89 @@ function StatCard({ title, children }) {
 
 // ─── Main Component ─────────────────────────────────────────
 
+// ─── Period helpers ──────────────────────────────────────────
+function getMondayOfDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function addDaysStr(dateStr, n) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function getPeriodRange(periodId, today) {
+  const monday = getMondayOfDate(today);
+  const year = today.slice(0, 4);
+  const month = today.slice(5, 7);
+  const qStart = ['01', '04', '07', '10'][Math.ceil(Number(month) / 3) - 1];
+  const qEnd = ['03', '06', '09', '12'][Math.ceil(Number(month) / 3) - 1];
+  const qEndDay = new Date(Number(year), Number(qEnd), 0).getDate();
+
+  switch (periodId) {
+    case 'thisWeek':    return { start: monday, end: addDaysStr(monday, 6) };
+    case 'lastWeek':    return { start: addDaysStr(monday, -7), end: addDaysStr(monday, -1) };
+    case '2weeksAgo':   return { start: addDaysStr(monday, -14), end: addDaysStr(monday, -8) };
+    case 'thisMonth':   return { start: `${year}-${month}-01`, end: today };
+    case 'lastMonth': {
+      const lm = Number(month) === 1 ? 12 : Number(month) - 1;
+      const ly = Number(month) === 1 ? Number(year) - 1 : Number(year);
+      const lmEnd = new Date(ly, lm, 0).getDate();
+      return { start: `${ly}-${String(lm).padStart(2,'0')}-01`, end: `${ly}-${String(lm).padStart(2,'0')}-${lmEnd}` };
+    }
+    case 'thisQuarter': return { start: `${year}-${qStart}-01`, end: `${year}-${qEnd}-${String(qEndDay).padStart(2,'0')}` };
+    case 'all':
+    default:            return null;
+  }
+}
+
+const PROFILE_PERIODS = [
+  { id: 'all',        label: 'All Time' },
+  { id: 'thisWeek',   label: 'This Week' },
+  { id: 'lastWeek',   label: 'Last Week' },
+  { id: '2weeksAgo',  label: '2 Weeks Ago' },
+  { id: 'thisMonth',  label: 'This Month' },
+  { id: 'lastMonth',  label: 'Last Month' },
+  { id: 'thisQuarter',label: 'This Quarter' },
+];
+
+function subtaskInPeriod(st, range) {
+  if (!range) return true;
+  const due = st.due_on || '';
+  const done = st.completed_at ? st.completed_at.slice(0, 10) : '';
+  return (due >= range.start && due <= range.end) || (done >= range.start && done <= range.end);
+}
+
 export default function TeamMemberProfile({ memberData, onClose }) {
-  const {
-    display, total, completed, onTime, late, open, overdue, onTimeRate, subtasks,
-  } = memberData;
+  const { display, subtasks: allSubtasks } = memberData;
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [activePeriod, setActivePeriod] = useState('all');
+  const periodRange = useMemo(() => getPeriodRange(activePeriod, today), [activePeriod, today]);
+
+  // Filter subtasks by selected period
+  const subtasks = useMemo(
+    () => allSubtasks.filter(st => subtaskInPeriod(st, periodRange)),
+    [allSubtasks, periodRange],
+  );
+
+  // Recompute stats from filtered subtasks
+  const completedArr = useMemo(() => subtasks.filter(s => s.completed), [subtasks]);
+  const openArr = useMemo(() => subtasks.filter(s => !s.completed), [subtasks]);
+  const onTimeArr = useMemo(() => completedArr.filter(s => s.due_on && s.completed_at && s.completed_at.slice(0, 10) <= s.due_on), [completedArr]);
+  const lateArr = useMemo(() => completedArr.filter(s => !s.due_on || !s.completed_at || s.completed_at.slice(0, 10) > s.due_on), [completedArr]);
+  const overdueArr = useMemo(() => openArr.filter(s => s.due_on && s.due_on < today), [openArr, today]);
+  const total = subtasks.length;
+  const completed = completedArr.length;
+  const onTime = onTimeArr.length;
+  const late = lateArr.length;
+  const open = openArr.length;
+  const overdue = overdueArr.length;
+  const onTimeRate = (completed + overdue) > 0 ? Math.round((onTime / (completed + overdue)) * 100) : 0;
 
   // ── Avg days early/late ───────────────────────────────────
   const avgDaysEarlyLate = useMemo(() => {
@@ -225,6 +302,23 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         <span className={`text-sm font-bold px-3 py-1 rounded-full ${rateBgClass(onTimeRate)}`}>
           {onTimeRate}% On-Time
         </span>
+      </div>
+
+      {/* ── PERIOD SELECTOR ──────────────────────────────── */}
+      <div className="flex flex-wrap gap-1.5">
+        {PROFILE_PERIODS.map(p => (
+          <button
+            key={p.id}
+            onClick={() => setActivePeriod(p.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              activePeriod === p.id
+                ? 'bg-accent text-white'
+                : 'bg-white/5 text-white/50 hover:bg-white/10'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       {/* ── 2. STAT CARDS ROW ────────────────────────────── */}
