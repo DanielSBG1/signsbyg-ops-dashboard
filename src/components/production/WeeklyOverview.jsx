@@ -310,28 +310,54 @@ function JobCard({ job, today, onClick }) {
 
 function DeptStageSummary({ subTasksByDept }) {
   const hasAny = DEPT_META.some(d => (subTasksByDept[d.key]?.length ?? 0) > 0);
+  const [expandedDept, setExpandedDept] = useState(null);
   if (!hasAny) return null;
 
   return (
     <div className="space-y-2 pt-3 border-t border-white/[0.06]">
-      <p className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">Stages due</p>
+      <p className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">Stages due — click to see tasks</p>
       {DEPT_META.map(dept => {
         const tasks = subTasksByDept[dept.key] ?? [];
         if (tasks.length === 0) return null;
         const done = tasks.filter(t => t.completed).length;
-        const overdue = tasks.filter(t => !t.completed && t.due_on).length;
+        const openTasks = tasks.filter(t => !t.completed);
+        const isExpanded = expandedDept === dept.key;
         return (
-          <div key={dept.key} className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
-              <span className="text-[11px] text-white/50 truncate">{dept.label}</span>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[11px] text-white/30 tabular-nums">{done}/{tasks.length}</span>
-              {overdue > 0 && (
-                <span className="text-[10px] text-danger tabular-nums font-semibold">({overdue} open)</span>
-              )}
-            </div>
+          <div key={dept.key}>
+            <button
+              className="w-full flex items-center justify-between gap-2 hover:bg-white/[0.04] rounded px-1 -mx-1 py-0.5 transition-colors"
+              onClick={() => setExpandedDept(isExpanded ? null : dept.key)}
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
+                <span className="text-[11px] text-white/50 truncate">{dept.label}</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[11px] text-white/30 tabular-nums">{done}/{tasks.length}</span>
+                {openTasks.length > 0 && (
+                  <span className="text-[10px] text-danger tabular-nums font-semibold">({openTasks.length} open)</span>
+                )}
+                <span className="text-white/20 text-[10px]">{isExpanded ? '▲' : '▼'}</span>
+              </div>
+            </button>
+            {isExpanded && (
+              <div className="ml-3 mt-1 space-y-1 border-l border-white/[0.06] pl-2">
+                {tasks.map((t, i) => (
+                  <div key={t.gid || i} className="flex items-center gap-2 text-[10px]">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.completed ? 'bg-success' : 'bg-danger'}`} />
+                    <span className={`truncate ${t.completed ? 'text-white/30 line-through' : 'text-white/70'}`} title={t.name}>
+                      {t.name}
+                    </span>
+                    {t.assignee && (
+                      <span className="text-white/25 shrink-0">— {t.assignee}</span>
+                    )}
+                    {t.completed && t.completed_at && (
+                      <span className="text-success/60 shrink-0">✓</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}
