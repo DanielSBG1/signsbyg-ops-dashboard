@@ -499,7 +499,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) + projectedLateInPeriod.length;
 
-  // Rollover jobs: any open job with a past due date (not just last week)
+  // Late open orders: active jobs past their due date — this number should be zero
   const rolloverJobs = useMemo(() =>
     data.jobs
       .filter(j => j.due_on && j.due_on < today)
@@ -563,9 +563,9 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       {/* ── Needs Attention alerts ── */}
       <div className="grid grid-cols-2 gap-4">
         <AlertCard
-          label="Rolled Over from Last Week"
+          label="Late Open Orders"
           value={rolloverJobs.length}
-          sub="open jobs past their due date — complete ASAP"
+          sub="jobs still in production past their due date — should be zero"
           active={activeAlert === 'rollover'}
           onClick={() => toggleAlert('rollover')}
         />
