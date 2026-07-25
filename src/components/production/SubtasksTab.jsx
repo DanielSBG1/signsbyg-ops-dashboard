@@ -208,6 +208,9 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
                 <div><span className="text-white/30">Open</span> <span className="text-white/60">{m.open}</span></div>
                 <div><span className="text-white/30">On Time</span> <span className="text-success/70">{m.onTime}</span></div>
                 <div><span className="text-white/30">Late</span> <span className="text-danger/70">{m.late}</span></div>
+                {m.overdue > 0 && (
+                  <div className="col-span-2"><span className="text-white/30">Overdue</span> <span className="text-danger">{m.overdue}</span> <span className="text-white/20">— counts against rate</span></div>
+                )}
               </div>
               <button
                 className="text-[10px] text-accent hover:underline mt-2"
