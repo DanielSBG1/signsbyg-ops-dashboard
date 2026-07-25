@@ -20,7 +20,11 @@ function lsRead(key) {
 }
 
 function lsWrite(key, data) {
-  try { localStorage.setItem(key, JSON.stringify({ d: data, t: Date.now() })); } catch {}
+  try {
+    const json = JSON.stringify({ d: data, t: Date.now() });
+    if (json.length > 200_000) return;
+    localStorage.setItem(key, json);
+  } catch {}
 }
 
 export function useRepActivity(enabled = true, period = 'today', customRange = null) {
