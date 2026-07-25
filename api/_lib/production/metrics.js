@@ -210,9 +210,13 @@ export async function buildProductionMetrics() {
   const normalizeDueDate = t => ({ ...t, due_on: extractProductionDueDate(t) });
   const normalizedIncompleteTasks = incompleteTasks.map(normalizeDueDate);
   const completedTasksOnly = scheduleTasks.filter(t => t.completed === true).map(normalizeDueDate);
-  const completedThisWeek = completedTasksOnly.filter(t =>
+  // Count completed this week — includes both Asana-completed AND staged tasks
+  const asanaCompletedThisWeek = completedTasksOnly.filter(t =>
     t.completed_at && t.completed_at.slice(0, 10) >= sevenDaysAgo
   ).length;
+  // Staged jobs count as completed "today" since we don't know when they moved to staging
+  const stagedCount = incompleteTasks.filter(t => isInStaging(t)).length;
+  const completedThisWeek = asanaCompletedThisWeek + stagedCount;
 
   // 2. Count how many production sub-tasks each parent main task has
   //    (>1 means PM/Sales redo)
@@ -293,7 +297,21 @@ export async function buildProductionMetrics() {
   };
   for (const job of jobs) departmentLoad[job.department].push(job);
 
-  const bss = (range) => buildScheduleStats(normalizedIncompleteTasks, completedTasksOnly, range, today);
+  // Include staged jobs (not Asana-completed but production-complete) in the
+  // completed pool for schedule stats. Use today as their completion date since
+  // Asana doesn't have a completed_at for them.
+  const stagedAsCompleted = incompleteTasks
+    .filter(t => isInStaging(t))
+    .map(t => ({
+      ...normalizeDueDate(t),
+      completed: true,
+      completed_at: today + 'T00:00:00.000Z',
+    }));
+  const allCompletedForSchedule = [...completedTasksOnly, ...stagedAsCompleted];
+  // Exclude staged from the "open" pool so they don't count as in-progress
+  const openForSchedule = normalizedIncompleteTasks.filter(t => !isInStaging(t));
+
+  const bss = (range) => buildScheduleStats(openForSchedule, allCompletedForSchedule, range, today);
   const schedule = {
     thisWeek:    bss(thisWeekRange),
     nextWeek:    bss(nextWeekRange),
