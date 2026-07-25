@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useProductionData } from '../hooks/useProductionData';
 import WeeklyOverview from '../components/production/WeeklyOverview';
 import OverviewTab from '../components/production/OverviewTab';
 import CalendarView from '../components/production/CalendarView';
 
+const SubtasksTab = lazy(() => import('../components/production/SubtasksTab'));
+
 const TABS = [
   { id: 'overview',  label: 'Overview' },
+  { id: 'subtasks',  label: 'Subtasks' },
   { id: 'calendar',  label: 'Calendar' },
 ];
 
@@ -70,6 +73,11 @@ export default function ProductionSection() {
             </div>
             <OverviewTab data={data} />
           </>
+        )}
+        {data && activeTab === 'subtasks' && (
+          <Suspense fallback={<div className="text-center py-20 text-white/40">Loading subtasks...</div>}>
+            <SubtasksTab data={data} />
+          </Suspense>
         )}
         {data && activeTab === 'calendar'    && <CalendarView rawJobs={data.jobs} onRefresh={refresh} />}
       </div>
