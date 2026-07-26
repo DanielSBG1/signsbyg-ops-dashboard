@@ -1,6 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import JobsTable from './JobsTable';
-import IntakeCard from './IntakeCard';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -10,11 +8,10 @@ const PERIODS = [
   { id: 'monthToDate', label: 'Month to Date' },
 ];
 
-const CALENDAR_WEEK_LABELS = ['This Week', 'Next Week', 'In 2 Weeks'];
-
 const STATUS_BADGE = {
   early:       { label: 'Early',       cls: 'bg-success/20 text-success' },
   on_time:     { label: 'On Time',     cls: 'bg-success/20 text-success' },
+  bled_over:   { label: 'Bled Over',   cls: 'bg-warning/20 text-warning' },
   scheduled:   { label: 'Scheduled',   cls: 'bg-accent/20 text-accent' },
   in_progress: { label: 'Upcoming',    cls: 'bg-accent/20 text-accent' },
   pending:     { label: 'No Date',     cls: 'bg-white/10 text-white/40' },
@@ -24,15 +21,15 @@ const STATUS_BADGE = {
   failed:      { label: 'Failed',      cls: 'bg-danger/20 text-danger' },
 };
 
-// Border + dot color for each status (used on calendar job cards)
 const STATUS_CARD = {
-  early:       { borderClass: 'border-success/30',   dotClass: 'bg-success'    },
-  on_time:     { borderClass: 'border-success/30',   dotClass: 'bg-success'    },
-  scheduled:   { borderClass: 'border-white/10',     dotClass: 'bg-accent'     },
-  pending:     { borderClass: 'border-white/[0.07]', dotClass: 'bg-white/20'   },
-  late:        { borderClass: 'border-danger/40',    dotClass: 'bg-danger'     },
-  rescheduled: { borderClass: 'border-warning/30',   dotClass: 'bg-warning'    },
-  failed:      { borderClass: 'border-danger/40',    dotClass: 'bg-danger'     },
+  early:       { borderClass: 'border-success/30',   dotClass: 'bg-success'  },
+  on_time:     { borderClass: 'border-success/30',   dotClass: 'bg-success'  },
+  bled_over:   { borderClass: 'border-warning/30',   dotClass: 'bg-warning'  },
+  scheduled:   { borderClass: 'border-white/10',     dotClass: 'bg-accent'   },
+  pending:     { borderClass: 'border-white/[0.07]', dotClass: 'bg-white/20' },
+  late:        { borderClass: 'border-danger/40',    dotClass: 'bg-danger'   },
+  rescheduled: { borderClass: 'border-warning/30',   dotClass: 'bg-warning'  },
+  failed:      { borderClass: 'border-danger/40',    dotClass: 'bg-danger'   },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -55,13 +52,13 @@ function getWeekDays(today) {
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '\u2014';
   return new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC',
   });
 }
 
-// ─── Alert card ───────────────────────────────────────────────────────────────
+// ─── Alert card (grid-cols-3 top section) ─────────────────────────────────────
 
 function AlertCard({ label, value, sub, active, onClick }) {
   return (
@@ -81,7 +78,7 @@ function AlertCard({ label, value, sub, active, onClick }) {
       </p>
       {sub && <p className="text-white/30 text-xs mt-2">{sub}</p>}
       <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-danger' : 'text-white/20'}`}>
-        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
+        {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
       </p>
     </button>
   );
@@ -101,10 +98,10 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
       }`}
     >
       <p className="text-white/40 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
-      <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '—'}</p>
+      <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '\u2014'}</p>
       {sub && <p className="text-white/30 text-xs mt-2">{sub}</p>}
       <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-white/20'}`}>
-        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
+        {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
       </p>
     </button>
   );
@@ -132,7 +129,7 @@ function JobPanel({ jobs, accentColor }) {
           const status = job.status ?? job.state ?? 'pending';
           const badge  = STATUS_BADGE[status] ?? STATUS_BADGE.pending;
           const crews  = Array.isArray(job.crews) ? job.crews.join(', ') : null;
-          const meta   = [crews, job.section].filter(Boolean).join(' · ');
+          const meta   = [crews, job.section].filter(Boolean).join(' \u00B7 ');
           return (
             <a
               key={job.id ?? i}
@@ -157,7 +154,7 @@ function JobPanel({ jobs, accentColor }) {
   );
 }
 
-// ─── Calendar: install job card ───────────────────────────────────────────────
+// ─── Install job card (inside day column) ─────────────────────────────────────
 
 function InstallJobCard({ job }) {
   const cfg   = STATUS_CARD[job.status] ?? STATUS_CARD.scheduled;
@@ -172,7 +169,7 @@ function InstallJobCard({ job }) {
     >
       <div className="flex items-start gap-2">
         <span className={`mt-[3px] w-2 h-2 rounded-full shrink-0 ${cfg.dotClass}`} />
-        <span className={`text-sm font-medium leading-snug group-hover:text-white/90 ${isDone ? 'text-white/50 line-through decoration-white/20' : 'text-white'}`}>
+        <span className={`text-sm font-medium leading-snug group-hover:text-white/90 truncate ${isDone ? 'text-white/50 line-through decoration-white/20' : 'text-white'}`}>
           {job.name}
         </span>
       </div>
@@ -183,65 +180,39 @@ function InstallJobCard({ job }) {
               {crew}
             </span>
           ))}
-          {job.status === 'late' && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-danger/20 text-danger font-semibold">Late</span>
-          )}
-          {job.status === 'rescheduled' && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-warning/20 text-warning font-semibold">Rescheduled</span>
-          )}
+        </div>
+      )}
+      {(job.status === 'late' || job.status === 'rescheduled') && (
+        <div className="pl-4">
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+            job.status === 'late' ? 'bg-danger/20 text-danger' : 'bg-warning/20 text-warning'
+          }`}>
+            {STATUS_BADGE[job.status]?.label}
+          </span>
         </div>
       )}
     </a>
   );
 }
 
-// ─── Calendar: crew day summary (bottom of day column) ────────────────────────
-
-function CrewDaySummary({ jobs, crewColorMap }) {
-  const crewMap = {};
-  for (const job of jobs) {
-    for (const crew of (job.crews ?? [])) {
-      if (!crewMap[crew]) crewMap[crew] = [];
-      crewMap[crew].push(job);
-    }
-  }
-  const crews = Object.keys(crewMap);
-  if (crews.length === 0) return null;
-  return (
-    <div className="space-y-2.5 pt-3 border-t border-white/[0.06]">
-      <p className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">By crew</p>
-      {crews.map(crew => {
-        const crewJobs = crewMap[crew];
-        const done  = crewJobs.filter(j => j.status === 'on_time' || j.status === 'early').length;
-        const late  = crewJobs.filter(j => j.status === 'late' || j.status === 'failed').length;
-        const sched = crewJobs.filter(j => j.status === 'scheduled' || j.status === 'rescheduled').length;
-        const color = crewColorMap[crew] ?? '#6b7280';
-        return (
-          <div key={crew} className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-              <span className="text-[11px] text-white/50 truncate">{crew}</span>
-            </div>
-            <div className="flex items-center gap-2 pl-3">
-              {done  > 0 && <span className="text-[10px] tabular-nums font-semibold text-success">{done} done</span>}
-              {late  > 0 && <span className="text-[10px] tabular-nums font-semibold text-danger">{late} late</span>}
-              {sched > 0 && <span className="text-[10px] tabular-nums font-semibold text-accent">{sched} scheduled</span>}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Calendar: day column ─────────────────────────────────────────────────────
+// ─── Day column ───────────────────────────────────────────────────────────────
 
 function DayColumn({ day, jobs, isToday, crewColorMap }) {
+  const uniqueCrews = useMemo(() => {
+    const set = new Set();
+    for (const job of jobs) {
+      for (const c of (job.crews ?? [])) set.add(c);
+    }
+    return set.size;
+  }, [jobs]);
+
   const lateCount = jobs.filter(j => j.status === 'late' || j.status === 'failed').length;
+
   return (
     <div className={`rounded-2xl border flex flex-col gap-0 overflow-hidden ${
       isToday ? 'border-accent/50 bg-accent/[0.04]' : 'border-white/10 bg-slate-card'
     }`}>
+      {/* Day header */}
       <div className={`px-4 pt-4 pb-3 ${isToday ? 'border-b border-accent/20' : 'border-b border-white/[0.06]'}`}>
         <div className="flex items-center justify-between mb-1">
           <span className={`text-[11px] font-bold uppercase tracking-widest ${isToday ? 'text-accent' : 'text-white/35'}`}>
@@ -257,20 +228,26 @@ function DayColumn({ day, jobs, isToday, crewColorMap }) {
           <span className="text-[11px] text-white/40">{jobs.length} install{jobs.length !== 1 ? 's' : ''}</span>
           {lateCount > 0 && (
             <>
-              <span className="text-white/20">·</span>
+              <span className="text-white/20">&middot;</span>
               <span className="text-[11px] text-danger font-semibold">{lateCount} late</span>
             </>
           )}
         </div>
       </div>
+
+      {/* Crew count strip */}
+      {uniqueCrews > 0 && (
+        <div className="px-4 py-2 border-b border-white/[0.04]">
+          <span className="text-[10px] text-white/30 font-medium">{uniqueCrews} crew{uniqueCrews !== 1 ? 's' : ''} active</span>
+        </div>
+      )}
+
+      {/* Job cards */}
       <div className="flex-1 p-3 space-y-2">
         {jobs.length === 0
           ? <p className="text-white/15 text-xs text-center py-6">No installs</p>
           : jobs.map((job, i) => <InstallJobCard key={job.id ?? i} job={job} />)
         }
-      </div>
-      <div className="px-4 pb-4">
-        <CrewDaySummary jobs={jobs} crewColorMap={crewColorMap} />
       </div>
     </div>
   );
@@ -285,51 +262,60 @@ export default function InstallationOverview({ data }) {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  // ── Data reads ──
+  const lateCount        = data.summary?.late ?? 0;
+  const unreviewedCount  = data.summary?.unreviewed?.count ?? 0;
+  const pendingCount     = data.summary?.pending ?? 0;
+
   const schedule       = data.schedule?.[activePeriod] ?? {};
   const scheduledTotal = schedule.scheduled ?? 0;
   const onTimeTotal    = schedule.onTime    ?? 0;
   const atRiskTotal    = schedule.late      ?? 0;
 
-  // 3-week calendar: this week, next week, in 2 weeks
-  const calendarWeeks = useMemo(() =>
-    CALENDAR_WEEK_LABELS.map((label, i) => {
-      const d = new Date(today + 'T12:00:00Z');
-      d.setUTCDate(d.getUTCDate() + i * 7);
-      return { label, days: getWeekDays(d.toISOString().slice(0, 10)) };
-    }),
-  [today]);
+  // ── Week days for calendar ──
+  const weekDays = useMemo(() => getWeekDays(today), [today]);
 
-  // crew name → color lookup for day column summaries
+  // ── Crew color lookup ──
   const crewColorMap = useMemo(() => {
     const map = {};
     for (const crew of (data.byCrew ?? [])) map[crew.name] = crew.color;
     return map;
   }, [data.byCrew]);
 
-  // group jobs by installDate for the calendar
-  const calendarJobsByDay = useMemo(() => {
+  // ── Jobs grouped by installDate for the weekly calendar ──
+  const jobsByDay = useMemo(() => {
     const map = {};
-    for (const week of calendarWeeks)
-      for (const day of week.days) map[day.date] = [];
-    for (const job of data.jobs)
-      if (job.installDate && map[job.installDate] !== undefined)
+    for (const day of weekDays) map[day.date] = [];
+    for (const job of (data.jobs ?? [])) {
+      if (job.installDate && map[job.installDate] !== undefined) {
         map[job.installDate].push(job);
+      }
+    }
     return map;
-  }, [data.jobs, calendarWeeks]);
+  }, [data.jobs, weekDays]);
 
+  // ── Filtered job lists for alert panels ──
   const lateJobs = useMemo(() =>
-    data.jobs.filter(j => j.status === 'late'),
+    (data.jobs ?? []).filter(j => j.status === 'late'),
   [data.jobs]);
 
+  const unreviewedJobs = useMemo(() => {
+    if (!data.summary?.unreviewed?.jobs) {
+      return (data.jobs ?? []).filter(j => j.status === 'unreviewed' || j.reviewed === false);
+    }
+    return data.summary.unreviewed.jobs;
+  }, [data.summary, data.jobs]);
+
   const pendingJobs = useMemo(() =>
-    data.jobs.filter(j => j.status === 'pending'),
+    (data.jobs ?? []).filter(j => j.status === 'pending'),
   [data.jobs]);
 
   const alertPanelJobs = useMemo(() => {
-    if (activeAlert === 'late')    return lateJobs;
-    if (activeAlert === 'pending') return pendingJobs;
+    if (activeAlert === 'late')       return lateJobs;
+    if (activeAlert === 'unreviewed') return unreviewedJobs;
+    if (activeAlert === 'pending')    return pendingJobs;
     return [];
-  }, [activeAlert, lateJobs, pendingJobs]);
+  }, [activeAlert, lateJobs, unreviewedJobs, pendingJobs]);
 
   const panelJobs = useMemo(() => {
     if (!activeCard || !schedule.jobs) return [];
@@ -351,31 +337,35 @@ export default function InstallationOverview({ data }) {
   return (
     <div className="space-y-5">
 
-      {/* ── Intake health ── */}
-      <IntakeCard unreviewed={data.summary?.unreviewed} />
-
-      {/* ── Alert cards ── */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* ── Top: 3 Alert modules (grid-cols-3) ── */}
+      <div className="grid grid-cols-3 gap-4">
         <AlertCard
-          label="Late / Overdue"
-          value={lateJobs.length}
-          sub="open jobs past their install date"
+          label="Late Open Orders"
+          value={lateCount}
+          sub="past install date \u2014 should be zero"
           active={activeAlert === 'late'}
           onClick={() => toggleAlert('late')}
         />
         <AlertCard
-          label="Pending / No Date"
-          value={pendingJobs.length}
-          sub="jobs without an install date set"
+          label="Unreviewed"
+          value={unreviewedCount}
+          sub="jobs not yet triaged from intake"
+          active={activeAlert === 'unreviewed'}
+          onClick={() => toggleAlert('unreviewed')}
+        />
+        <AlertCard
+          label="Pending Date"
+          value={pendingCount}
+          sub="reviewed but no install date set"
           active={activeAlert === 'pending'}
           onClick={() => toggleAlert('pending')}
         />
       </div>
 
-      {/* ── Alert panel ── */}
+      {/* ── Alert expansion panel ── */}
       {activeAlert && <JobPanel jobs={alertPanelJobs} accentColor="danger" />}
 
-      {/* ── Period selector ── */}
+      {/* ── Middle: Period selector ── */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -392,27 +382,43 @@ export default function InstallationOverview({ data }) {
         ))}
       </div>
 
-      {/* ── KPI strip ── */}
+      {/* ── Middle: 3 KPI cards ── */}
       <div className="grid grid-cols-3 gap-4">
-        <KpiCard label="Jobs Scheduled" value={scheduledTotal} sub="total installs in period"
-          active={activeCard === 'scheduled'} onClick={() => toggleCard('scheduled')} />
-        <KpiCard label="On Time" value={onTimeTotal} sub="completed on schedule" color="success"
-          active={activeCard === 'onTime'} onClick={() => toggleCard('onTime')} />
-        <KpiCard label="At Risk / Late" value={atRiskTotal} sub="overdue or past install date"
+        <KpiCard
+          label="Jobs Scheduled"
+          value={scheduledTotal}
+          sub="total installs in period"
+          active={activeCard === 'scheduled'}
+          onClick={() => toggleCard('scheduled')}
+        />
+        <KpiCard
+          label="On Time"
+          value={onTimeTotal}
+          sub="completed on schedule"
+          color="success"
+          active={activeCard === 'onTime'}
+          onClick={() => toggleCard('onTime')}
+        />
+        <KpiCard
+          label="At Risk / Late"
+          value={atRiskTotal}
+          sub="overdue or past install date"
           color={atRiskTotal > 0 ? 'danger' : undefined}
-          active={activeCard === 'atRisk'} onClick={() => toggleCard('atRisk')} />
+          active={activeCard === 'atRisk'}
+          onClick={() => toggleCard('atRisk')}
+        />
       </div>
 
-      {/* ── KPI panel ── */}
+      {/* ── KPI expansion panel ── */}
       {activeCard && <JobPanel jobs={panelJobs} />}
 
       {/* ── Legend ── */}
       <div className="flex items-center gap-4">
         {[
-          { label: 'On Time',     cls: 'bg-success'     },
-          { label: 'Scheduled',   cls: 'bg-accent'      },
-          { label: 'Rescheduled', cls: 'bg-warning'     },
-          { label: 'Late',        cls: 'bg-danger'      },
+          { label: 'On Time',     cls: 'bg-success'  },
+          { label: 'Scheduled',   cls: 'bg-accent'   },
+          { label: 'Rescheduled', cls: 'bg-warning'  },
+          { label: 'Late',        cls: 'bg-danger'   },
         ].map(({ label, cls }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${cls}`} />
@@ -421,32 +427,27 @@ export default function InstallationOverview({ data }) {
         ))}
       </div>
 
-      {/* ── 3-week Mon–Fri calendar ── */}
-      {calendarWeeks.map((week, wi) => (
-        <div key={wi} className="space-y-3">
-          <div className="flex items-center gap-3">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-white/40 shrink-0">{week.label}</p>
-            <div className="flex-1 h-px bg-white/[0.06]" />
-            <p className="text-[10px] text-white/20 shrink-0">
-              {week.days[0].dayNum} {week.days[0].month} – {week.days[4].dayNum} {week.days[4].month}
-            </p>
-          </div>
-          <div className="grid grid-cols-5 gap-3 items-start">
-            {week.days.map(day => (
-              <DayColumn
-                key={day.date}
-                day={day}
-                jobs={calendarJobsByDay[day.date] ?? []}
-                isToday={day.date === today}
-                crewColorMap={crewColorMap}
-              />
-            ))}
-          </div>
+      {/* ── Bottom: Mon-Fri day columns (This Week) ── */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-white/40 shrink-0">This Week</p>
+          <div className="flex-1 h-px bg-white/[0.06]" />
+          <p className="text-[10px] text-white/20 shrink-0">
+            {weekDays[0]?.dayNum} {weekDays[0]?.month} &ndash; {weekDays[4]?.dayNum} {weekDays[4]?.month}
+          </p>
         </div>
-      ))}
-
-      {/* ── Jobs table ── */}
-      <JobsTable jobs={data.jobs} />
+        <div className="grid grid-cols-5 gap-3 items-start">
+          {weekDays.map(day => (
+            <DayColumn
+              key={day.date}
+              day={day}
+              jobs={jobsByDay[day.date] ?? []}
+              isToday={day.date === today}
+              crewColorMap={crewColorMap}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

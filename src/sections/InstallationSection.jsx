@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { useInstallationMetrics } from '../hooks/useInstallationMetrics';
 import { getPeriodRange } from '../lib/period';
 import { filterJobs, computeSummary, computeBySection, computeByCrew, computeUnassigned } from '../lib/aggregate';
@@ -10,10 +10,15 @@ import SectionPipeline from '../components/installation/SectionPipeline';
 import CrewScorecard from '../components/installation/CrewScorecard';
 import StatusLegend from '../components/installation/StatusLegend';
 import SectionJobsModal from '../components/installation/SectionJobsModal';
+import TrucksTab from '../components/installation/TrucksTab';
+
+const InstallerScorecard = lazy(() => import('../components/installation/InstallerScorecard'));
 
 const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'calendar', label: 'Calendar' },
+  { id: 'overview',   label: 'Overview'    },
+  { id: 'installers', label: 'Installers'  },
+  { id: 'calendar',   label: 'Calendar'    },
+  { id: 'trucks',     label: 'Trucks'      },
 ];
 
 export default function InstallationSection() {
@@ -50,7 +55,7 @@ export default function InstallationSection() {
             <h1 className="text-2xl font-bold">Installation</h1>
             {lastRefreshed && (
               <p className="text-white/40 text-xs mt-1">
-                Live snapshot · Updated {lastRefreshed.toLocaleTimeString()}
+                Live snapshot &middot; Updated {lastRefreshed.toLocaleTimeString()}
               </p>
             )}
           </div>
@@ -105,9 +110,17 @@ export default function InstallationSection() {
           </>
         )}
 
+        {data && activeTab === 'installers' && (
+          <Suspense fallback={<div className="text-center py-20 text-white/40">Loading installer scorecard...</div>}>
+            <InstallerScorecard data={data} />
+          </Suspense>
+        )}
+
         {data && activeTab === 'calendar' && (
           <CalendarView jobs={data.jobs} byCrew={data.byCrew} onRefresh={refresh} />
         )}
+
+        {activeTab === 'trucks' && <TrucksTab />}
 
         {openSection && (
           <SectionJobsModal
