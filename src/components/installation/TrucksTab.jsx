@@ -675,7 +675,7 @@ function TruckForm({ truck, onSaved, onCancel }) {
   );
 }
 
-// ─── Truck Card (grid item) ──────────────────────────────────────────────────
+// ─── Truck Card (grid item) ────────────────────────────────────────────────────
 
 function TruckCard({ truck, logs, onClick }) {
   const status = getOverallStatus(truck, logs);
