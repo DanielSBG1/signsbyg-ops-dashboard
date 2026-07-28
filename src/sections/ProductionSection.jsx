@@ -26,7 +26,7 @@ export default function ProductionSection() {
             <h1 className="text-2xl font-bold">Production</h1>
             {data && (
               <p className="text-white/40 text-xs mt-1">
-                Live snapshot · Updated {new Date(data.generatedAt).toLocaleTimeString()}
+                Live snapshot \u00B7 Updated {new Date(data.generatedAt).toLocaleTimeString()}
               </p>
             )}
           </div>
@@ -68,7 +68,7 @@ export default function ProductionSection() {
                 onClick={() => setOverviewMode('weekly')}
                 className="text-[11px] text-white/35 hover:text-white/60 transition-colors"
               >
-                ← Weekly view
+                \u2190 Weekly view
               </button>
             </div>
             <OverviewTab data={data} />
