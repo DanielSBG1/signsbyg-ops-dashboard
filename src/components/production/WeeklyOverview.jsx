@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import JobDrawer from './JobDrawer';
 import { computeProductionHealth, BAND_CONFIG } from '../../utils/health.js';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Constants ─────────────────────────────────────────────────────────────
 
 const DEPT_META = [
   { key: 'channel_letters', label: 'Channel Letters', short: 'CL',    color: '#06b6d4' },
@@ -35,7 +35,7 @@ const STATE_BADGE = {
   projected_late: { label: 'Projected Late', cls: 'bg-orange-400/20 text-orange-400' },
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────
 
 function getWeekDays(today) {
   const d = new Date(today + 'T12:00:00Z');
@@ -95,13 +95,13 @@ function AlertCard({ label, value, sub, active, onClick }) {
       </p>
       {sub && <p className="text-white/30 text-xs mt-2">{sub}</p>}
       <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-danger' : 'text-white/20'}`}>
-        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
+        {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
       </p>
     </button>
   );
 }
 
-// ─── KPI card ────────────────────────────────────────────────────────────────
+// ─── KPI card ──────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, color, active, onClick }) {
   const cls = { success: 'text-success', danger: 'text-danger', warning: 'text-warning' }[color] ?? 'text-white';
@@ -115,10 +115,10 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
       }`}
     >
       <p className="text-white/40 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
-      <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '—'}</p>
+      <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '\u2014'}</p>
       {sub && <p className="text-white/30 text-xs mt-2">{sub}</p>}
       <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-white/20'}`}>
-        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
+        {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
       </p>
     </button>
   );
@@ -166,12 +166,12 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
               <div className="text-right shrink-0">
                 {job.promisedDate
                   ? <span className="text-[11px] text-warning font-semibold">{formatDate(job.promisedDate)}</span>
-                  : <span className="text-[11px] text-white/20">—</span>}
+                  : <span className="text-[11px] text-white/20">\u2014</span>}
               </div>
               <div className="text-right shrink-0">
                 {job.due_on
                   ? <span className="text-[11px] text-white/50">{formatDate(job.due_on)}</span>
-                  : <span className="text-[11px] text-white/20">—</span>}
+                  : <span className="text-[11px] text-white/20">\u2014</span>}
               </div>
               <div className="text-right shrink-0">
                 <span className={`text-sm font-bold tabular-nums ${urgency}`}>
@@ -319,7 +319,7 @@ function DeptStageSummary({ subTasksByDept }) {
 
   return (
     <div className="space-y-2 pt-3 border-t border-white/[0.06]">
-      <p className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">Stages due — click to see tasks</p>
+      <p className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">Stages due \u2014 click to see tasks</p>
       {DEPT_META.map(dept => {
         const tasks = subTasksByDept[dept.key] ?? [];
         if (tasks.length === 0) return null;
@@ -341,7 +341,7 @@ function DeptStageSummary({ subTasksByDept }) {
                 {openTasks.length > 0 && (
                   <span className="text-[10px] text-danger tabular-nums font-semibold">({openTasks.length} open)</span>
                 )}
-                <span className="text-white/20 text-[10px]">{isExpanded ? '▲' : '▼'}</span>
+                <span className="text-white/20 text-[10px]">{isExpanded ? '\u25B2' : '\u25BC'}</span>
               </div>
             </button>
             {isExpanded && (
@@ -363,7 +363,7 @@ function DeptStageSummary({ subTasksByDept }) {
                           )}
                         </div>
                         {t.completed && t.completed_at && (
-                          <span className="text-success/60 shrink-0 text-[10px]">✓</span>
+                          <span className="text-success/60 shrink-0 text-[10px]">\u2713</span>
                         )}
                       </div>
                     </button>
@@ -410,7 +410,7 @@ function DeptStageSummary({ subTasksByDept }) {
                               rel="noopener noreferrer"
                               className="text-[10px] text-accent hover:underline"
                             >
-                              Open subtask in Asana ↗
+                              Open subtask in Asana \u2197
                             </a>
                           )}
                           {t._parentGid && (
@@ -420,7 +420,7 @@ function DeptStageSummary({ subTasksByDept }) {
                               rel="noopener noreferrer"
                               className="text-[10px] text-white/40 hover:text-white/70 hover:underline"
                             >
-                              Open main job ↗
+                              Open main job \u2197
                             </a>
                           )}
                         </div>
@@ -437,7 +437,7 @@ function DeptStageSummary({ subTasksByDept }) {
   );
 }
 
-// ─── Day column ───────────────────────────────────────────────────────────────
+// ─── Day column ─────────────────────────────────────────────────────────────
 
 function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   const atRiskCount = jobs.filter(j => j._atRisk || j.status === 'late').length;
@@ -473,7 +473,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
           </span>
           {atRiskCount > 0 && (
             <>
-              <span className="text-white/20">·</span>
+              <span className="text-white/20">\u00b7</span>
               <span className="text-[11px] text-danger font-semibold">
                 {atRiskCount} at risk
               </span>
@@ -504,7 +504,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main component ─────────────────────────────────────────────────────────
 
 export default function WeeklyOverview({ data, onSwitchToList }) {
   const [selectedJob,  setSelectedJob]  = useState(null);
@@ -564,7 +564,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, weekDays, showCalendar]);
 
-  // Group sub-tasks by day → department
+  // Group sub-tasks by day \u2192 department
   const subTasksByDay = useMemo(() => {
     if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
@@ -597,7 +597,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) + projectedLateInPeriod.length;
 
-  // Late open orders: active jobs past their due date — this number should be zero
+  // Late open orders: active jobs past their due date \u2014 this number should be zero
   const rolloverJobs = useMemo(() =>
     data.jobs
       .filter(j => j.due_on && j.due_on < today)
@@ -629,7 +629,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   // Fernando gets a single "crear subtareas" task to build the production
   // breakdown. If the only subtask is his, the job hasn't been processed yet.
   // Jobs with 0 subtasks OR 1 subtask assigned to someone else (e.g. Eduardo
-  // doing fabrication) are NOT counted — those are either empty or already
+  // doing fabrication) are NOT counted \u2014 those are either empty or already
   // in production with a real task.
   const notProcessedJobs = useMemo(() => {
     return data.jobs
@@ -694,12 +694,12 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   return (
     <div className="space-y-5">
 
-      {/* ── Needs Attention alerts ── */}
+      {/* \u2500\u2500 Needs Attention alerts \u2500\u2500 */}
       <div className="grid grid-cols-3 gap-4">
         <AlertCard
           label="Late Open Orders"
           value={rolloverJobs.length}
-          sub="past due date — should be zero"
+          sub="past due date \u2014 should be zero"
           active={activeAlert === 'rollover'}
           onClick={() => toggleAlert('rollover')}
         />
@@ -713,13 +713,13 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         <AlertCard
           label="Not Processed"
           value={notProcessedJobs.length}
-          sub="reviewed but no production breakdown yet (≤1 subtask)"
+          sub="reviewed but no production breakdown yet (\u22641 subtask)"
           active={activeAlert === 'notprocessed'}
           onClick={() => toggleAlert('notprocessed')}
         />
       </div>
 
-      {/* ── Alert panel ── */}
+      {/* \u2500\u2500 Alert panel \u2500\u2500 */}
       {activeAlert === 'rollover' && (
         <JobPanel
           jobs={alertPanelJobs}
@@ -743,7 +743,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       )}
 
-      {/* ── Period selector ── */}
+      {/* \u2500\u2500 Period selector \u2500\u2500 */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -760,7 +760,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         ))}
       </div>
 
-      {/* ── KPI strip ── */}
+      {/* \u2500\u2500 KPI strip \u2500\u2500 */}
       <div className="grid grid-cols-3 gap-4">
         <KpiCard
           label="Jobs Scheduled"
@@ -787,7 +787,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       </div>
 
-      {/* ── Inline job panel ── */}
+      {/* \u2500\u2500 Inline job panel \u2500\u2500 */}
       {activeCard && (
         <JobPanel
           jobs={panelJobs}
@@ -796,7 +796,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       )}
 
-      {/* ── Next Week Forecast strip ── */}
+      {/* \u2500\u2500 Next Week Forecast strip \u2500\u2500 */}
       {activePeriod !== 'nextWeek' && (() => {
         const nw = data.schedule?.nextWeek ?? {};
         const nwScheduled = nw.scheduled ?? 0;
@@ -825,7 +825,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         );
       })()}
 
-      {/* ── Legend + list-view toggle (week periods only) ── */}
+      {/* \u2500\u2500 Legend + list-view toggle (week periods only) \u2500\u2500 */}
       {showCalendar && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -845,12 +845,12 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
             onClick={onSwitchToList}
             className="text-[11px] text-white/35 hover:text-white/60 transition-colors"
           >
-            List view →
+            List view &rarr;
           </button>
         </div>
       )}
 
-      {/* ── Mon–Fri day columns (week periods only) ── */}
+      {/* \u2500\u2500 Mon\u2013Fri day columns (week periods only) \u2500\u2500 */}
       {showCalendar && (
         <div className="grid grid-cols-5 gap-3 items-start">
           {weekDays.map(day => (
@@ -867,7 +867,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         </div>
       )}
 
-      {/* ── Job drawer ── */}
+      {/* \u2500\u2500 Job drawer \u2500\u2500 */}
       {selectedJob && (
         <JobDrawer job={selectedJob} onClose={() => setSelectedJob(null)} />
       )}
