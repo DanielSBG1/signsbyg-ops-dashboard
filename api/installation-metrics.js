@@ -72,7 +72,7 @@ function classifyTask(task, installDate, rescheduleCount, todayISO) {
   return 'scheduled';
 }
 
-// ─── Date range helpers ───────────────────────────────────────
+// ─── Date range helpers ─────────────────────────────────────────────
 
 function getMondayOf(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
@@ -113,7 +113,7 @@ function buildScheduleStats(jobs, range, today) {
   return { scheduled: inRange.length, onTime, late, inProgress, jobs: jobRows };
 }
 
-// ─── Main handler ─────────────────────────────────────────────
+// ─── Main handler ─────────────────────────────────────────────────
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
