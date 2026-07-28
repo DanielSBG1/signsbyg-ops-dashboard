@@ -57,7 +57,6 @@ function Card({ label, value, trend, format, compareLabel, tooltip, onClick, isA
   );
 }
 
-// Maps each card's filterKey to the funnelFilter row (determines DealDetail vs LeadDetail)
 const CARD_FILTERS = [
   { filterKey: 'totalLeads',         row: 'leads', label: 'Total Leads',    value: (s) => s.totalLeads,                         trend: (s) => s.trends.totalLeads,             tooltip: 'Leads with associated deals or active lifecycle in this period' },
   { filterKey: 'facebookLeads',      row: 'leads', label: 'FB Leads',       value: (s) => s.facebookLeads,                      trend: (s) => s.trends.facebookLeads,          tooltip: 'Contacts with original source = Facebook/Paid Social' },
