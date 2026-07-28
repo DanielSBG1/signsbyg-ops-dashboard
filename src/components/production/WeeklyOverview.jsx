@@ -258,6 +258,29 @@ function JobCard({ job, today, onClick }) {
       onClick={onClick}
       className={`w-full text-left rounded-xl border ${cfg.borderClass} bg-white/[0.025] hover:bg-white/[0.055] transition-all duration-150 p-3 space-y-2.5 group`}
     >
+      {/* Department + status badges at top */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {dept && (
+          <span
+            className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+            style={{ backgroundColor: `${dept.color}22`, color: dept.color }}
+          >
+            {dept.label}
+          </span>
+        )}
+        {job.status === 'late' && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-danger/20 text-danger font-semibold">
+            Late
+          </span>
+        )}
+        {job.redoType && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-400/20 text-orange-400 font-semibold">
+            Redo
+          </span>
+        )}
+      </div>
+
+      {/* Job name */}
       <div className="flex items-start gap-2">
         <span className={`mt-[3px] w-2 h-2 rounded-full shrink-0 ${cfg.fillClass}`} />
         <span className="text-sm font-medium text-white leading-snug group-hover:text-white/90">
@@ -265,6 +288,7 @@ function JobCard({ job, today, onClick }) {
         </span>
       </div>
 
+      {/* Progress bar */}
       {total > 0 && (
         <div className="space-y-1">
           <div className="h-1 rounded-full bg-white/10 overflow-hidden">
@@ -281,27 +305,6 @@ function JobCard({ job, today, onClick }) {
           </div>
         </div>
       )}
-
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {dept && (
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
-            style={{ backgroundColor: `${dept.color}22`, color: dept.color }}
-          >
-            {dept.short}
-          </span>
-        )}
-        {job.status === 'late' && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-danger/20 text-danger font-semibold">
-            Late
-          </span>
-        )}
-        {job.redoType && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-400/20 text-orange-400 font-semibold">
-            Redo
-          </span>
-        )}
-      </div>
     </button>
   );
 }
