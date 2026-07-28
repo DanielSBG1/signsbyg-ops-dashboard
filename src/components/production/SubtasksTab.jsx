@@ -5,7 +5,7 @@ const TeamMemberProfile = lazy(() => import('./TeamMemberProfile'));
 // ─── Team roster (display order) ─────────────────────────────
 const TEAM_ROSTER = [
   { key: 'Manuel Munoz',                 display: 'Manuel Munoz' },
-  { key: 'Fernando Peña',                display: 'Fernando Peña' },
+  { key: 'Fernando Pe\u00f1a',                display: 'Fernando Pe\u00f1a' },
   { key: 'Ivan Acevedo',                 display: 'Ivan Acevedo' },
   { key: 'jose@signsbyghouston.com',     display: 'Jose' },
   { key: 'Eduardo Menchu',               display: 'Eduardo Menchu' },
@@ -31,7 +31,7 @@ function todayStr() {
 }
 
 function fmtDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return '\u2014';
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
@@ -115,7 +115,7 @@ function rateColorClass(rate) {
 // ─── Sortable column header ─────────────────────────────────
 function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className }) {
   const isActive = currentSort === sortKey;
-  const arrow = isActive ? (currentDir === 'asc' ? ' ↑' : ' ↓') : '';
+  const arrow = isActive ? (currentDir === 'asc' ? ' \u2191' : ' \u2193') : '';
   return (
     <span
       className={`cursor-pointer select-none hover:text-white/60 transition-colors ${isActive ? 'text-accent' : ''} ${className || ''}`}
@@ -137,7 +137,7 @@ const LEADERBOARD_SORTS = [
   { key: 'total',       label: 'Total' },
 ];
 
-const MEDALS = ['🥇', '🥈', '🥉'];
+const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
 
 function leaderboardBarColor(member) {
   if (member.onTimeRate >= 80) return 'bg-success';
@@ -189,7 +189,7 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
         </div>
       </div>
 
-      {/* Podium — top 3 */}
+      {/* Podium \u2014 top 3 */}
       {sorted.length >= 3 && (
         <div className="grid grid-cols-3 gap-3 mb-4">
           {sorted.slice(0, 3).map((m, idx) => (
@@ -209,14 +209,14 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
                 <div><span className="text-white/30">On Time</span> <span className="text-success/70">{m.onTime}</span></div>
                 <div><span className="text-white/30">Late</span> <span className="text-danger/70">{m.late}</span></div>
                 {m.overdue > 0 && (
-                  <div className="col-span-2"><span className="text-white/30">Overdue</span> <span className="text-danger">{m.overdue}</span> <span className="text-white/20">— counts against rate</span></div>
+                  <div className="col-span-2"><span className="text-white/30">Overdue</span> <span className="text-danger">{m.overdue}</span> <span className="text-white/20">\u2014 counts against rate</span></div>
                 )}
               </div>
               <button
                 className="text-[10px] text-accent hover:underline mt-2"
                 onClick={(e) => { e.stopPropagation(); onViewProfile(m.key); }}
               >
-                View Stats →
+                View Stats &rarr;
               </button>
             </div>
           ))}
@@ -332,13 +332,13 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
           className="text-[10px] text-accent hover:underline cursor-pointer shrink-0"
           onClick={(e) => { e.stopPropagation(); onViewProfile?.(); }}
         >
-          View Stats →
+          View Stats &rarr;
         </span>
         <span className="flex-1" />
         <span className={`text-xs font-semibold tabular-nums ${rateColorClass(member.onTimeRate)}`}>
           {member.onTimeRate}%
         </span>
-        <span className="shrink-0 text-white/30 text-xs">{expanded ? '▲' : '▼'}</span>
+        <span className="shrink-0 text-white/30 text-xs">{expanded ? '\u25B2' : '\u25BC'}</span>
       </button>
 
       {expanded && (
@@ -364,7 +364,7 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
               <span className="text-xs tabular-nums text-white/50">{fmtDate(st.due_on)}</span>
               <StatusBadge status={getStatusKey(st, today)} />
               <span className="text-xs tabular-nums text-white/40">
-                {st.completed_at ? fmtDate(st.completed_at.slice(0, 10)) : '—'}
+                {st.completed_at ? fmtDate(st.completed_at.slice(0, 10)) : '\u2014'}
               </span>
             </div>
           ))}
@@ -436,7 +436,7 @@ function subtaskInRange(st, range) {
   return (due >= range.start && due <= range.end) || (done >= range.start && done <= range.end);
 }
 
-// ─── Main Component ──────────────────────────────────────────
+// ─── Main Component ────────────────────────────────────────
 export default function SubtasksTab({ data }) {
   const today = useMemo(() => todayStr(), []);
   const [activePeriod, setActivePeriod] = useState('all');
@@ -485,7 +485,7 @@ export default function SubtasksTab({ data }) {
     return initial;
   });
 
-  // Profile view state — when set, shows the chess.com-style stats page
+  // Profile view state \u2014 when set, shows the chess.com-style stats page
   const [profileKey, setProfileKey] = useState(null);
   const profileMember = profileKey ? members.find(m => m.key === profileKey) : null;
 
@@ -544,7 +544,7 @@ export default function SubtasksTab({ data }) {
 
   return (
     <div className="space-y-6">
-      {/* ── Period selector ────────────────────────────────── */}
+      {/* \u2500\u2500 Period selector \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -561,7 +561,7 @@ export default function SubtasksTab({ data }) {
         ))}
       </div>
 
-      {/* ── Leaderboard ─────────────────────────────────────── */}
+      {/* \u2500\u2500 Leaderboard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <ProductionLeaderboard
         members={members}
         sortKey={leaderboardSort}
@@ -570,7 +570,7 @@ export default function SubtasksTab({ data }) {
         onMemberClick={(key) => handleScoreCardClick(key)}
       />
 
-      {/* ── Team member sections (sortable columns) ────────── */}
+      {/* \u2500\u2500 Team member sections (sortable columns) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="space-y-3">
         {members.map(m => (
           <MemberSection
