@@ -67,7 +67,6 @@ function currentStage(jobGid, jobMap) {
   if (!job) return 'Complete';
   const incomplete = job.subTasks.filter(s => !s.completed);
   if (incomplete.length === 0) return 'Complete';
-  // Return the first incomplete stage (chronological order they appear)
   return incomplete[0].name ?? 'In Progress';
 }
 
@@ -141,7 +140,6 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
         <p className="text-xs text-white/40 font-semibold uppercase tracking-widest">Unreviewed Jobs</p>
         <p className="text-xs text-white/30">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
       </div>
-      {/* Column headers */}
       <div className="px-5 py-2 border-b border-white/[0.04] grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center">
         <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest">Job</span>
         <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest text-right">Promised Date</span>
@@ -260,7 +258,6 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
         <p className="text-xs text-white/40 font-semibold uppercase tracking-widest">Rescheduled Jobs</p>
         <p className="text-xs text-white/30">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
       </div>
-      {/* Column headers */}
       <div className="px-5 py-2 border-b border-white/[0.04] grid grid-cols-[1fr_auto_auto] gap-4 items-center">
         <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest">Job</span>
         <span className="text-[10px] text-white/25 font-semibold uppercase tracking-widest text-right">Current Due</span>
@@ -290,7 +287,6 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
                   </span>
                 </div>
               </button>
-              {/* Expandable reschedule log */}
               {isExpanded && job.rescheduleLog.length > 0 && (
                 <div className="px-5 pb-4">
                   <div className="ml-2 border-l-2 border-warning/20 pl-3 space-y-2 py-1">
@@ -315,7 +311,6 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
                       );
                     })}
                   </div>
-                  {/* Link to open in drawer */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -358,7 +353,6 @@ function JobCard({ job, today, onClick }) {
       onClick={onClick}
       className={`w-full text-left rounded-xl border ${cfg.borderClass} bg-white/[0.025] hover:bg-white/[0.055] transition-all duration-150 p-3 space-y-2.5 group`}
     >
-      {/* Department + status badges at top */}
       <div className="flex items-center gap-1.5 flex-wrap">
         {dept && (
           <span
@@ -385,7 +379,6 @@ function JobCard({ job, today, onClick }) {
         )}
       </div>
 
-      {/* Job name */}
       <div className="flex items-start gap-2">
         <span className={`mt-[3px] w-2 h-2 rounded-full shrink-0 ${cfg.fillClass}`} />
         <span className="text-sm font-medium text-white leading-snug group-hover:text-white/90">
@@ -393,7 +386,6 @@ function JobCard({ job, today, onClick }) {
         </span>
       </div>
 
-      {/* Progress bar */}
       {total > 0 && (
         <div className="space-y-1">
           <div className="h-1 rounded-full bg-white/10 overflow-hidden">
@@ -472,7 +464,6 @@ function DeptStageSummary({ subTasksByDept }) {
                         )}
                       </div>
                     </button>
-                    {/* Inline detail dialog */}
                     {selectedTask?.gid === t.gid && (
                       <div className="ml-4 mt-1 mb-2 bg-white/[0.06] border border-white/10 rounded-lg p-3 space-y-2">
                         {t._parentName && (
@@ -614,16 +605,13 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
 export default function WeeklyOverview({ data, onSwitchToList }) {
   const [selectedJob,  setSelectedJob]  = useState(null);
   const [activePeriod, setActivePeriod] = useState('thisWeek');
-  const [activeCard,   setActiveCard]   = useState(null); // 'scheduled' | 'onTime' | 'atRisk'
-  const [activeAlert,  setActiveAlert]  = useState(null); // 'rollover' | 'unreviewed' | 'rescheduled'
+  const [activeCard,   setActiveCard]   = useState(null);
+  const [activeAlert,  setActiveAlert]  = useState(null);
 
   const today    = new Date().toISOString().slice(0, 10);
   const periodCfg = PERIODS.find(p => p.id === activePeriod) ?? PERIODS[0];
-
-  // Only show weekly calendar for week-type periods
   const showCalendar = periodCfg.isWeek;
 
-  // Week days (for calendar view)
   const weekDays = useMemo(() => {
     if (!showCalendar) return [];
     if (activePeriod === 'lastWeek') {
@@ -644,12 +632,10 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return getWeekDays(today);
   }, [activePeriod, showCalendar, today]);
 
-  // Build jobMap from data.jobs for stage lookup
   const jobMap = useMemo(() =>
     Object.fromEntries(data.jobs.map(j => [j.gid, j])),
   [data.jobs]);
 
-  // Annotate every job with health + at-risk flag
   const annotatedJobs = useMemo(() =>
     data.jobs.map(job => ({
       ...job,
@@ -658,7 +644,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     })),
   [data.jobs, today]);
 
-  // Group annotated jobs by their due_on date (within this week only)
   const jobsByDay = useMemo(() => {
     if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
@@ -669,7 +654,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, weekDays, showCalendar]);
 
-  // Group sub-tasks by day → department
   const subTasksByDay = useMemo(() => {
     if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
@@ -689,12 +673,11 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, weekDays, showCalendar]);
 
-  // Schedule stats for the active period
   const schedule   = data.schedule?.[activePeriod] ?? {};
-  const scheduledTotal = schedule.scheduled ?? 0;
-  const onTimeTotal    = schedule.onTime    ?? 0;
+  const scheduledTotal    = schedule.scheduled    ?? 0;
+  const onTimeTotal       = schedule.onTime       ?? 0;
+  const completedLateTotal = schedule.completedLate ?? 0;
 
-  // Projected-late jobs: in-progress within the period whose sub-tasks are already overdue
   const projectedLateInPeriod = useMemo(() => {
     if (!schedule.jobs) return [];
     return schedule.jobs.filter(j => j.state === 'in_progress' && jobMap[j.gid]?.projectedLate);
@@ -702,14 +685,12 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) + projectedLateInPeriod.length;
 
-  // Late open orders: active jobs past their due date — this number should be zero
   const rolloverJobs = useMemo(() =>
     data.jobs
       .filter(j => j.due_on && j.due_on < today)
       .map(j => ({ gid: j.gid, name: j.name, due_on: j.due_on, state: 'overdue' })),
   [data.jobs, today]);
 
-  // Unreviewed jobs: still in the Unreviewed section (not yet triaged)
   const unreviewedJobs = useMemo(() => {
     return data.jobs
       .filter(j => !j.reviewed)
@@ -730,17 +711,11 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       .sort((a, b) => b.daysWaiting - a.daysWaiting);
   }, [data.jobs, today]);
 
-  // Not-processed jobs: reviewed but only has 1 subtask assigned to Fernando.
-  // Fernando gets a single "crear subtareas" task to build the production
-  // breakdown. If the only subtask is his, the job hasn't been processed yet.
-  // Jobs with 0 subtasks OR 1 subtask assigned to someone else (e.g. Eduardo
-  // doing fabrication) are NOT counted — those are either empty or already
-  // in production with a real task.
   const notProcessedJobs = useMemo(() => {
     return data.jobs
       .filter(j => {
         if (!j.reviewed) return false;
-        if (j.subTasks.length === 0) return true; // no subtasks at all
+        if (j.subTasks.length === 0) return true;
         if (j.subTasks.length === 1) {
           const assignee = (j.subTasks[0].assignee || '').toLowerCase();
           return assignee.includes('fernando');
@@ -765,7 +740,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       .sort((a, b) => b.daysWaiting - a.daysWaiting);
   }, [data.jobs, today]);
 
-  // Rescheduled jobs: jobs whose production due date was changed at least once
   const rescheduledJobs = useMemo(() => {
     return data.jobs
       .filter(j => j.reschedules > 0)
@@ -780,7 +754,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       .sort((a, b) => b.reschedules - a.reschedules);
   }, [data.jobs]);
 
-  // Jobs to show in alert panels
   const alertPanelJobs = useMemo(() => {
     if (activeAlert === 'rollover') return rolloverJobs;
     if (activeAlert === 'unreviewed') return unreviewedJobs;
@@ -789,11 +762,11 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return [];
   }, [activeAlert, rolloverJobs, unreviewedJobs, notProcessedJobs, rescheduledJobs]);
 
-  // Jobs to show in the inline panel (filtered by which card is open)
   const panelJobs = useMemo(() => {
     if (!activeCard || !schedule.jobs) return [];
     if (activeCard === 'scheduled') return schedule.jobs;
     if (activeCard === 'onTime')    return schedule.jobs.filter(j => j.state === 'on_time');
+    if (activeCard === 'completedLate') return schedule.jobs.filter(j => j.state === 'late');
     if (activeCard === 'atRisk') {
       const lateOrOverdue = schedule.jobs.filter(j => j.state === 'overdue' || j.state === 'late');
       const projLate = projectedLateInPeriod.map(j => ({ ...j, state: 'projected_late' }));
@@ -847,35 +820,17 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       </div>
 
-      {/* ── Alert panel ── */}
       {activeAlert === 'rollover' && (
-        <JobPanel
-          jobs={alertPanelJobs}
-          jobMap={jobMap}
-          onSelectJob={setSelectedJob}
-          accentColor="danger"
-        />
+        <JobPanel jobs={alertPanelJobs} jobMap={jobMap} onSelectJob={setSelectedJob} accentColor="danger" />
       )}
       {activeAlert === 'unreviewed' && (
-        <UnreviewedJobPanel
-          jobs={unreviewedJobs}
-          jobMap={jobMap}
-          onSelectJob={setSelectedJob}
-        />
+        <UnreviewedJobPanel jobs={unreviewedJobs} jobMap={jobMap} onSelectJob={setSelectedJob} />
       )}
       {activeAlert === 'notprocessed' && (
-        <UnreviewedJobPanel
-          jobs={notProcessedJobs}
-          jobMap={jobMap}
-          onSelectJob={setSelectedJob}
-        />
+        <UnreviewedJobPanel jobs={notProcessedJobs} jobMap={jobMap} onSelectJob={setSelectedJob} />
       )}
       {activeAlert === 'rescheduled' && (
-        <RescheduledJobPanel
-          jobs={rescheduledJobs}
-          jobMap={jobMap}
-          onSelectJob={setSelectedJob}
-        />
+        <RescheduledJobPanel jobs={rescheduledJobs} jobMap={jobMap} onSelectJob={setSelectedJob} />
       )}
 
       {/* ── Period selector ── */}
@@ -896,7 +851,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       </div>
 
       {/* ── KPI strip ── */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <KpiCard
           label="Jobs Scheduled"
           value={scheduledTotal}
@@ -913,6 +868,14 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           onClick={() => toggleCard('onTime')}
         />
         <KpiCard
+          label="Completed Late"
+          value={completedLateTotal}
+          sub="finished after due date"
+          color={completedLateTotal > 0 ? 'warning' : undefined}
+          active={activeCard === 'completedLate'}
+          onClick={() => toggleCard('completedLate')}
+        />
+        <KpiCard
           label="At Risk / Late"
           value={atRiskTotal}
           sub="overdue or past due date"
@@ -922,13 +885,8 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       </div>
 
-      {/* ── Inline job panel ── */}
       {activeCard && (
-        <JobPanel
-          jobs={panelJobs}
-          jobMap={jobMap}
-          onSelectJob={setSelectedJob}
-        />
+        <JobPanel jobs={panelJobs} jobMap={jobMap} onSelectJob={setSelectedJob} />
       )}
 
       {/* ── Next Week Forecast strip ── */}
@@ -960,7 +918,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         );
       })()}
 
-      {/* ── Legend + list-view toggle (week periods only) ── */}
       {showCalendar && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -985,7 +942,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         </div>
       )}
 
-      {/* ── Mon–Fri day columns (week periods only) ── */}
       {showCalendar && (
         <div className="grid grid-cols-5 gap-3 items-start">
           {weekDays.map(day => (
@@ -1002,7 +958,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         </div>
       )}
 
-      {/* ── Job drawer ── */}
       {selectedJob && (
         <JobDrawer job={selectedJob} onClose={() => setSelectedJob(null)} />
       )}
