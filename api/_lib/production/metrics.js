@@ -65,6 +65,7 @@ export function buildScheduleStats(openTasks, completedTasks, range, today) {
     scheduled:  completedInRange.length + openInRange.length,
     onTime,
     late:        completedLate + overdueOpen,
+    completedLate,
     inProgress:  openInRange.filter(t => t.due_on >= today).length,
     jobs,
   };
