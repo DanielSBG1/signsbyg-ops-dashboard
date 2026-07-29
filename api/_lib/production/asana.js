@@ -75,7 +75,7 @@ export async function getSubtasks(taskGid, optFields) {
 /** Returns stories for a task — used for reschedule detection. */
 export async function getTaskStories(taskGid) {
   return asanaGetAll(`/tasks/${taskGid}/stories`, {
-    opt_fields: 'resource_subtype,created_at,old_date_value.due_on,new_date_value.due_on',
+    opt_fields: 'resource_subtype,created_at,custom_field.gid,old_date_value.due_on,new_date_value.due_on',
     limit: 100,
   });
 }

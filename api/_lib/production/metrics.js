@@ -1,6 +1,7 @@
 import { DEPT_SECTION_MAP, REDO_PREFIX, PRODUCTION_PROJECT_GID, PROD_SUBTASK_FIELDS, SUBSUBTASK_FIELDS, PRODUCTION_DUE_DATE_CF_GID, PROMISED_DATE_CF_GID, STAGING_SECTION_GID, UNREVIEWED_SECTION_GID } from './constants.js';
 import { getProjectTasks, getTasksCompletedSince, getSubtasks } from './asana.js';
 import { pLimit } from '../concurrency.js';
+import { getRescheduleCounts } from './rescheduleCache.js';
 
 /**
  * Returns { start, end } (YYYY-MM-DD, inclusive Mon–Sun) for the ISO week
@@ -218,6 +219,9 @@ export async function buildProductionMetrics() {
   const stagedCount = incompleteTasks.filter(t => isInStaging(t)).length;
   const completedThisWeek = asanaCompletedThisWeek + stagedCount;
 
+  // 1b. Fetch reschedule counts for all incomplete tasks
+  const rescheduleCounts = await getRescheduleCounts(incompleteTasks);
+
   // 2. Count how many production sub-tasks each parent main task has
   //    (>1 means PM/Sales redo)
   const parentSubtaskCount = {};
@@ -272,6 +276,8 @@ export async function buildProductionMetrics() {
         projectedLate: !staged && status !== 'late' && isProjectedLate(subTasks, today),
         redoType: detectRedoType(subTasks, count),
         department: inferDepartment(t),
+        reschedules: rescheduleCounts[t.gid]?.count ?? 0,
+        rescheduleLog: rescheduleCounts[t.gid]?.log ?? [],
         subTasks,
       };
     });
@@ -340,6 +346,8 @@ export async function buildProductionMetrics() {
       staged: stagedJobs.length,
       reviewed: jobs.filter(j => j.reviewed).length,
       unreviewed: jobs.filter(j => !j.reviewed).length,
+      rescheduledJobs: jobs.filter(j => j.reschedules > 0).length,
+      totalReschedules: jobs.reduce((s, j) => s + j.reschedules, 0),
     },
     jobs,
     stagedJobs,
