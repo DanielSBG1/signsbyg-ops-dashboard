@@ -703,6 +703,18 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) - completedLateTotal + projectedLateInPeriod.length;
 
+  // Rescheduled jobs due in this period — schedule health indicator
+  const rescheduledInPeriod = useMemo(() => {
+    if (!schedule.jobs) return [];
+    const rescheduledGids = new Set(data.jobs.filter(j => j.reschedules > 0).map(j => j.gid));
+    return schedule.jobs
+      .filter(j => rescheduledGids.has(j.gid))
+      .map(j => {
+        const full = jobMap[j.gid];
+        return { ...j, reschedules: full?.reschedules ?? 0, rescheduleLog: full?.rescheduleLog ?? [] };
+      });
+  }, [schedule.jobs, data.jobs, jobMap]);
+
   // Late open orders: active jobs past their due date — this number should be zero
   const rolloverJobs = useMemo(() =>
     data.jobs
@@ -786,9 +798,8 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     if (activeAlert === 'rollover') return rolloverJobs;
     if (activeAlert === 'unreviewed') return unreviewedJobs;
     if (activeAlert === 'notprocessed') return notProcessedJobs;
-    if (activeAlert === 'rescheduled') return rescheduledJobs;
     return [];
-  }, [activeAlert, rolloverJobs, unreviewedJobs, notProcessedJobs, rescheduledJobs]);
+  }, [activeAlert, rolloverJobs, unreviewedJobs, notProcessedJobs]);
 
   // Jobs to show in the inline panel (filtered by which card is open)
   const panelJobs = useMemo(() => {
@@ -801,8 +812,9 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       const projLate = projectedLateInPeriod.map(j => ({ ...j, state: 'projected_late' }));
       return [...overdueOnly, ...projLate];
     }
+    if (activeCard === 'rescheduled') return rescheduledInPeriod;
     return [];
-  }, [activeCard, schedule.jobs, projectedLateInPeriod]);
+  }, [activeCard, schedule.jobs, projectedLateInPeriod, rescheduledInPeriod]);
 
   function toggleCard(card) {
     setActiveAlert(null);
@@ -818,7 +830,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     <div className="space-y-5">
 
       {/* ── Needs Attention alerts ── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <AlertCard
           label="Late Open Orders"
           value={rolloverJobs.length}
@@ -839,13 +851,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           sub="reviewed but no production breakdown yet (≤1 subtask)"
           active={activeAlert === 'notprocessed'}
           onClick={() => toggleAlert('notprocessed')}
-        />
-        <AlertCard
-          label="Rescheduled"
-          value={rescheduledJobs.length}
-          sub="jobs with date changes this period"
-          active={activeAlert === 'rescheduled'}
-          onClick={() => toggleAlert('rescheduled')}
         />
       </div>
 
@@ -872,14 +877,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           onSelectJob={setSelectedJob}
         />
       )}
-      {activeAlert === 'rescheduled' && (
-        <RescheduledJobPanel
-          jobs={rescheduledJobs}
-          jobMap={jobMap}
-          onSelectJob={setSelectedJob}
-        />
-      )}
-
       {/* ── Period selector ── */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
@@ -898,7 +895,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       </div>
 
       {/* ── KPI strip ── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <KpiCard
           label="Jobs Scheduled"
           value={scheduledTotal}
@@ -930,12 +927,27 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           active={activeCard === 'atRisk'}
           onClick={() => toggleCard('atRisk')}
         />
+        <KpiCard
+          label="Rescheduled"
+          value={rescheduledInPeriod.length}
+          sub="due this period with date changes"
+          color={rescheduledInPeriod.length > 0 ? 'warning' : undefined}
+          active={activeCard === 'rescheduled'}
+          onClick={() => toggleCard('rescheduled')}
+        />
       </div>
 
       {/* ── Inline job panel ── */}
-      {activeCard && (
+      {activeCard && activeCard !== 'rescheduled' && (
         <JobPanel
           jobs={panelJobs}
+          jobMap={jobMap}
+          onSelectJob={setSelectedJob}
+        />
+      )}
+      {activeCard === 'rescheduled' && (
+        <RescheduledJobPanel
+          jobs={rescheduledInPeriod}
           jobMap={jobMap}
           onSelectJob={setSelectedJob}
         />
