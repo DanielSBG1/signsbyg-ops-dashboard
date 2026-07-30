@@ -285,8 +285,7 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
                 </div>
                 <div className="text-right shrink-0">
                   <span className="inline-flex items-center gap-1 text-sm font-bold tabular-nums text-warning">
-                    <span className="text-warning/70">&updownarrow;</span>
-                    {job.reschedules}
+                    ↻{job.reschedules}
                   </span>
                 </div>
               </button>
