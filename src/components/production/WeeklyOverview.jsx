@@ -103,8 +103,14 @@ function AlertCard({ label, value, sub, active, onClick }) {
 
 // ─── KPI card ────────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, color, active, onClick }) {
-  const cls = { success: 'text-success', danger: 'text-danger', warning: 'text-warning' }[color] ?? 'text-white';
+function KpiCard({ label, value, sub, color, icon, active, onClick }) {
+  const colorMap = {
+    success: 'text-success',
+    danger:  'text-danger',
+    warning: 'text-warning',
+    orange:  'text-orange-400',
+  };
+  const cls = colorMap[color] ?? 'text-white';
   return (
     <button
       onClick={onClick}
@@ -115,7 +121,10 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
       }`}
     >
       <p className="text-white/40 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
-      <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '—'}</p>
+      <div className="flex items-baseline gap-2">
+        <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '—'}</p>
+        {icon && <span className="text-2xl leading-none">{icon}</span>}
+      </div>
       {sub && <p className="text-white/30 text-xs mt-2">{sub}</p>}
       <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-white/20'}`}>
         {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
@@ -907,6 +916,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           value={onTimeTotal}
           sub="completed on schedule"
           color="success"
+          icon={onTimeTotal > 0 ? '✓' : undefined}
           active={activeCard === 'onTime'}
           onClick={() => toggleCard('onTime')}
         />
@@ -914,7 +924,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           label="Completed Late"
           value={completedLateTotal}
           sub="finished after due date"
-          color={completedLateTotal > 0 ? 'warning' : undefined}
+          color={completedLateTotal > 0 ? 'danger' : undefined}
           active={activeCard === 'completedLate'}
           onClick={() => toggleCard('completedLate')}
         />
@@ -922,7 +932,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           label="At Risk"
           value={atRiskTotal}
           sub="overdue or behind schedule"
-          color={atRiskTotal > 0 ? 'danger' : undefined}
+          color={atRiskTotal > 0 ? 'orange' : undefined}
           active={activeCard === 'atRisk'}
           onClick={() => toggleCard('atRisk')}
         />
@@ -930,7 +940,6 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           label="Rescheduled"
           value={rescheduledInPeriod.length}
           sub="due this period with date changes"
-          color={rescheduledInPeriod.length > 0 ? 'warning' : undefined}
           active={activeCard === 'rescheduled'}
           onClick={() => toggleCard('rescheduled')}
         />
