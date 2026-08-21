@@ -485,6 +485,8 @@ const OWNER_DIRECTORY = {
   '1241152267': 'Isabel Urquiza',
   '1796461421': 'Support On The Fuze',
   '1977160866': 'Daniel Garnier',
+  '166912158': 'Barbara Geaccone',
+  '166924847': 'Danish Mansoor',
 };
 
 let _ownersCache = null;
