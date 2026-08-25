@@ -409,12 +409,18 @@ function KpiCard({ label, value, colorClass = 'text-white' }) {
 
 function AlertPanel({ title, empty, children }) {
   const hasChildren = React.Children.count(children) > 0;
+  const count = React.Children.count(children);
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-4">
-      <h3 className="text-sm font-semibold mb-3">{title}</h3>
+    <div className="bg-slate-card border border-white/5 rounded-2xl p-6 min-h-[180px] flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-semibold">{title}</h3>
+        {hasChildren && (
+          <span className="text-xs text-white/30 tabular-nums">{count}</span>
+        )}
+      </div>
       {hasChildren
-        ? <div className="space-y-2">{children}</div>
-        : <p className="text-white/30 text-xs">{empty}</p>
+        ? <div className="space-y-2.5 flex-1">{children}</div>
+        : <p className="text-white/30 text-sm flex-1 flex items-center">{empty}</p>
       }
     </div>
   );
@@ -469,8 +475,7 @@ function buildPmStats(pm, scorecardMap) {
   return { name: pm.name, projectGid: pm.projectGid, jobCount, overdueCount, avgHealth, stageBreakdown, unprocessedCount };
 }
 
-const MAIN_PM_NAMES    = ['Nikhil', 'Abhijeet', 'Siddhen'];
-const MINIMAL_PM_NAMES = ['Amanda', 'Antonella', 'Daniel'];
+const ACTIVE_PM_NAMES = ['Nikhil', 'Danish', 'Barbara'];
 
 function PmCard({ pm, onClick }) {
   const { name, jobCount, overdueCount, avgHealth, stageBreakdown, unprocessedCount } = pm;
@@ -485,7 +490,7 @@ function PmCard({ pm, onClick }) {
       <div className="flex items-center gap-3 text-xs text-white/60 flex-wrap">
         <span>{jobCount} jobs</span>
         {unprocessedCount > 0 && (
-          <span className="text-red-400 font-semibold">🚨 {unprocessedCount} unprocessed</span>
+          <span className="text-red-400 font-semibold">{unprocessedCount} unprocessed</span>
         )}
         <span className={overdueCount > 0 ? 'text-red-400 font-semibold' : ''}>{overdueCount} overdue</span>
         {avgHealth !== null && (
@@ -553,7 +558,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-white/40">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">{unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -597,28 +602,36 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
   }, [scorecards]);
 
   const allStats = auditData.pms.map(pm => buildPmStats(pm, scorecardMap));
-  const mainStats    = allStats.filter(pm => MAIN_PM_NAMES.includes(pm.name));
-  const minimalStats = allStats.filter(pm => MINIMAL_PM_NAMES.includes(pm.name));
+  const activeStats    = allStats.filter(pm => ACTIVE_PM_NAMES.includes(pm.name));
+  const unmanagedStats = allStats.filter(pm => !ACTIVE_PM_NAMES.includes(pm.name) && pm.jobCount > 0);
+  const unmanagedTotal = unmanagedStats.reduce((s, pm) => s + pm.jobCount, 0);
 
   return (
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">PM Portfolio</h2>
 
-      {/* Main PMs — large cards */}
-      {mainStats.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mainStats.map(pm => (
+      {/* Active PMs — large cards, 3 across */}
+      {activeStats.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {activeStats.map(pm => (
             <PmCard key={pm.projectGid} pm={pm} onClick={() => onAuditPmClick?.(pm.name)} />
           ))}
         </div>
       )}
 
-      {/* Minimal PMs — compact row */}
-      {minimalStats.length > 0 && (
-        <div>
-          <p className="text-[10px] text-white/25 uppercase tracking-widest mb-2">Supporting</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            {minimalStats.map(pm => (
+      {/* Unmanaged projects — flagged as needing reassignment */}
+      {unmanagedTotal > 0 && (
+        <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-red-400">
+              Unmanaged Projects — {unmanagedTotal} jobs need reassignment
+            </h3>
+          </div>
+          <p className="text-xs text-white/40">
+            These projects belong to inactive PMs and are not being actively managed. Reassign to Nikhil, Danish, or Barbara.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {unmanagedStats.map(pm => (
               <MiniPmCard key={pm.projectGid} pm={pm} onClick={() => onAuditPmClick?.(pm.name)} />
             ))}
           </div>
@@ -632,17 +645,14 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
 
 export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClick }) {
   const { totals, scorecards } = data;
-  const criticalJobs = scorecards.filter(j => j.band === 'critical').slice(0, 5);
-  const overdueJobs  = scorecards.filter(j => j.hasOverdueSubtask).slice(0, 3);
-  const redoJobs     = scorecards.filter(j => j.hasRedo);
+  const criticalJobs = scorecards.filter(j => j.band === 'critical').slice(0, 8);
+  const overdueJobs  = scorecards.filter(j => j.hasOverdueSubtask).slice(0, 8);
+  const redoJobs     = scorecards.filter(j => j.hasRedo).slice(0, 8);
 
   return (
     <div className="space-y-6">
 
-      {/* Overall pipeline — top */}
-      <CumulativeProgressSection data={data} onJobClick={onJobClick} />
-
-      {/* PM Portfolio */}
+      {/* PM Portfolio — top, most important */}
       {auditData && (
         <PmPortfolioSection auditData={auditData} scorecards={scorecards} onAuditPmClick={onAuditPmClick} />
       )}
@@ -657,24 +667,27 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
         <KpiCard label="Overdue Subtasks"  value={totals.overdueSubtasks} colorClass="text-red-400" />
       </div>
 
-      {/* Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <AlertPanel title="🔴 Critical Jobs" empty="No critical jobs">
+      {/* Alerts — large 3-across cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <AlertPanel title="Critical Jobs" empty="No critical jobs">
           {criticalJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="⚠️ Overdue Subtasks" empty="No overdue subtasks">
+        <AlertPanel title="Overdue Subtasks" empty="No overdue subtasks">
           {overdueJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="🔄 REDOs in Flight" empty="No REDOs">
+        <AlertPanel title="REDOs in Flight" empty="No REDOs">
           {redoJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
       </div>
+
+      {/* Overall pipeline — moved below alerts */}
+      <CumulativeProgressSection data={data} onJobClick={onJobClick} />
 
     </div>
   );
