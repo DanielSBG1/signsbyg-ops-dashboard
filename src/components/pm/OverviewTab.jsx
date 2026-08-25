@@ -580,7 +580,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-white/40">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">{unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -838,7 +838,10 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
   return (
     <div className="space-y-6">
 
-      {/* PM Portfolio — top, most important */}
+      {/* Overall pipeline — top */}
+      <CumulativeProgressSection data={data} onJobClick={onJobClick} />
+
+      {/* PM Portfolio */}
       {auditData && (
         <PmPortfolioSection auditData={auditData} scorecards={scorecards} onAuditPmClick={onAuditPmClick} />
       )}
@@ -871,9 +874,6 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
           ))}
         </AlertPanel>
       </div>
-
-      {/* Overall pipeline — moved below alerts */}
-      <CumulativeProgressSection data={data} onJobClick={onJobClick} />
 
     </div>
   );
