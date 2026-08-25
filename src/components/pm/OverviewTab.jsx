@@ -580,7 +580,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-white/40">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">{unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -710,7 +710,7 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
         <div className={`rounded-2xl overflow-hidden ${needsReview.length > 0 ? 'bg-red-500/10 border border-red-500/25' : 'bg-slate-card border border-white/5'}`}>
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🚨</span>
+              <span className="text-lg">\uD83D\uDEA8</span>
               <h4 className="text-base font-semibold text-red-400">Needs Review</h4>
             </div>
             <span className={`text-3xl font-black tabular-nums ${needsReview.length > 0 ? 'text-red-400' : 'text-white/20'}`}>
@@ -782,8 +782,8 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">PM Portfolio</h2>
 
-      {/* Active PMs — large cards, 3 across */}
-      {activeStats.length > 0 && (
+      {/* Active PMs — large cards (hidden when one is expanded) */}
+      {!expandedPm && activeStats.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {activeStats.map(pm => (
             <PmCard key={pm.projectGid} pm={pm} onClick={() => handlePmClick(pm.name)} />
@@ -805,7 +805,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
       {unmanagedTotal > 0 && (
         <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-red-400 text-lg">⚠️</span>
+            <span className="text-red-400 text-lg">\u26A0\uFE0F</span>
             <h3 className="text-sm font-semibold text-red-400">
               Unmanaged Projects — {unmanagedTotal} jobs need reassignment
             </h3>
@@ -852,17 +852,17 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
 
       {/* Alerts — large 3-across cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AlertPanel title="🔴 Critical Jobs" empty="No critical jobs">
+        <AlertPanel title="\uD83D\uDD34 Critical Jobs" empty="No critical jobs">
           {criticalJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="⚠️ Overdue Subtasks" empty="No overdue subtasks">
+        <AlertPanel title="\u26A0\uFE0F Overdue Subtasks" empty="No overdue subtasks">
           {overdueJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="🔄 REDOs in Flight" empty="No REDOs">
+        <AlertPanel title="\uD83D\uDD04 REDOs in Flight" empty="No REDOs">
           {redoJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
