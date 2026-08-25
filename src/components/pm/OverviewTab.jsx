@@ -480,33 +480,55 @@ const ACTIVE_PM_NAMES = ['Nikhil', 'Danish', 'Barbara'];
 function PmCard({ pm, onClick }) {
   const { name, jobCount, overdueCount, avgHealth, stageBreakdown, unprocessedCount } = pm;
   const totalStaged = Object.values(stageBreakdown).reduce((a, b) => a + b, 0);
+  const onTrackCount = jobCount - overdueCount - unprocessedCount;
 
   return (
     <div
-      className="bg-slate-card border border-white/5 rounded-2xl p-4 space-y-3 cursor-pointer hover:border-white/20 hover:bg-white/[0.03] transition-colors"
+      className="bg-slate-card border border-white/5 rounded-2xl p-8 space-y-6 cursor-pointer hover:border-white/20 hover:bg-white/[0.03] transition-colors"
       onClick={onClick}
     >
-      <p className="font-semibold text-sm">{name}</p>
-      <div className="flex items-center gap-3 text-xs text-white/60 flex-wrap">
-        <span>{jobCount} jobs</span>
-        {unprocessedCount > 0 && (
-          <span className="text-red-400 font-semibold">{unprocessedCount} unprocessed</span>
-        )}
-        <span className={overdueCount > 0 ? 'text-red-400 font-semibold' : ''}>{overdueCount} overdue</span>
+      {/* PM name + health score */}
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-2xl text-white">{name}</h3>
         {avgHealth !== null && (
-          <span>Perf <span style={{ color: healthBarColor(avgHealth) }} className="font-semibold">{avgHealth}</span></span>
+          <div className="text-right">
+            <span className="text-4xl font-black tabular-nums" style={{ color: healthBarColor(avgHealth) }}>
+              {avgHealth}
+            </span>
+            <p className="text-[10px] text-white/30 uppercase tracking-wider mt-0.5">Health Score</p>
+          </div>
         )}
       </div>
+
+      {/* Health bar */}
       {avgHealth !== null && (
-        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-3 bg-white/10 rounded-full overflow-hidden">
           <div className="h-full rounded-full transition-all"
             style={{ width: `${avgHealth}%`, backgroundColor: healthBarColor(avgHealth) }} />
         </div>
       )}
+
+      {/* KPI row */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white/[0.04] rounded-xl p-4 text-center">
+          <p className="text-3xl font-bold text-white tabular-nums">{jobCount}</p>
+          <p className="text-[11px] text-white/40 mt-1">Total Jobs</p>
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-4 text-center">
+          <p className={`text-3xl font-bold tabular-nums ${overdueCount > 0 ? 'text-red-400' : 'text-white/30'}`}>{overdueCount}</p>
+          <p className="text-[11px] text-white/40 mt-1">Overdue</p>
+        </div>
+        <div className="bg-white/[0.04] rounded-xl p-4 text-center">
+          <p className={`text-3xl font-bold tabular-nums ${unprocessedCount > 0 ? 'text-red-400' : 'text-white/30'}`}>{unprocessedCount}</p>
+          <p className="text-[11px] text-white/40 mt-1">Unprocessed</p>
+        </div>
+      </div>
+
+      {/* Stage breakdown */}
       {(totalStaged > 0 || unprocessedCount > 0) && (
         <div>
-          <div className="text-[10px] text-white/40 mb-1">Stages</div>
-          <div className="flex h-2 rounded-full overflow-hidden gap-px">
+          <div className="text-xs text-white/40 mb-2 font-medium">Stage Distribution</div>
+          <div className="flex h-4 rounded-lg overflow-hidden gap-px">
             {STAGES.map(stage => {
               const count = stageBreakdown[stage.name];
               if (!count) return null;
@@ -520,21 +542,21 @@ function PmCard({ pm, onClick }) {
                 style={{ width: `${(unprocessedCount / jobCount) * 100}%`, backgroundColor: '#ef4444' }} />
             )}
           </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
             {STAGES.map(stage => {
               const count = stageBreakdown[stage.name];
               if (!count) return null;
               return (
-                <span key={stage.name} className="flex items-center gap-1 text-[10px] text-white/50">
-                  <span className="inline-block w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                  {stage.name} ({count})
+                <span key={stage.name} className="flex items-center gap-1.5 text-xs text-white/55">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
+                  {stage.name} <span className="text-white/30 font-semibold">{count}</span>
                 </span>
               );
             })}
             {unprocessedCount > 0 && (
-              <span className="flex items-center gap-1 text-[10px] text-red-400 font-semibold">
-                <span className="inline-block w-2 h-2 rounded-sm flex-shrink-0 bg-red-500" />
-                Unprocessed ({unprocessedCount})
+              <span className="flex items-center gap-1.5 text-xs text-red-400 font-semibold">
+                <span className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0 bg-red-500" />
+                Unprocessed <span>{unprocessedCount}</span>
               </span>
             )}
           </div>
@@ -558,7 +580,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-white/40">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">{unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">\uD83D\uDEA8 {unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -623,6 +645,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
       {unmanagedTotal > 0 && (
         <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2">
+            <span className="text-red-400 text-lg">\u26A0\uFE0F</span>
             <h3 className="text-sm font-semibold text-red-400">
               Unmanaged Projects — {unmanagedTotal} jobs need reassignment
             </h3>
@@ -669,17 +692,17 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
 
       {/* Alerts — large 3-across cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AlertPanel title="Critical Jobs" empty="No critical jobs">
+        <AlertPanel title="\uD83D\uDD34 Critical Jobs" empty="No critical jobs">
           {criticalJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="Overdue Subtasks" empty="No overdue subtasks">
+        <AlertPanel title="\u26A0\uFE0F Overdue Subtasks" empty="No overdue subtasks">
           {overdueJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="REDOs in Flight" empty="No REDOs">
+        <AlertPanel title="\uD83D\uDD04 REDOs in Flight" empty="No REDOs">
           {redoJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
