@@ -580,7 +580,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-white/40">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">\uD83D\uDEA8 {unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -634,10 +634,15 @@ function JobRow({ task, dueOn, showLastActivity }) {
     : isLate ? 'text-red-400 font-semibold' : 'text-white/40';
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] last:border-b-0">
-      <span className="flex-1 text-sm text-white/85 truncate" title={task.name}>{task.name}</span>
+    <a
+      href={`https://app.asana.com/0/0/${task.gid}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.06] transition-colors border-b border-white/[0.04] last:border-b-0 cursor-pointer group"
+    >
+      <span className="flex-1 text-sm text-white/85 truncate group-hover:text-white" title={task.name}>{task.name}</span>
       <span className={`text-xs tabular-nums shrink-0 ${dateColor}`}>{dateLabel}</span>
-    </div>
+    </a>
   );
 }
 
