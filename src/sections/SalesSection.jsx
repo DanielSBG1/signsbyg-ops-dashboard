@@ -65,9 +65,13 @@ export default function SalesSection() {
   const handoffs    = useHandoffs(handoffsEnabled);
   const callsData   = useCalls(callsEnabled);
   const repActivity = useRepActivity(metricsEnabled, metrics.period, metrics.customRange);
+  // Cohort deals for wide periods (month+) — fetched in parallel, never blocks render
   const cohortDealsHook = useCohortDeals(metricsEnabled, metrics.period, metrics.customRange);
   const cohortDeals = cohortDealsHook.data ?? metrics.data?.cohortDeals ?? [];
 
+  // Rep-scoped contact fetch — only fires for wide periods (month+) when a rep is
+  // selected and the leaderboard is in leads-sort mode (narrow periods already have
+  // all contacts in the main metrics payload).
   const leadsMode = filterRepStatusHint === 'new_lead' || filterRepStatusHint === null;
   const repLeadsHook = useRepLeads(
     metricsEnabled && leadsMode,
@@ -76,6 +80,11 @@ export default function SalesSection() {
     metrics.customRange,
   );
 
+  // Determine which detail panel to show:
+  // - deals sort (revenue/won/conversion) + rep selected → DealDetail
+  // - funnel deals/won/decided row clicked → DealDetail
+  // - metric card: deals-type cards → DealDetail; leads-type cards → LeadDetail
+  // - everything else → LeadDetail
   const dealsRow = funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided' || funnelFilter.row === 'sent');
   const showDealDetail = dealsRow || (filterRep && filterRepStatusHint === 'qualified');
 
@@ -130,6 +139,7 @@ export default function SalesSection() {
                     setLeaderboardSortKey(sortKey);
                     setFilterRep(repId);
                     if (!repId) { setFilterRepStatusHint(null); return; }
+                    // null = show all statuses (leadsAssigned counts all, not just new_lead)
                     const hint = (sortKey === 'leadsAssigned' || sortKey === 'avgResponseMinutes')
                       ? null : 'qualified';
                     setFilterRepStatusHint(hint);
@@ -192,6 +202,7 @@ export default function SalesSection() {
               selectedRepId={selectedRepTab}
               onSelectRep={setSelectedRepTab}
               periodDeals={metrics.data?.periodDeals}
+              period={metrics.period}
             />
           </Suspense>
         )}
