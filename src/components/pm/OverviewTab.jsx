@@ -580,7 +580,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-white/40">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">\uD83D\uDEA8 {unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -616,7 +616,149 @@ function MiniPmCard({ pm, onClick }) {
   );
 }
 
+// ─── PM Detail Panel (inline expansion) ──────────────────────
+
+function JobRow({ task, dueOn }) {
+  const isLate = dueOn && dueOn < TODAY_STR;
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] last:border-b-0">
+      <span className="flex-1 text-sm text-white/85 truncate" title={task.name}>{task.name}</span>
+      <span className={`text-xs tabular-nums shrink-0 ${isLate ? 'text-red-400 font-semibold' : 'text-white/40'}`}>
+        {dueOn
+          ? new Date(dueOn + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : 'No date'}
+      </span>
+    </div>
+  );
+}
+
+function JobColumn({ title, count, color, borderColor, tasks }) {
+  return (
+    <div className={`bg-slate-card border ${borderColor} rounded-2xl overflow-hidden flex flex-col`}>
+      <div className="px-5 py-4 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between">
+          <h4 className={`text-sm font-semibold ${color}`}>{title}</h4>
+          <span className={`text-2xl font-bold tabular-nums ${color}`}>{count}</span>
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto max-h-[400px]">
+        {tasks.length === 0
+          ? <p className="text-white/20 text-sm text-center py-8">None</p>
+          : tasks.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} />)
+        }
+      </div>
+    </div>
+  );
+}
+
+function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
+  // Classify tasks into buckets
+  const { needsReview, onTrack, atRisk, late } = useMemo(() => {
+    const needsReview = [];
+    const onTrack = [];
+    const atRisk = [];
+    const late = [];
+
+    // "Close to late" threshold: due within 3 days
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    const atRiskThreshold = threeDaysFromNow.toISOString().slice(0, 10);
+
+    for (const t of tasks) {
+      // Unprocessed = needs review (top priority)
+      if (t.flag === 'urgent' || t.flag === 'mislabeled') {
+        needsReview.push(t);
+        continue;
+      }
+      // Late: past due date
+      if (t.dueOn && t.dueOn < TODAY_STR) {
+        late.push(t);
+      }
+      // At risk: due within 3 days (but not late)
+      else if (t.dueOn && t.dueOn <= atRiskThreshold) {
+        atRisk.push(t);
+      }
+      // On track: everything else
+      else {
+        onTrack.push(t);
+      }
+    }
+
+    // Sort each by due date
+    const byDue = (a, b) => (a.dueOn ?? '9999') < (b.dueOn ?? '9999') ? -1 : 1;
+    needsReview.sort(byDue);
+    onTrack.sort(byDue);
+    atRisk.sort(byDue);
+    late.sort(byDue);
+
+    return { needsReview, onTrack, atRisk, late };
+  }, [tasks]);
+
+  return (
+    <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3">
+          <h3 className="text-xl font-bold text-white">{pm.name}</h3>
+          <span className="text-sm text-white/40">{tasks.length} total jobs</span>
+        </div>
+        <button onClick={onClose} className="text-white/30 hover:text-white/80 text-2xl leading-none px-2">×</button>
+      </div>
+
+      <div className="p-6 space-y-6">
+        {/* Needs Review — top priority, large module */}
+        <div className={`rounded-2xl overflow-hidden ${needsReview.length > 0 ? 'bg-red-500/10 border border-red-500/25' : 'bg-slate-card border border-white/5'}`}>
+          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🚨</span>
+              <h4 className="text-base font-semibold text-red-400">Needs Review</h4>
+            </div>
+            <span className={`text-3xl font-black tabular-nums ${needsReview.length > 0 ? 'text-red-400' : 'text-white/20'}`}>
+              {needsReview.length}
+            </span>
+          </div>
+          <div className="max-h-[250px] overflow-y-auto">
+            {needsReview.length === 0
+              ? <p className="text-white/30 text-sm text-center py-6">All jobs have been reviewed</p>
+              : needsReview.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} />)
+            }
+          </div>
+        </div>
+
+        {/* 3-column layout: On Track | At Risk | Late */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <JobColumn
+            title="On Track"
+            count={onTrack.length}
+            color="text-green-400"
+            borderColor="border-green-500/20"
+            tasks={onTrack}
+          />
+          <JobColumn
+            title="Getting Close"
+            count={atRisk.length}
+            color="text-yellow-400"
+            borderColor="border-yellow-500/20"
+            tasks={atRisk}
+          />
+          <JobColumn
+            title="Late"
+            count={late.length}
+            color="text-red-400"
+            borderColor="border-red-500/25"
+            tasks={late}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PM Portfolio Section ─────────────────────────────────────
+
 function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
+  const [expandedPm, setExpandedPm] = useState(null);
+
   const scorecardMap = useMemo(() => {
     const map = {};
     for (const sc of scorecards) map[sc.gid] = sc;
@@ -628,6 +770,14 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
   const unmanagedStats = allStats.filter(pm => !ACTIVE_PM_NAMES.includes(pm.name) && pm.jobCount > 0);
   const unmanagedTotal = unmanagedStats.reduce((s, pm) => s + pm.jobCount, 0);
 
+  // Find the raw PM data for the expanded PM
+  const expandedPmData = expandedPm ? auditData.pms.find(pm => pm.name === expandedPm) : null;
+  const expandedPmStats = expandedPm ? activeStats.find(pm => pm.name === expandedPm) : null;
+
+  function handlePmClick(name) {
+    setExpandedPm(prev => prev === name ? null : name);
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">PM Portfolio</h2>
@@ -636,16 +786,26 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
       {activeStats.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {activeStats.map(pm => (
-            <PmCard key={pm.projectGid} pm={pm} onClick={() => onAuditPmClick?.(pm.name)} />
+            <PmCard key={pm.projectGid} pm={pm} onClick={() => handlePmClick(pm.name)} />
           ))}
         </div>
+      )}
+
+      {/* Expanded PM detail panel */}
+      {expandedPmData && expandedPmStats && (
+        <PmDetailPanel
+          pm={expandedPmStats}
+          tasks={expandedPmData.tasks}
+          scorecardMap={scorecardMap}
+          onClose={() => setExpandedPm(null)}
+        />
       )}
 
       {/* Unmanaged projects — flagged as needing reassignment */}
       {unmanagedTotal > 0 && (
         <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-red-400 text-lg">\u26A0\uFE0F</span>
+            <span className="text-red-400 text-lg">⚠️</span>
             <h3 className="text-sm font-semibold text-red-400">
               Unmanaged Projects — {unmanagedTotal} jobs need reassignment
             </h3>
@@ -692,17 +852,17 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
 
       {/* Alerts — large 3-across cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AlertPanel title="\uD83D\uDD34 Critical Jobs" empty="No critical jobs">
+        <AlertPanel title="🔴 Critical Jobs" empty="No critical jobs">
           {criticalJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="\u26A0\uFE0F Overdue Subtasks" empty="No overdue subtasks">
+        <AlertPanel title="⚠️ Overdue Subtasks" empty="No overdue subtasks">
           {overdueJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="\uD83D\uDD04 REDOs in Flight" empty="No REDOs">
+        <AlertPanel title="🔄 REDOs in Flight" empty="No REDOs">
           {redoJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
