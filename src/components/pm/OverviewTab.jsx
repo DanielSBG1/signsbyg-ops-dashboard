@@ -580,7 +580,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-white/40">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">{unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">\uD83D\uDEA8 {unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -618,21 +618,30 @@ function MiniPmCard({ pm, onClick }) {
 
 // ─── PM Detail Panel (inline expansion) ──────────────────────
 
-function JobRow({ task, dueOn }) {
+function formatShortDate(dateStr) {
+  if (!dateStr) return 'No date';
+  const d = dateStr.length === 10 ? dateStr + 'T12:00:00Z' : dateStr;
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function JobRow({ task, dueOn, showLastActivity }) {
   const isLate = dueOn && dueOn < TODAY_STR;
+  const dateLabel = showLastActivity
+    ? (task.lastActivity ? formatShortDate(task.lastActivity) : 'Never')
+    : formatShortDate(dueOn);
+  const dateColor = showLastActivity
+    ? 'text-orange-400'
+    : isLate ? 'text-red-400 font-semibold' : 'text-white/40';
+
   return (
     <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] last:border-b-0">
       <span className="flex-1 text-sm text-white/85 truncate" title={task.name}>{task.name}</span>
-      <span className={`text-xs tabular-nums shrink-0 ${isLate ? 'text-red-400 font-semibold' : 'text-white/40'}`}>
-        {dueOn
-          ? new Date(dueOn + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : 'No date'}
-      </span>
+      <span className={`text-xs tabular-nums shrink-0 ${dateColor}`}>{dateLabel}</span>
     </div>
   );
 }
 
-function JobColumn({ title, count, color, borderColor, tasks }) {
+function JobColumn({ title, count, color, borderColor, tasks, showLastActivity }) {
   return (
     <div className={`bg-slate-card border ${borderColor} rounded-2xl overflow-hidden flex flex-col`}>
       <div className="px-5 py-4 border-b border-white/[0.06]">
@@ -644,7 +653,7 @@ function JobColumn({ title, count, color, borderColor, tasks }) {
       <div className="flex-1 overflow-y-auto max-h-[400px]">
         {tasks.length === 0
           ? <p className="text-white/20 text-sm text-center py-8">None</p>
-          : tasks.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} />)
+          : tasks.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} showLastActivity={showLastActivity} />)
         }
       </div>
     </div>
@@ -653,8 +662,9 @@ function JobColumn({ title, count, color, borderColor, tasks }) {
 
 function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
   // Classify tasks into buckets
-  const { unreviewed, onTrack, atRisk, late } = useMemo(() => {
+  const { unreviewed, stale, onTrack, atRisk, late } = useMemo(() => {
     const unreviewed = [];
+    const stale = [];
     const onTrack = [];
     const atRisk = [];
     const late = [];
@@ -664,27 +674,41 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
     const atRiskThreshold = threeDaysFromNow.toISOString().slice(0, 10);
 
+    // Stale = no comment activity in 48+ hours
+    const now = Date.now();
+    const STALE_MS = 48 * 60 * 60 * 1000;
+
     for (const t of tasks) {
       if (t.flag === 'urgent' || t.flag === 'mislabeled') {
         unreviewed.push(t);
         continue;
       }
+
+      // Check if stale (no activity in 48h+)
+      const lastMs = t.lastActivity ? new Date(t.lastActivity).getTime() : 0;
+      const isStale = !t.lastActivity || (now - lastMs > STALE_MS);
+
       if (t.dueOn && t.dueOn < TODAY_STR) {
         late.push(t);
       } else if (t.dueOn && t.dueOn <= atRiskThreshold) {
         atRisk.push(t);
+      } else if (isStale) {
+        stale.push(t);
       } else {
         onTrack.push(t);
       }
     }
 
     const byDue = (a, b) => (a.dueOn ?? '9999') < (b.dueOn ?? '9999') ? -1 : 1;
+    // Sort stale by last activity (oldest first)
+    const byActivity = (a, b) => (a.lastActivity ?? '') < (b.lastActivity ?? '') ? -1 : 1;
     unreviewed.sort(byDue);
+    stale.sort(byActivity);
     onTrack.sort(byDue);
     atRisk.sort(byDue);
     late.sort(byDue);
 
-    return { unreviewed, onTrack, atRisk, late };
+    return { unreviewed, stale, onTrack, atRisk, late };
   }, [tasks]);
 
   return (
@@ -729,14 +753,22 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
           </div>
         </div>
 
-        {/* 3-column layout: On Track | Getting Close | Late */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* 4-column layout: On Track | Stale | Getting Close | Late */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <JobColumn
             title="On Track"
             count={onTrack.length}
             color="text-green-400"
             borderColor="border-green-500/20"
             tasks={onTrack}
+          />
+          <JobColumn
+            title="Stale (48h+)"
+            count={stale.length}
+            color="text-orange-400"
+            borderColor="border-orange-500/20"
+            tasks={stale}
+            showLastActivity
           />
           <JobColumn
             title="Getting Close"
