@@ -580,7 +580,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-white/40">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">{unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -653,8 +653,8 @@ function JobColumn({ title, count, color, borderColor, tasks }) {
 
 function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
   // Classify tasks into buckets
-  const { needsReview, onTrack, atRisk, late } = useMemo(() => {
-    const needsReview = [];
+  const { unreviewed, onTrack, atRisk, late } = useMemo(() => {
+    const unreviewed = [];
     const onTrack = [];
     const atRisk = [];
     const late = [];
@@ -665,67 +665,71 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
     const atRiskThreshold = threeDaysFromNow.toISOString().slice(0, 10);
 
     for (const t of tasks) {
-      // Unprocessed = needs review (top priority)
       if (t.flag === 'urgent' || t.flag === 'mislabeled') {
-        needsReview.push(t);
+        unreviewed.push(t);
         continue;
       }
-      // Late: past due date
       if (t.dueOn && t.dueOn < TODAY_STR) {
         late.push(t);
-      }
-      // At risk: due within 3 days (but not late)
-      else if (t.dueOn && t.dueOn <= atRiskThreshold) {
+      } else if (t.dueOn && t.dueOn <= atRiskThreshold) {
         atRisk.push(t);
-      }
-      // On track: everything else
-      else {
+      } else {
         onTrack.push(t);
       }
     }
 
-    // Sort each by due date
     const byDue = (a, b) => (a.dueOn ?? '9999') < (b.dueOn ?? '9999') ? -1 : 1;
-    needsReview.sort(byDue);
+    unreviewed.sort(byDue);
     onTrack.sort(byDue);
     atRisk.sort(byDue);
     late.sort(byDue);
 
-    return { needsReview, onTrack, atRisk, late };
+    return { unreviewed, onTrack, atRisk, late };
   }, [tasks]);
 
   return (
     <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-        <div className="flex items-center gap-3">
-          <h3 className="text-xl font-bold text-white">{pm.name}</h3>
-          <span className="text-sm text-white/40">{tasks.length} total jobs</span>
+      {/* Header with health bar */}
+      <div className="px-6 py-5 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">{pm.name}</h3>
+            <span className="text-sm text-white/40">{tasks.length} total jobs</span>
+          </div>
+          <button onClick={onClose} className="text-white/30 hover:text-white/80 text-2xl leading-none px-2">&times;</button>
         </div>
-        <button onClick={onClose} className="text-white/30 hover:text-white/80 text-2xl leading-none px-2">×</button>
+        {/* Health bar */}
+        {pm.avgHealth !== null && (
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all"
+                style={{ width: `${pm.avgHealth}%`, backgroundColor: healthBarColor(pm.avgHealth) }} />
+            </div>
+            <span className="text-lg font-bold tabular-nums shrink-0" style={{ color: healthBarColor(pm.avgHealth) }}>
+              {pm.avgHealth}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Needs Review — top priority, large module */}
-        <div className={`rounded-2xl overflow-hidden ${needsReview.length > 0 ? 'bg-red-500/10 border border-red-500/25' : 'bg-slate-card border border-white/5'}`}>
+        {/* UNREVIEWED JOBS */}
+        <div className={`rounded-2xl overflow-hidden ${unreviewed.length > 0 ? 'bg-red-500/10 border border-red-500/25' : 'bg-slate-card border border-white/5'}`}>
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">\uD83D\uDEA8</span>
-              <h4 className="text-base font-semibold text-red-400">Needs Review</h4>
-            </div>
-            <span className={`text-3xl font-black tabular-nums ${needsReview.length > 0 ? 'text-red-400' : 'text-white/20'}`}>
-              {needsReview.length}
+            <h4 className="text-sm font-black uppercase tracking-widest text-red-400">Unreviewed Jobs</h4>
+            <span className={`text-3xl font-black tabular-nums ${unreviewed.length > 0 ? 'text-red-400' : 'text-white/20'}`}>
+              {unreviewed.length}
             </span>
           </div>
           <div className="max-h-[250px] overflow-y-auto">
-            {needsReview.length === 0
+            {unreviewed.length === 0
               ? <p className="text-white/30 text-sm text-center py-6">All jobs have been reviewed</p>
-              : needsReview.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} />)
+              : unreviewed.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} />)
             }
           </div>
         </div>
 
-        {/* 3-column layout: On Track | At Risk | Late */}
+        {/* 3-column layout: On Track | Getting Close | Late */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <JobColumn
             title="On Track"
@@ -805,9 +809,8 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
       {unmanagedTotal > 0 && (
         <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-red-400 text-lg">\u26A0\uFE0F</span>
             <h3 className="text-sm font-semibold text-red-400">
-              Unmanaged Projects — {unmanagedTotal} jobs need reassignment
+              Unmanaged Projects &mdash; {unmanagedTotal} jobs need reassignment
             </h3>
           </div>
           <p className="text-xs text-white/40">
@@ -852,17 +855,17 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
 
       {/* Alerts — large 3-across cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AlertPanel title="\uD83D\uDD34 Critical Jobs" empty="No critical jobs">
+        <AlertPanel title="Critical Jobs" empty="No critical jobs">
           {criticalJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="\u26A0\uFE0F Overdue Subtasks" empty="No overdue subtasks">
+        <AlertPanel title="Overdue Subtasks" empty="No overdue subtasks">
           {overdueJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
         </AlertPanel>
-        <AlertPanel title="\uD83D\uDD04 REDOs in Flight" empty="No REDOs">
+        <AlertPanel title="REDOs in Flight" empty="No REDOs">
           {redoJobs.map(j => (
             <AlertRow key={j.gid} job={j} onClick={() => onJobClick(j.gid)} />
           ))}
