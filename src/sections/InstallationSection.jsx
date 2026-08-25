@@ -2,14 +2,13 @@ import React, { useState, lazy, Suspense } from 'react';
 import { useInstallationMetrics } from '../hooks/useInstallationMetrics';
 import InstallationOverview from '../components/installation/InstallationOverview';
 import CalendarView from '../components/installation/CalendarView';
-import TrucksTab from '../components/installation/TrucksTab';
-
 const InstallerScorecard = lazy(() => import('../components/installation/InstallerScorecard'));
+const TrucksTab = lazy(() => import('../components/installation/TrucksTab'));
 
 const TABS = [
   { id: 'overview',   label: 'Overview'    },
-  { id: 'installers', label: 'Installers'  },
   { id: 'calendar',   label: 'Calendar'    },
+  { id: 'installers', label: 'Installers'  },
   { id: 'trucks',     label: 'Trucks'      },
 ];
 
@@ -71,7 +70,11 @@ export default function InstallationSection() {
           <CalendarView jobs={data.jobs} byCrew={data.byCrew} onRefresh={refresh} />
         )}
 
-        {activeTab === 'trucks' && <TrucksTab />}
+        {activeTab === 'trucks' && (
+          <Suspense fallback={<div className="text-center py-20 text-white/40">Loading trucks...</div>}>
+            <TrucksTab />
+          </Suspense>
+        )}
       </div>
     </div>
   );
