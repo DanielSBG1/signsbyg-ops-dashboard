@@ -141,8 +141,8 @@ function JobDrawer({ job, crewColor, onClose }) {
         {/* Deposit status banner */}
         {(unpaid || paid) && (
           <div className={`px-5 py-2.5 text-sm font-semibold flex items-center gap-2 ${
-            unpaid ? 'bg-amber-500/20 text-amber-300 border-b border-amber-500/30'
-                   : 'bg-green-500/15 text-green-300 border-b border-green-500/20'
+            unpaid ? 'bg-amber-50 text-amber-700 border-b border-amber-200'
+                   : 'bg-green-50 text-green-700 border-b border-green-200'
           }`}>
             <span className="text-base">{unpaid ? '⚠' : '✓'}</span>
             {unpaid ? 'Deposit not paid — job may be rescheduled' : 'Deposit paid — job is committed'}
@@ -197,22 +197,22 @@ function JobDrawer({ job, crewColor, onClose }) {
             <div className="space-y-1.5">
               <Row label="Job status" value={
                 <span className={`capitalize font-semibold ${
-                  isOverdue ? 'text-red-400' :
-                  job.status === 'scheduled' ? 'text-cyan-400' :
-                  job.status === 'at_risk' ? 'text-amber-400' :
-                  job.status === 'completed' || job.status === 'on_time' || job.status === 'early' ? 'text-green-400' :
+                  isOverdue ? 'text-red-600' :
+                  job.status === 'scheduled' ? 'text-cyan-600' :
+                  job.status === 'at_risk' ? 'text-amber-600' :
+                  job.status === 'completed' || job.status === 'on_time' || job.status === 'early' ? 'text-green-600' :
                   'text-gray-500'
                 }`}>{isOverdue ? 'Overdue' : (job.status || '—')}</span>
               } />
               {job.rescheduleCount > 0 && (
                 <Row label="Reschedules" value={
-                  <span className="text-amber-400 font-semibold">{job.rescheduleCount}×</span>
+                  <span className="text-amber-600 font-semibold">{job.rescheduleCount}×</span>
                 } />
               )}
               <Row label="Deposit" value={
                 job.depositPaid == null
                   ? <span className="text-gray-500 text-[11px] italic">Not tracked</span>
-                  : <span className={unpaid ? 'text-amber-400 font-semibold' : 'text-green-400 font-semibold'}>
+                  : <span className={unpaid ? 'text-amber-600 font-semibold' : 'text-green-600 font-semibold'}>
                       {unpaid ? '⚠ Not paid' : '✓ Paid'}
                     </span>
               } />
@@ -240,14 +240,14 @@ function JobDrawer({ job, crewColor, onClose }) {
                 {job.address && <Row label="Address" value={job.address} />}
                 {job.contactPhone && (
                   <Row label="Phone" value={
-                    <a href={`tel:${job.contactPhone}`} className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                    <a href={`tel:${job.contactPhone}`} className="text-cyan-600 hover:text-cyan-600 transition-colors">
                       {job.contactPhone}
                     </a>
                   } />
                 )}
                 {job.contactEmail && (
                   <Row label="Email" value={
-                    <a href={`mailto:${job.contactEmail}`} className="text-cyan-400 hover:text-cyan-300 transition-colors truncate block">
+                    <a href={`mailto:${job.contactEmail}`} className="text-cyan-600 hover:text-cyan-600 transition-colors truncate block">
                       {job.contactEmail}
                     </a>
                   } />
@@ -452,17 +452,17 @@ function WeekJobCard({ job, crewColor, updating, onDragStart, onJobClick }) {
           </span>
         )}
         {colors.unpaid && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold">
             ⚠ Deposit pending
           </span>
         )}
         {isRescheduled && !colors.unpaid && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/15 text-yellow-300 font-medium">
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700 font-medium">
             {job.rescheduleCount}× rescheduled
           </span>
         )}
         {isOverdue && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-medium">
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 font-medium">
             Overdue
           </span>
         )}
@@ -492,7 +492,7 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, bar
       {/* Date number always on top */}
       <div className="px-1.5 pt-1 flex items-center" style={{ height: DATE_HEADER_H }}>
         <span className={`text-[11px] font-semibold leading-none
-          ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-gray-900' : 'text-gray-500'}`}>
+          ${day.isToday ? 'text-blue-600' : day.inMonth ? 'text-gray-900' : 'text-gray-500'}`}>
           {day.num}
         </span>
       </div>
@@ -580,13 +580,13 @@ function WeekView({ weekDays, multiDayJobs, singleDayJobs, crewColorMap, updatin
               className={`px-3 border-b flex items-center shrink-0 ${day.isToday ? 'border-blue-500/30' : 'border-gray-200'}`}
               style={{ height: WEEK_HEADER_H }}
             >
-              <span className={`text-[10px] font-semibold uppercase tracking-wider ${day.isToday ? 'text-blue-400' : 'text-gray-600'}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${day.isToday ? 'text-blue-600' : 'text-gray-600'}`}>
                 {day.dayLabel}
               </span>
-              <span className={`ml-2 text-xl font-bold ${day.isToday ? 'text-blue-400' : 'text-gray-900'}`}>
+              <span className={`ml-2 text-xl font-bold ${day.isToday ? 'text-blue-600' : 'text-gray-900'}`}>
                 {day.num}
               </span>
-              <span className={`ml-1 text-[10px] ${day.isToday ? 'text-blue-400/70' : 'text-gray-500'}`}>
+              <span className={`ml-1 text-[10px] ${day.isToday ? 'text-blue-500' : 'text-gray-500'}`}>
                 {day.monthLabel}
               </span>
             </div>
@@ -938,7 +938,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
       {/* Toast */}
       {toast && (
         <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-medium shadow-lg pointer-events-none
-          ${toast.type === 'success' ? 'bg-green-500/20 border border-green-500/30 text-green-300' : 'bg-red-500/20 border border-red-500/30 text-red-300'}
+          ${toast.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-600'}
         `}>
           {toast.msg}
         </div>
