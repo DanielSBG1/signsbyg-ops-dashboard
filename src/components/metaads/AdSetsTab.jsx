@@ -285,7 +285,14 @@ function GroupSection({ group, adSets, adsByAdSet, adSetRevenueMap, metaLeadCoun
                       </td>
                       <td className="px-3 py-2.5 text-right">
                         {rev ? (
-                          <span className="tabular-nums font-extrabold text-success">{fmtMoney(rev.revenue)}</span>
+                          <span
+                            className={`tabular-nums font-extrabold ${rev.method === 'proportional' ? 'text-emerald-400' : 'text-success'}`}
+                            title={rev.method === 'proportional'
+                              ? 'Estimated — proportional share of campaign revenue based on lead volume'
+                              : 'Measured — direct lead-to-deal attribution'}
+                          >
+                            {rev.method === 'proportional' ? '~' : ''}{fmtMoney(rev.revenue)}
+                          </span>
                         ) : (
                           <span className="text-gray-300 text-xs" title="Revenue not yet measured at ad set level">n/a</span>
                         )}
