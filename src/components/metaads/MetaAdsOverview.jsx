@@ -165,7 +165,7 @@ function PnlTable({ monthlyPnl }) {
 
 // ---- Main component -------------------------------------------------------
 
-export default function MetaAdsOverview({ data }) {
+export default function MetaAdsOverview({ data, view = 'cohort' }) {
   const totals = data.totals ?? {};
   const adSets = data.adSets ?? [];
   const ads = data.ads ?? [];
@@ -175,9 +175,11 @@ export default function MetaAdsOverview({ data }) {
   const cpc = safeRatio(totals.spend, totals.linkClicks);
   const cpm = safeRatio(totals.spend * 1000, totals.impressions);
 
-  // Use canonical totals from the API, not derived from campaigns
+  // Switch between cohort (lead creation date) and closed (deal close date)
+  const isCohort = view === 'cohort';
   const totalHubspotLeads = totals.hubspotLeads ?? 0;
-  const totalRevenue = totals.attributedRevenue ?? 0;
+  const totalRevenue = isCohort ? (totals.attributedRevenue ?? 0) : (totals.closedRevenue ?? 0);
+  const dealsWon = isCohort ? (totals.dealsWon ?? 0) : (totals.closedDeals ?? 0);
 
   const [drawerMode, setDrawerMode] = useState(null); // 'deals' | 'repeats' | null
   const preset = data?.period?.preset ?? 'year';
@@ -195,45 +197,47 @@ export default function MetaAdsOverview({ data }) {
           label="Leads"
           value={fmtNum(totals.metaLeads)}
           topbar="linear-gradient(90deg,#818cf8,#6366f1)"
-          sub={`${fmtMoney(totals.spend)} spent · ${totalCpl != null ? fmtMoney(totalCpl, 2) + '/lead' : ''}`}
+          sub={`${fmtMoney(totals.spend)} spent \u00b7 ${totalCpl != null ? fmtMoney(totalCpl, 2) + '/lead' : ''}`}
         />
         <MetricTile
           label="Ad Spend"
           value={fmtMoney(totals.spend)}
           topbar="linear-gradient(90deg,#a855f7,#7c3aed)"
-          sub={`${fmtNum(ads.length)} ads · ${adSets.length} ad sets`}
+          sub={`${fmtNum(ads.length)} ads \u00b7 ${adSets.length} ad sets`}
         />
         <MetricTile
-          label="Leads → Deals"
+          label="Leads \u2192 Deals"
           value={fmtNum(totals.leadsWithDeals ?? 0)}
           topbar="linear-gradient(90deg,#fbbf24,#f59e0b)"
           sub={totals.metaLeads > 0
-            ? `${((totals.leadsWithDeals / totals.metaLeads) * 100).toFixed(1)}% of leads · ${fmtNum(totals.dealsWon)} deals total`
+            ? `${((totals.leadsWithDeals / totals.metaLeads) * 100).toFixed(1)}% of leads \u00b7 ${fmtNum(totals.dealsWon)} deals total`
             : undefined}
           onClick={() => setDrawerMode('deals')}
         />
         <MetricTile
           label="Deals Won"
-          value={fmtNum(totals.dealsWon ?? 0)}
+          value={fmtNum(dealsWon)}
           topbar="linear-gradient(90deg,#34d399,#059669)"
-          sub="Click to see deals →"
+          sub={isCohort
+            ? `From leads in period \u00b7 ${fmtNum(totals.closedDeals ?? 0)} closed this period`
+            : `Closed this period \u00b7 ${fmtNum(totals.dealsWon ?? 0)} from period leads`}
           onClick={() => setDrawerMode('deals')}
         />
         <MetricTile
           label="Revenue"
           value={fmtMoney(totalRevenue)}
           topbar="linear-gradient(90deg,#06b6d4,#0891b2)"
-          sub="Click to see deals →"
+          sub="Click to see deals \u2192"
           onClick={() => setDrawerMode('deals')}
         />
         <MetricTile
-          label="Avg Lead → Close"
+          label="Avg Lead \u2192 Close"
           value={totals.velocityAvg != null && totals.velocityAvg > 0 ? `${totals.velocityAvg}d` : '---'}
           topbar={totals.velocityAvg > 0
             ? `linear-gradient(90deg,${totals.velocityAvg <= 30 ? '#34d399,#059669' : totals.velocityAvg <= 60 ? '#fbbf24,#f59e0b' : '#f87171,#ef4444'})`
             : 'linear-gradient(90deg,#d1d5db,#9ca3af)'}
           sub={totals.velocityMin > 0 && totals.velocityMax > 0
-            ? `${totals.velocityMin}d fastest · ${totals.velocityMax}d slowest`
+            ? `${totals.velocityMin}d fastest \u00b7 ${totals.velocityMax}d slowest`
             : undefined}
         />
         {(totals.repeatCustomers ?? 0) > 0 ? (
@@ -242,7 +246,7 @@ export default function MetaAdsOverview({ data }) {
             className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-2xl overflow-hidden relative text-left w-full cursor-pointer hover:border-amber-400 hover:shadow-md transition-all"
           >
             <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-bl-lg">
-              ★ Highlight
+              \u2605 Highlight
             </div>
             <div className="p-5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700 mb-2">
@@ -252,7 +256,7 @@ export default function MetaAdsOverview({ data }) {
                 {totals.repeatCustomers}
               </p>
               <p className="text-amber-600/70 text-xs mt-2">
-                {fmtNum(totals.repeatDeals)} repeat orders · {fmtMoney(totals.repeatRevenue)} · Click to see →
+                {fmtNum(totals.repeatDeals)} repeat orders \u00b7 {fmtMoney(totals.repeatRevenue)} \u00b7 Click to see \u2192
               </p>
             </div>
           </button>

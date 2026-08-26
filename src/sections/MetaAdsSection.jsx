@@ -18,9 +18,15 @@ const PRESETS = [
   { id: 'year',    label: 'Year' },
 ];
 
+const VIEWS = [
+  { id: 'cohort', label: 'By Lead Date' },
+  { id: 'closed', label: 'By Close Date' },
+];
+
 export default function MetaAdsSection() {
   const [activeTab, setActiveTab] = useState('overview');
   const [preset, setPreset] = useState('month');
+  const [view, setView] = useState('cohort');
   const { data, loading, error, lastRefreshed, refresh } = useMetaAdsData(preset);
 
   return (
@@ -80,12 +86,30 @@ export default function MetaAdsSection() {
           </div>
         </div>
 
-        {/* Period label */}
-        {data?.period && (
-          <p className="text-[11px] text-gray-400">
-            {data.period.start} &rarr; {data.period.end}
-          </p>
-        )}
+        {/* View toggle + period label */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-1 bg-black/[0.03] rounded-lg p-0.5">
+            {VIEWS.map(v => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+                  view === v.id
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          {data?.period && (
+            <p className="text-[11px] text-gray-400">
+              {data.period.start} &rarr; {data.period.end}
+              {view === 'cohort' ? ' \u00b7 leads created' : ' \u00b7 deals closed'}
+            </p>
+          )}
+        </div>
 
         {/* Loading */}
         {loading && !data && (
@@ -107,7 +131,7 @@ export default function MetaAdsSection() {
         {/* Tab content */}
         {data && activeTab === 'overview' && (
           <div className="space-y-8">
-            <MetaAdsOverview data={data} />
+            <MetaAdsOverview data={data} view={view} />
             <AdSetsTab data={data} />
             <CreativesSection data={data} />
             <CampaignsTab data={data} />

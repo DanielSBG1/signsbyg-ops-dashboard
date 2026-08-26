@@ -91,6 +91,7 @@ async function fetchMetaAdsMetrics(preset) {
         where month between to_char(${start}::date, 'YYYY-MM')
                         and to_char(${end}::date, 'YYYY-MM')
       ),
+      -- Cohort view: revenue from leads CREATED in this period
       rev as (
         select
           coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
@@ -102,6 +103,17 @@ async function fetchMetaAdsMetrics(preset) {
         where d.is_closed_won = true
           and al.spend_category = 'meta_ads'
           and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+      ),
+      -- Closed view: deals that CLOSED in this period (regardless of lead date)
+      closed as (
+        select
+          coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
+          count(distinct d.id) as deals
+        from attribution_links al
+        join hs_deals d on d.id = al.deal_id
+        where d.is_closed_won = true
+          and al.spend_category = 'meta_ads'
+          and d.close_date::date between ${pnlStart}::date and ${pnlEnd}::date
       ),
       -- Funnel: leads that converted into deals (any stage)
       funnel as (
@@ -164,8 +176,10 @@ async function fetchMetaAdsMetrics(preset) {
         rp.repeat_revenue,
         v.avg_days as velocity_avg,
         v.min_days as velocity_min,
-        v.max_days as velocity_max
-      from perf p, hs_leads l, rev r, funnel f, repeats rp, vel v
+        v.max_days as velocity_max,
+        cl.revenue as closed_revenue,
+        cl.deals   as closed_deals
+      from perf p, hs_leads l, rev r, closed cl, funnel f, repeats rp, vel v
     `,
 
     // 2. Monthly P&L — uses full calendar months so partial-month presets
@@ -518,6 +532,8 @@ async function fetchMetaAdsMetrics(preset) {
     velocityAvg: Number(t.velocity_avg || 0),
     velocityMin: Number(t.velocity_min || 0),
     velocityMax: Number(t.velocity_max || 0),
+    closedDeals: Number(t.closed_deals || 0),
+    closedRevenue: Number(t.closed_revenue || 0),
     linkClicks,
     impressions,
     linkCtr,
@@ -669,7 +685,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v11:${preset}`;
+    const cacheKey = `meta-ads:v12:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
