@@ -25,7 +25,7 @@ function resolveAssignee(assignee) {
   return { key: '__other__', display: 'Other' };
 }
 
-// ─── Date helpers ────────────────────────────────────────────
+// ─── Date helpers ────────────────────────────────────────
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -36,7 +36,7 @@ function fmtDate(iso) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// ─── Status helpers ─────────────────────────────────────────
+// ─── Status helpers ───────────────────────────────────────
 function getStatusKey(subtask, today) {
   if (subtask.completed) {
     const isOnTime = subtask.due_on && subtask.completed_at
@@ -50,7 +50,7 @@ function getStatusKey(subtask, today) {
 
 const STATUS_ORDER = { overdue: 0, late: 1, in_progress: 2, on_time: 3, no_date: 4 };
 
-// ─── Compute per-member stats ────────────────────────────────
+// ─── Compute per-member stats ──────────────────────────────
 function computeMemberStats(subtasks, today) {
   const total     = subtasks.length;
   const completed = subtasks.filter(s => s.completed);
@@ -69,7 +69,7 @@ function computeMemberStats(subtasks, today) {
 
   const overdue = open.filter(s => s.due_on && s.due_on < today);
 
-  // On-time rate includes overdue open tasks as failures — having overdue
+  // On-time rate includes overdue open tasks as failures \u2014 having overdue
   // tasks should bring down your score, not be invisible.
   const denominator = completed.length + overdue.length;
   const onTimeRate = denominator > 0
@@ -88,15 +88,15 @@ function computeMemberStats(subtasks, today) {
   };
 }
 
-// ─── Status badge ────────────────────────────────────────────
+// ─── Status badge ────────────────────────────────────────
 function StatusBadge({ status }) {
   const cfg = {
     on_time:     { label: 'On Time',     cls: 'bg-success/20 text-success' },
     late:        { label: 'Late',        cls: 'bg-danger/20 text-danger' },
     overdue:     { label: 'Overdue',     cls: 'bg-danger/20 text-danger' },
     in_progress: { label: 'In Progress', cls: 'bg-accent/20 text-accent' },
-    no_date:     { label: 'No Date',     cls: 'bg-white/10 text-white/40' },
-  }[status] || { label: status, cls: 'bg-white/10 text-white/40' };
+    no_date:     { label: 'No Date',     cls: 'bg-black/[0.05] text-gray-400' },
+  }[status] || { label: status, cls: 'bg-black/[0.05] text-gray-400' };
 
   return (
     <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${cfg.cls}`}>
@@ -105,20 +105,20 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Rate color helper ───────────────────────────────────────
+// ─── Rate color helper ─────────────────────────────────────
 function rateColorClass(rate) {
   if (rate >= 80) return 'text-success';
   if (rate >= 50) return 'text-warning';
   return 'text-danger';
 }
 
-// ─── Sortable column header ─────────────────────────────────
+// ─── Sortable column header ───────────────────────────────
 function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className }) {
   const isActive = currentSort === sortKey;
   const arrow = isActive ? (currentDir === 'asc' ? ' \u2191' : ' \u2193') : '';
   return (
     <span
-      className={`cursor-pointer select-none hover:text-white/60 transition-colors ${isActive ? 'text-accent' : ''} ${className || ''}`}
+      className={`cursor-pointer select-none hover:text-gray-500 transition-colors ${isActive ? 'text-accent' : ''} ${className || ''}`}
       onClick={() => onSort(sortKey)}
     >
       {label}{arrow}
@@ -126,7 +126,7 @@ function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className
   );
 }
 
-// ─── Leaderboard sort options ────────────────────────────────
+// ─── Leaderboard sort options ──────────────────────────────
 const LEADERBOARD_SORTS = [
   { key: 'onTimeRate',  label: 'On-Time %' },
   { key: 'completed',   label: 'Completed' },
@@ -137,7 +137,7 @@ const LEADERBOARD_SORTS = [
   { key: 'total',       label: 'Total' },
 ];
 
-const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+const MEDALS = ['\ud83e\udd47', '\ud83e\udd48', '\ud83e\udd49'];
 
 function leaderboardBarColor(member) {
   if (member.onTimeRate >= 80) return 'bg-success';
@@ -150,7 +150,7 @@ function fmtLeaderboardValue(member, key) {
   return member[key] ?? 0;
 }
 
-// ─── Leaderboard Component ───────────────────────────────────
+// ─── Leaderboard Component ───────────────────────────────
 function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, onMemberClick }) {
   const sortOpt = LEADERBOARD_SORTS.find(o => o.key === sortKey);
 
@@ -167,20 +167,20 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
   if (sorted.length === 0) return null;
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6">
       {/* Header + sort pills */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold">Production Team Leaderboard</h2>
         <div className="flex items-center gap-1.5">
-          <span className="text-white/30 text-xs mr-1">Sort:</span>
+          <span className="text-gray-300 text-xs mr-1">Sort:</span>
           {LEADERBOARD_SORTS.map(opt => (
             <button
               key={opt.key}
               onClick={() => onSortChange(opt.key)}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                 sortKey === opt.key
-                  ? 'bg-accent text-white'
-                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+                  ? 'bg-accent text-gray-900'
+                  : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05]'
               }`}
             >
               {opt.label}
@@ -195,28 +195,28 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
           {sorted.slice(0, 3).map((m, idx) => (
             <div
               key={m.key}
-              className="bg-white/[0.05] rounded-xl p-4 text-center cursor-pointer hover:bg-white/[0.08] transition-colors"
+              className="bg-black/[0.03] rounded-xl p-4 text-center cursor-pointer hover:bg-black/[0.04] transition-colors"
               onClick={() => onMemberClick(m.key)}
             >
               <span className="text-2xl">{MEDALS[idx]}</span>
-              <p className="text-sm font-semibold text-white mt-1 truncate">{m.display}</p>
+              <p className="text-sm font-semibold text-gray-900 mt-1 truncate">{m.display}</p>
               <p className={`text-2xl font-bold tabular-nums mt-1 ${rateColorClass(m.onTimeRate)}`}>
                 {fmtLeaderboardValue(m, sortKey)}
               </p>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[10px]">
-                <div><span className="text-white/30">Done</span> <span className="text-white/60">{m.completed}</span></div>
-                <div><span className="text-white/30">Open</span> <span className="text-white/60">{m.open}</span></div>
-                <div><span className="text-white/30">On Time</span> <span className="text-success/70">{m.onTime}</span></div>
-                <div><span className="text-white/30">Late</span> <span className="text-danger/70">{m.late}</span></div>
+                <div><span className="text-gray-300">Done</span> <span className="text-gray-500">{m.completed}</span></div>
+                <div><span className="text-gray-300">Open</span> <span className="text-gray-500">{m.open}</span></div>
+                <div><span className="text-gray-300">On Time</span> <span className="text-success/70">{m.onTime}</span></div>
+                <div><span className="text-gray-300">Late</span> <span className="text-danger/70">{m.late}</span></div>
                 {m.overdue > 0 && (
-                  <div className="col-span-2"><span className="text-white/30">Overdue</span> <span className="text-danger">{m.overdue}</span> <span className="text-white/20">\u2014 counts against rate</span></div>
+                  <div className="col-span-2"><span className="text-gray-300">Overdue</span> <span className="text-danger">{m.overdue}</span> <span className="text-gray-300">\u2014 counts against rate</span></div>
                 )}
               </div>
               <button
                 className="text-[10px] text-accent hover:underline mt-2"
                 onClick={(e) => { e.stopPropagation(); onViewProfile(m.key); }}
               >
-                View Stats &rarr;
+                View Stats \u2192
               </button>
             </div>
           ))}
@@ -234,24 +234,24 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
           return (
             <div
               key={m.key}
-              className="group relative rounded-lg px-3 py-2 cursor-pointer transition-all bg-white/[0.03] hover:bg-white/[0.07]"
+              className="group relative rounded-lg px-3 py-2 cursor-pointer transition-all bg-black/[0.02] hover:bg-black/[0.04]"
               onClick={() => onMemberClick(m.key)}
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-6 shrink-0 text-center">
-                  <span className="text-white/20 text-[10px] font-mono">#{rank + 1}</span>
+                  <span className="text-gray-300 text-[10px] font-mono">#{rank + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-white/60 truncate leading-none mb-1.5">{m.display}</div>
-                  <div className="h-1 bg-white/8 rounded-full overflow-hidden">
+                  <div className="text-xs font-medium text-gray-500 truncate leading-none mb-1.5">{m.display}</div>
+                  <div className="h-1 bg-black/[0.04] rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${color}`}
                       style={{ width: `${Math.max(barPct, barPct > 0 ? 1.5 : 0)}%` }}
                     />
                   </div>
-                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-white/25 leading-none">
-                    <span><span className="text-white/45">{m.completed}</span> done</span>
-                    <span><span className="text-white/45">{m.open}</span> open</span>
+                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-gray-300 leading-none">
+                    <span><span className="text-gray-400">{m.completed}</span> done</span>
+                    <span><span className="text-gray-400">{m.open}</span> open</span>
                     {m.overdue > 0 && <span className="text-danger">{m.overdue} overdue</span>}
                   </div>
                 </div>
@@ -312,12 +312,12 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
   }, [member.subtasks, sortKey, sortDir, today]);
 
   return (
-    <div ref={sectionRef} className="bg-white/[0.03] rounded-xl overflow-hidden">
+    <div ref={sectionRef} className="bg-black/[0.02] rounded-xl overflow-hidden">
       <button
-        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left"
+        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-black/[0.03] transition-colors text-left"
         onClick={onToggle}
       >
-        <span className="text-sm font-semibold text-white/90 shrink-0">{member.display}</span>
+        <span className="text-sm font-semibold text-gray-900 shrink-0">{member.display}</span>
         {member.open > 0 && (
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/20 text-accent font-bold shrink-0">
             {member.open} open
@@ -332,18 +332,18 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
           className="text-[10px] text-accent hover:underline cursor-pointer shrink-0"
           onClick={(e) => { e.stopPropagation(); onViewProfile?.(); }}
         >
-          View Stats &rarr;
+          View Stats \u2192
         </span>
         <span className="flex-1" />
         <span className={`text-xs font-semibold tabular-nums ${rateColorClass(member.onTimeRate)}`}>
           {member.onTimeRate}%
         </span>
-        <span className="shrink-0 text-white/30 text-xs">{expanded ? '\u25B2' : '\u25BC'}</span>
+        <span className="shrink-0 text-gray-300 text-xs">{expanded ? '\u25b2' : '\u25bc'}</span>
       </button>
 
       {expanded && (
-        <div className="border-t border-white/5">
-          <div className="px-4 py-2 grid grid-cols-[1fr_80px_80px_90px] gap-2 text-[10px] uppercase tracking-wider text-white/40">
+        <div className="border-t border-gray-200">
+          <div className="px-4 py-2 grid grid-cols-[1fr_80px_80px_90px] gap-2 text-[10px] uppercase tracking-wider text-gray-400">
             <SortHeader label="Task" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
             <SortHeader label="Due" sortKey="due_on" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
             <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
@@ -353,24 +353,24 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
           {sortedTasks.map((st, idx) => (
             <div
               key={st.gid || idx}
-              className="px-4 py-2 grid grid-cols-[1fr_80px_80px_90px] gap-2 items-center border-t border-white/[0.03] hover:bg-white/[0.03] transition-colors"
+              className="px-4 py-2 grid grid-cols-[1fr_80px_80px_90px] gap-2 items-center border-t border-gray-100 hover:bg-black/[0.02] transition-colors"
             >
-              <span className="text-xs text-white/80 truncate" title={st.name}>
+              <span className="text-xs text-gray-700 truncate" title={st.name}>
                 {st._parentName && (
-                  <span className="text-white/30 mr-1">{st._parentName} /</span>
+                  <span className="text-gray-300 mr-1">{st._parentName} /</span>
                 )}
                 {st.name}
               </span>
-              <span className="text-xs tabular-nums text-white/50">{fmtDate(st.due_on)}</span>
+              <span className="text-xs tabular-nums text-gray-500">{fmtDate(st.due_on)}</span>
               <StatusBadge status={getStatusKey(st, today)} />
-              <span className="text-xs tabular-nums text-white/40">
+              <span className="text-xs tabular-nums text-gray-400">
                 {st.completed_at ? fmtDate(st.completed_at.slice(0, 10)) : '\u2014'}
               </span>
             </div>
           ))}
 
           {sortedTasks.length === 0 && (
-            <div className="px-4 py-6 text-center text-xs text-white/20">No subtasks</div>
+            <div className="px-4 py-6 text-center text-xs text-gray-300">No subtasks</div>
           )}
         </div>
       )}
@@ -378,7 +378,7 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
   );
 }
 
-// ─── Period helpers ──────────────────────────────────────────
+// ─── Period helpers ────────────────────────────────────────
 function getMondayOf(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
   const day = d.getDay();
@@ -436,7 +436,7 @@ function subtaskInRange(st, range) {
   return (due >= range.start && due <= range.end) || (done >= range.start && done <= range.end);
 }
 
-// ─── Main Component ────────────────────────────────────────
+// ─── Main Component ──────────────────────────────────────
 export default function SubtasksTab({ data }) {
   const today = useMemo(() => todayStr(), []);
   const [activePeriod, setActivePeriod] = useState('all');
@@ -523,13 +523,13 @@ export default function SubtasksTab({ data }) {
   }, []);
 
   if (!data) {
-    return <div className="text-center py-20 text-white/30 text-sm">Loading subtask data...</div>;
+    return <div className="text-center py-20 text-gray-300 text-sm">Loading subtask data...</div>;
   }
 
   // Show profile view when a member is selected
   if (profileMember) {
     return (
-      <Suspense fallback={<div className="text-center py-20 text-white/40">Loading stats...</div>}>
+      <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading stats...</div>}>
         <TeamMemberProfile
           memberData={profileMember}
           onClose={() => setProfileKey(null)}
@@ -539,12 +539,12 @@ export default function SubtasksTab({ data }) {
   }
 
   if (members.length === 0) {
-    return <div className="text-center py-20 text-white/30 text-sm">No subtask data available.</div>;
+    return <div className="text-center py-20 text-gray-300 text-sm">No subtask data available.</div>;
   }
 
   return (
     <div className="space-y-6">
-      {/* \u2500\u2500 Period selector \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* \u2500\u2500 Period selector \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -552,8 +552,8 @@ export default function SubtasksTab({ data }) {
             onClick={() => setActivePeriod(p.id)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activePeriod === p.id
-                ? 'bg-accent text-white'
-                : 'bg-white/5 text-white/50 hover:bg-white/10'
+                ? 'bg-accent text-gray-900'
+                : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05]'
             }`}
           >
             {p.label}
@@ -561,7 +561,7 @@ export default function SubtasksTab({ data }) {
         ))}
       </div>
 
-      {/* \u2500\u2500 Leaderboard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* \u2500\u2500 Leaderboard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <ProductionLeaderboard
         members={members}
         sortKey={leaderboardSort}
@@ -570,7 +570,7 @@ export default function SubtasksTab({ data }) {
         onMemberClick={(key) => handleScoreCardClick(key)}
       />
 
-      {/* \u2500\u2500 Team member sections (sortable columns) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* \u2500\u2500 Team member sections (sortable columns) \u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="space-y-3">
         {members.map(m => (
           <MemberSection

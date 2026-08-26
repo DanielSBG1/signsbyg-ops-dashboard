@@ -69,13 +69,13 @@ function diffDays(a, b) {
   return Math.round((da - db) / (1000 * 60 * 60 * 24));
 }
 
-// ─── Custom Tooltip ─────────────────────────────────────────
+// ─── Custom Tooltip ───────────────────────────────────────
 
 function ChartTooltip({ active, payload, label, formatter }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="bg-[#1a2035] border border-white/10 rounded-lg p-3 shadow-xl">
-      <p className="text-xs text-white/60 mb-1.5 font-medium">{label}</p>
+    <div className="bg-[#1a2035] border border-gray-200 rounded-lg p-3 shadow-xl">
+      <p className="text-xs text-gray-500 mb-1.5 font-medium">{label}</p>
       {payload.map((entry, i) => (
         <p key={i} className="text-xs" style={{ color: entry.color || '#fff' }}>
           {entry.name}: {formatter ? formatter(entry.value, entry.name) : entry.value}
@@ -89,16 +89,16 @@ function ChartTooltip({ active, payload, label, formatter }) {
 
 function StatCard({ title, children }) {
   return (
-    <div className="bg-white/5 rounded-xl p-5">
-      <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-2">{title}</p>
+    <div className="bg-black/[0.03] rounded-xl p-5">
+      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">{title}</p>
       {children}
     </div>
   );
 }
 
-// ─── Main Component ─────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────
 
-// ─── Period helpers ──────────────────────────────────────────
+// ─── Period helpers ────────────────────────────────────────
 function getMondayOfDate(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
   const day = d.getDay();
@@ -182,7 +182,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
   const overdue = overdueArr.length;
   const onTimeRate = (completed + overdue) > 0 ? Math.round((onTime / (completed + overdue)) * 100) : 0;
 
-  // \u2500\u2500 Avg days early/late \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // \u2500\u2500 Avg days early/late \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const avgDaysEarlyLate = useMemo(() => {
     const completedWithDates = subtasks.filter(s => s.completed && s.due_on && s.completed_at);
     if (completedWithDates.length === 0) return null;
@@ -193,7 +193,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
     return totalDiff / completedWithDates.length;
   }, [subtasks]);
 
-  // \u2500\u2500 Weekly buckets \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // \u2500\u2500 Weekly buckets \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const weeklyData = useMemo(() => {
     const buckets = {};
 
@@ -250,7 +250,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
     }));
   }, [subtasks]);
 
-  // \u2500\u2500 Completion speed per week \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // \u2500\u2500 Completion speed per week \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const speedData = useMemo(() => {
     const buckets = {};
 
@@ -275,14 +275,14 @@ export default function TeamMemberProfile({ memberData, onClose }) {
       }));
   }, [subtasks]);
 
-  // \u2500\u2500 Open tasks sorted by due date \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // \u2500\u2500 Open tasks sorted by due date \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const openTasks = useMemo(() => {
     return subtasks
       .filter(s => !s.completed)
       .sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999'));
   }, [subtasks]);
 
-  // \u2500\u2500 Days until due helper \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // \u2500\u2500 Days until due helper \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   function daysUntilDue(dueOn) {
     if (!dueOn) return null;
     return diffDays(dueOn, today);
@@ -290,21 +290,21 @@ export default function TeamMemberProfile({ memberData, onClose }) {
 
   return (
     <div className="space-y-6">
-      {/* \u2500\u2500 1. HEADER BAR \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* \u2500\u2500 1. HEADER BAR \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="flex items-center gap-4">
         <button
           onClick={onClose}
-          className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
           <span className="text-lg">&larr;</span> Back
         </button>
-        <h2 className="text-2xl font-bold text-white flex-1">{display}</h2>
+        <h2 className="text-2xl font-bold text-gray-900 flex-1">{display}</h2>
         <span className={`text-sm font-bold px-3 py-1 rounded-full ${rateBgClass(onTimeRate)}`}>
           {onTimeRate}% On-Time
         </span>
       </div>
 
-      {/* \u2500\u2500 PERIOD SELECTOR \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* \u2500\u2500 PERIOD SELECTOR \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="flex flex-wrap gap-1.5">
         {PROFILE_PERIODS.map(p => (
           <button
@@ -312,8 +312,8 @@ export default function TeamMemberProfile({ memberData, onClose }) {
             onClick={() => setActivePeriod(p.id)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activePeriod === p.id
-                ? 'bg-accent text-white'
-                : 'bg-white/5 text-white/50 hover:bg-white/10'
+                ? 'bg-accent text-gray-900'
+                : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05]'
             }`}
           >
             {p.label}
@@ -321,22 +321,22 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         ))}
       </div>
 
-      {/* \u2500\u2500 2. STAT CARDS ROW \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* \u2500\u2500 2. STAT CARDS ROW \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="grid grid-cols-4 gap-4">
         <StatCard title="Completion Rate">
           <p className={`text-3xl font-bold tabular-nums ${rateColorClass(onTimeRate)}`}>
             {onTimeRate}%
           </p>
-          <p className="text-xs text-white/30 mt-1">
+          <p className="text-xs text-gray-300 mt-1">
             {onTime} of {completed} completed on time
           </p>
         </StatCard>
 
         <StatCard title="Tasks Completed">
-          <p className="text-3xl font-bold tabular-nums text-white">
-            {completed}<span className="text-lg text-white/30">/{total}</span>
+          <p className="text-3xl font-bold tabular-nums text-gray-900">
+            {completed}<span className="text-lg text-gray-300">/{total}</span>
           </p>
-          <p className="text-xs text-white/30 mt-1">
+          <p className="text-xs text-gray-300 mt-1">
             {open} still open
           </p>
         </StatCard>
@@ -347,12 +347,12 @@ export default function TeamMemberProfile({ memberData, onClose }) {
               <p className={`text-3xl font-bold tabular-nums ${avgDaysEarlyLate >= 0 ? 'text-success' : 'text-danger'}`}>
                 {avgDaysEarlyLate >= 0 ? '+' : ''}{avgDaysEarlyLate.toFixed(1)}
               </p>
-              <p className="text-xs text-white/30 mt-1">
+              <p className="text-xs text-gray-300 mt-1">
                 {avgDaysEarlyLate >= 0 ? 'days early on average' : 'days late on average'}
               </p>
             </>
           ) : (
-            <p className="text-xl text-white/20 mt-2">&mdash;</p>
+            <p className="text-xl text-gray-300 mt-2">&mdash;</p>
           )}
         </StatCard>
 
@@ -360,15 +360,15 @@ export default function TeamMemberProfile({ memberData, onClose }) {
           <p className={`text-3xl font-bold tabular-nums ${overdue > 0 ? 'text-danger' : 'text-success'}`}>
             {overdue}
           </p>
-          <p className="text-xs text-white/30 mt-1">
+          <p className="text-xs text-gray-300 mt-1">
             {overdue > 0 ? 'tasks past due date' : 'all caught up'}
           </p>
         </StatCard>
       </div>
 
-      {/* \u2500\u2500 3. ON-TIME RATE TREND CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
-      <div className="bg-white/5 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white/70 mb-4">On-Time Rate Over Time</h3>
+      {/* \u2500\u2500 3. ON-TIME RATE TREND CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      <div className="bg-black/[0.03] rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-gray-600 mb-4">On-Time Rate Over Time</h3>
         {weeklyData.length > 0 ? (
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={weeklyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
@@ -427,13 +427,13 @@ export default function TeamMemberProfile({ memberData, onClose }) {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-sm text-white/20 text-center py-12">No completion data yet</p>
+          <p className="text-sm text-gray-300 text-center py-12">No completion data yet</p>
         )}
       </div>
 
-      {/* \u2500\u2500 4. WEEKLY BREAKDOWN CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
-      <div className="bg-white/5 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white/70 mb-4">Weekly Task Breakdown</h3>
+      {/* \u2500\u2500 4. WEEKLY BREAKDOWN CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      <div className="bg-black/[0.03] rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-gray-600 mb-4">Weekly Task Breakdown</h3>
         {weeklyData.length > 0 ? (
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={weeklyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
@@ -456,13 +456,13 @@ export default function TeamMemberProfile({ memberData, onClose }) {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-sm text-white/20 text-center py-12">No completion data yet</p>
+          <p className="text-sm text-gray-300 text-center py-12">No completion data yet</p>
         )}
       </div>
 
-      {/* \u2500\u2500 5. COMPLETION SPEED CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
-      <div className="bg-white/5 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white/70 mb-4">Avg Completion Speed (days)</h3>
+      {/* \u2500\u2500 5. COMPLETION SPEED CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      <div className="bg-black/[0.03] rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-gray-600 mb-4">Avg Completion Speed (days)</h3>
         {speedData.length > 0 ? (
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={speedData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
@@ -499,16 +499,16 @@ export default function TeamMemberProfile({ memberData, onClose }) {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-sm text-white/20 text-center py-12">No speed data available</p>
+          <p className="text-sm text-gray-300 text-center py-12">No speed data available</p>
         )}
       </div>
 
-      {/* \u2500\u2500 6. CURRENT TASKS TABLE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
-      <div className="bg-white/5 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5">
-          <h3 className="text-sm font-semibold text-white/70">
+      {/* \u2500\u2500 6. CURRENT TASKS TABLE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      <div className="bg-black/[0.03] rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-600">
             Current Open Tasks
-            <span className="ml-2 text-xs font-normal text-white/30">({openTasks.length})</span>
+            <span className="ml-2 text-xs font-normal text-gray-300">({openTasks.length})</span>
           </h3>
         </div>
 
@@ -516,7 +516,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-white/30">
+                <tr className="text-[10px] uppercase tracking-wider text-gray-300">
                   <th className="px-6 py-3 font-medium">Task</th>
                   <th className="px-6 py-3 font-medium">Due Date</th>
                   <th className="px-6 py-3 font-medium text-right">Status</th>
@@ -528,21 +528,21 @@ export default function TeamMemberProfile({ memberData, onClose }) {
                   const isOverdue = daysLeft !== null && daysLeft < 0;
 
                   return (
-                    <tr key={i} className="hover:bg-white/[0.03] transition-colors">
+                    <tr key={i} className="hover:bg-black/[0.02] transition-colors">
                       <td className="px-6 py-3">
-                        <p className="text-sm text-white/80 truncate max-w-xs">{task.name}</p>
+                        <p className="text-sm text-gray-700 truncate max-w-xs">{task.name}</p>
                         {task._parentName && (
-                          <p className="text-[10px] text-white/25 truncate max-w-xs mt-0.5">
+                          <p className="text-[10px] text-gray-300 truncate max-w-xs mt-0.5">
                             {task._parentName}
                           </p>
                         )}
                       </td>
-                      <td className="px-6 py-3 text-xs text-white/50 whitespace-nowrap">
+                      <td className="px-6 py-3 text-xs text-gray-500 whitespace-nowrap">
                         {fmtDate(task.due_on)}
                       </td>
                       <td className="px-6 py-3 text-right whitespace-nowrap">
                         {daysLeft === null ? (
-                          <span className="text-xs text-white/20">No date</span>
+                          <span className="text-xs text-gray-300">No date</span>
                         ) : isOverdue ? (
                           <span className="text-xs font-semibold text-danger">
                             {Math.abs(daysLeft)} day{Math.abs(daysLeft) !== 1 ? 's' : ''} overdue
@@ -550,7 +550,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
                         ) : daysLeft === 0 ? (
                           <span className="text-xs font-semibold text-warning">Due today</span>
                         ) : (
-                          <span className="text-xs text-white/50">
+                          <span className="text-xs text-gray-500">
                             {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
                           </span>
                         )}
@@ -562,7 +562,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-white/20 text-center py-8">No open tasks</p>
+          <p className="text-sm text-gray-300 text-center py-8">No open tasks</p>
         )}
       </div>
     </div>
