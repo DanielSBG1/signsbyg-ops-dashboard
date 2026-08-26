@@ -115,6 +115,23 @@ async function fetchMetaAdsMetrics(preset) {
           group by c.id
           having count(distinct d.id) > 1
         ) multi
+      ),
+      -- Average lead-to-close velocity
+      vel as (
+        select
+          round(avg(extract(epoch from (d.close_date - c.created_at)) / 86400)) as avg_days,
+          round(min(case when extract(epoch from (d.close_date - c.created_at)) > 0
+                        then extract(epoch from (d.close_date - c.created_at)) / 86400 end)) as min_days,
+          round(max(extract(epoch from (d.close_date - c.created_at)) / 86400)) as max_days
+        from hs_contacts c
+        join deal_contacts dc on dc.contact_id = c.id
+        join hs_deals d on d.id = dc.deal_id
+        join attribution_links al on al.deal_id = d.id
+        where d.is_closed_won = true
+          and al.spend_category = 'meta_ads'
+          and c.created_at is not null
+          and d.close_date is not null
+          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
       )
       select
         p.spend,
@@ -128,8 +145,11 @@ async function fetchMetaAdsMetrics(preset) {
         f.total_deals_created,
         rp.repeat_customers,
         rp.repeat_deals,
-        rp.repeat_revenue
-      from perf p, hs_leads l, rev r, funnel f, repeats rp
+        rp.repeat_revenue,
+        v.avg_days as velocity_avg,
+        v.min_days as velocity_min,
+        v.max_days as velocity_max
+      from perf p, hs_leads l, rev r, funnel f, repeats rp, vel v
     `,
 
     // 2. Monthly P&L — uses full calendar months so partial-month presets
@@ -479,6 +499,9 @@ async function fetchMetaAdsMetrics(preset) {
     repeatCustomers: Number(t.repeat_customers || 0),
     repeatDeals: Number(t.repeat_deals || 0),
     repeatRevenue: Number(t.repeat_revenue || 0),
+    velocityAvg: Number(t.velocity_avg || 0),
+    velocityMin: Number(t.velocity_min || 0),
+    velocityMax: Number(t.velocity_max || 0),
     linkClicks,
     impressions,
     linkCtr,

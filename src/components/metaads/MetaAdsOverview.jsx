@@ -191,18 +191,18 @@ export default function MetaAdsOverview({ data }) {
       )}
 
       {/* ---- Funnel KPIs ---- */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-7">
         <MetricTile
           label="Leads"
           value={fmtNum(totals.metaLeads)}
           topbar="linear-gradient(90deg,#818cf8,#6366f1)"
-          sub={`${fmtMoney(totals.spend)} spent · ${totalCpl != null ? fmtMoney(totalCpl, 2) + '/lead' : ''}`}
+          sub={`${fmtMoney(totals.spend)} spent \u00b7 ${totalCpl != null ? fmtMoney(totalCpl, 2) + '/lead' : ''}`}
         />
         <MetricTile
           label="Ad Spend"
           value={fmtMoney(totals.spend)}
           topbar="linear-gradient(90deg,#a855f7,#7c3aed)"
-          sub={`${fmtNum(ads.length)} ads · ${adSets.length} ad sets`}
+          sub={`${fmtNum(ads.length)} ads \u00b7 ${adSets.length} ad sets`}
         />
         <MetricTile
           label="Converted to Deals"
@@ -223,13 +223,21 @@ export default function MetaAdsOverview({ data }) {
           label="Revenue"
           value={fmtMoney(totalRevenue)}
           topbar="linear-gradient(90deg,#06b6d4,#0891b2)"
-          sub="Click to see deals →"
+          sub="Click to see deals \u2192"
           onClick={() => setShowDeals(true)}
+        />
+        <MetricTile
+          label="Avg Lead \u2192 Close"
+          value={totals.velocityAvg ? `${totals.velocityAvg}d` : '---'}
+          topbar={`linear-gradient(90deg,${totals.velocityAvg <= 30 ? '#34d399,#059669' : totals.velocityAvg <= 60 ? '#fbbf24,#f59e0b' : '#f87171,#ef4444'})`}
+          sub={totals.velocityMin && totals.velocityMax
+            ? `${totals.velocityMin}d fastest \u00b7 ${totals.velocityMax}d slowest`
+            : undefined}
         />
         {(totals.repeatCustomers ?? 0) > 0 ? (
           <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-2xl overflow-hidden relative">
             <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-bl-lg">
-              ★ Highlight
+              \u2605 Highlight
             </div>
             <div className="p-5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700 mb-2">
@@ -239,7 +247,7 @@ export default function MetaAdsOverview({ data }) {
                 {totals.repeatCustomers}
               </p>
               <p className="text-amber-600/70 text-xs mt-2">
-                {fmtNum(totals.repeatDeals)} repeat orders · {fmtMoney(totals.repeatRevenue)}
+                {fmtNum(totals.repeatDeals)} repeat orders \u00b7 {fmtMoney(totals.repeatRevenue)}
               </p>
             </div>
           </div>
