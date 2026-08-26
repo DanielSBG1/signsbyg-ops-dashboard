@@ -32,13 +32,13 @@ export default function PmSection() {
           <div>
             <h1 className="text-2xl font-bold">Project Management</h1>
             {data && (
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-gray-500 text-xs mt-1">
                 Live snapshot · Updated {new Date(data.generatedAt).toLocaleTimeString()}
               </p>
             )}
           </div>
           <button onClick={refresh}
-            className="text-gray-400 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors">
+            className="text-gray-500 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors">
             Refresh
           </button>
         </div>
@@ -54,7 +54,7 @@ export default function PmSection() {
           ))}
         </div>
 
-        {loading && <div className="text-center py-20 text-gray-400">Loading PM data...</div>}
+        {loading && <div className="text-center py-20 text-gray-500">Loading PM data...</div>}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400">
             Error: {error}

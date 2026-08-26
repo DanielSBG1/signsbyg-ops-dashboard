@@ -25,13 +25,13 @@ export default function ProductionSection() {
           <div>
             <h1 className="text-2xl font-bold">Production</h1>
             {data && (
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-gray-500 text-xs mt-1">
                 Live snapshot · Updated {new Date(data.generatedAt).toLocaleTimeString()}
               </p>
             )}
           </div>
           <button onClick={refresh}
-            className="text-gray-400 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors">
+            className="text-gray-500 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors">
             Refresh
           </button>
         </div>
@@ -51,7 +51,7 @@ export default function ProductionSection() {
           ))}
         </div>
 
-        {loading && <div className="text-center py-20 text-gray-400">Loading production data...</div>}
+        {loading && <div className="text-center py-20 text-gray-500">Loading production data...</div>}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
             Error: {error}
@@ -66,7 +66,7 @@ export default function ProductionSection() {
             <div className="flex justify-end">
               <button
                 onClick={() => setOverviewMode('weekly')}
-                className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-[11px] text-gray-500 hover:text-gray-600 transition-colors"
               >
                 ← Weekly view
               </button>
@@ -75,7 +75,7 @@ export default function ProductionSection() {
           </>
         )}
         {data && activeTab === 'subtasks' && (
-          <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading subtasks...</div>}>
+          <Suspense fallback={<div className="text-center py-20 text-gray-500">Loading subtasks...</div>}>
             <SubtasksTab data={data} />
           </Suspense>
         )}

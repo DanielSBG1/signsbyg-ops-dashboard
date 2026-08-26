@@ -51,7 +51,7 @@ export default function MarketingSection() {
         <div className="flex items-center justify-center h-64">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-400 text-sm">Loading marketing dashboard…</p>
+            <p className="text-gray-500 text-sm">Loading marketing dashboard…</p>
           </div>
         </div>
       )}

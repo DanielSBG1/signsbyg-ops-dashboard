@@ -24,13 +24,13 @@ export default function InstallationSection() {
           <div>
             <h1 className="text-2xl font-bold">Installation</h1>
             {lastRefreshed && (
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-gray-500 text-xs mt-1">
                 Live snapshot &middot; Updated {lastRefreshed.toLocaleTimeString()}
               </p>
             )}
           </div>
           <button onClick={refresh}
-            className="text-gray-400 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors">
+            className="text-gray-500 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors">
             Refresh
           </button>
         </div>
@@ -48,7 +48,7 @@ export default function InstallationSection() {
         </div>
 
         {loading && !data && (
-          <div className="text-center py-20 text-gray-400">Loading installation data...</div>
+          <div className="text-center py-20 text-gray-500">Loading installation data...</div>
         )}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
@@ -61,7 +61,7 @@ export default function InstallationSection() {
         )}
 
         {data && activeTab === 'installers' && (
-          <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading installer scorecard...</div>}>
+          <Suspense fallback={<div className="text-center py-20 text-gray-500">Loading installer scorecard...</div>}>
             <InstallerScorecard data={data} />
           </Suspense>
         )}
@@ -71,7 +71,7 @@ export default function InstallationSection() {
         )}
 
         {activeTab === 'trucks' && (
-          <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading trucks...</div>}>
+          <Suspense fallback={<div className="text-center py-20 text-gray-500">Loading trucks...</div>}>
             <TrucksTab />
           </Suspense>
         )}
