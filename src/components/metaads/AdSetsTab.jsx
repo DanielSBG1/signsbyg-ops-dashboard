@@ -168,7 +168,7 @@ function AdRow({ ad }) {
 
 // ---- Group Section (one audience group) -----------------------------------
 
-function GroupSection({ group, adSets, adsByAdSet, adSetRevenueMap, metaLeadCountsByAdSet }) {
+function GroupSection({ group, adSets, adsByAdSet, adSetRevenueMap, metaLeadCountsByAdSet, velocityMap }) {
   const [expandedAdSets, setExpandedAdSets] = useState(new Set());
 
   const groupSpend = adSets.reduce((s, a) => s + (a.spend ?? 0), 0);
@@ -212,6 +212,7 @@ function GroupSection({ group, adSets, adsByAdSet, adSetRevenueMap, metaLeadCoun
                 <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-500">Link Clicks</th>
                 <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-500">CTR</th>
                 <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-500">CPC</th>
+                <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-500">Velocity</th>
               </tr>
             </thead>
             <tbody>
@@ -295,6 +296,18 @@ function GroupSection({ group, adSets, adsByAdSet, adSetRevenueMap, metaLeadCoun
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-gray-500">
                         {cpc != null ? fmtMoney(cpc, 2) : '---'}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums">
+                        {(() => {
+                          const v = velocityMap?.[s.adSetId];
+                          if (!v || v.deals === 0) return <span className="text-gray-300">---</span>;
+                          const color = v.avgDays <= 30 ? 'text-success' : v.avgDays <= 60 ? 'text-warning' : 'text-danger';
+                          return (
+                            <span className={`font-semibold ${color}`} title={`${v.minDays}\u2013${v.maxDays} days range (${v.deals} deals)`}>
+                              {v.avgDays}d
+                            </span>
+                          );
+                        })()}
                       </td>
                     </tr>
 
@@ -393,6 +406,7 @@ export default function AdSetsTab({ data }) {
               adsByAdSet={adsByAdSet}
               adSetRevenueMap={adSetRevenueMap}
               metaLeadCountsByAdSet={metaLeadCountsByAdSet}
+              velocityMap={data?.velocity ?? {}}
             />
           );
         })}

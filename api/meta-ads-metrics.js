@@ -54,7 +54,7 @@ async function fetchMetaAdsMetrics(preset) {
   const [
     totalsRows, monthlyRows, campaignRows, adSetRows,
     adRows, creativeRows, spendCatRows, metaLeadCountRows,
-    adSetRevenueRows, creativeRevenueRows,
+    adSetRevenueRows, creativeRevenueRows, velocityRows,
   ] = await Promise.all([
     // 1. Totals
     sql`
@@ -310,6 +310,26 @@ async function fetchMetaAdsMetrics(preset) {
         and c.created_at::date between ${start}::date and ${end}::date
       group by a.creative_slug
     `,
+
+    // 11. Velocity: avg days from lead to closed deal, per ad set and campaign
+    sql`
+      select ml.ad_set_id,
+             c2.name as campaign_name,
+             count(distinct d.id) as deals,
+             round(avg(extract(epoch from (d.close_date - c.created_at)) / 86400)) as avg_days,
+             round(min(extract(epoch from (d.close_date - c.created_at)) / 86400)) as min_days,
+             round(max(extract(epoch from (d.close_date - c.created_at)) / 86400)) as max_days
+      from meta_leads ml
+      join hs_contacts c    on c.id = ml.matched_contact_id
+      join deal_contacts dc on dc.contact_id = c.id
+      join hs_deals d       on d.id = dc.deal_id
+      join ad_sets s        on s.id = ml.ad_set_id
+      join campaigns c2     on c2.id = s.campaign_id
+      where d.is_closed_won = true
+        and c.created_at is not null
+        and d.close_date is not null
+      group by ml.ad_set_id, c2.name
+    `,
   ]);
 
   // --- Shape results ---
@@ -441,6 +461,17 @@ async function fetchMetaAdsMetrics(preset) {
     leads: Number(r.leads || 0),
   }));
 
+  // Velocity: avg days lead-to-close per ad set
+  const velocity = {};
+  for (const r of velocityRows) {
+    velocity[r.ad_set_id] = {
+      avgDays: Number(r.avg_days || 0),
+      minDays: Number(r.min_days || 0),
+      maxDays: Number(r.max_days || 0),
+      deals: Number(r.deals || 0),
+    };
+  }
+
   return {
     period: { start, end, preset },
     totals,
@@ -453,6 +484,7 @@ async function fetchMetaAdsMetrics(preset) {
     metaLeadCounts,
     adSetRevenue,
     creativeRevenue,
+    velocity,
   };
 }
 
