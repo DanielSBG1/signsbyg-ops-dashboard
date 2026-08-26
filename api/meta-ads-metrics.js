@@ -116,6 +116,7 @@ async function fetchMetaAdsMetrics(preset) {
         ) multi
       ),
       -- Average lead-to-close velocity
+      -- Velocity uses same date range as deals_won so they're consistent
       vel as (
         select
           round(avg(extract(epoch from (d.close_date - c.created_at)) / 86400)) as avg_days,
@@ -130,7 +131,7 @@ async function fetchMetaAdsMetrics(preset) {
           and al.spend_category = 'meta_ads'
           and c.created_at is not null
           and d.close_date is not null
-          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+          and c.created_at::date between ${start}::date and ${end}::date
       )
       select
         p.spend,
