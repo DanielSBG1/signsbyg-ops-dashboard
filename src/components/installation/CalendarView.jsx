@@ -75,10 +75,10 @@ function isPaid(depositPaid) {
 function jobColors(crewColor, depositPaid) {
   const unpaid = isUnpaid(depositPaid);
   if (unpaid) {
-    return { bg: 'rgba(245,158,11,0.35)', border: '#f59e0b', text: '#fde68a', shadow: '#f59e0b', unpaid: true };
+    return { bg: 'rgba(245,158,11,0.12)', border: '#f59e0b', text: '#92400e', shadow: 'transparent', unpaid: true };
   }
   const c = crewColor || '#4b5563';
-  return { bg: c + '40', border: c, text: '#fff', shadow: c, unpaid: false };
+  return { bg: c + '18', border: c, text: '#1e293b', shadow: 'transparent', unpaid: false };
 }
 
 // ─── Multi-day bar helpers ────────────────────────────────────
@@ -338,7 +338,7 @@ function MultiDayBar({ bar, crewColor, updating, onDragStart, onJobClick, header
         color: colors.text,
         fontSize: 11,
         fontWeight: 600,
-        textShadow: `0 0 8px ${colors.shadow}`,
+        textShadow: 'none',
         whiteSpace: 'nowrap',
         gap: 4,
       }}>
@@ -370,9 +370,9 @@ function JobChip({ job, crewColor, updating, onDragStart, onJobClick }) {
 
   let colors;
   if (isDone) {
-    colors = { bg: 'rgba(34,197,94,0.25)', border: '#22c55e', text: '#86efac', shadow: '#22c55e', unpaid: false };
+    colors = { bg: 'rgba(34,197,94,0.10)', border: '#22c55e', text: '#166534', shadow: 'transparent', unpaid: false };
   } else if (isOverdue) {
-    colors = { bg: 'rgba(239,68,68,0.28)', border: '#ef4444', text: '#fca5a5', shadow: '#ef4444', unpaid: false };
+    colors = { bg: 'rgba(239,68,68,0.10)', border: '#ef4444', text: '#991b1b', shadow: 'transparent', unpaid: false };
   } else {
     colors = jobColors(crewColor, job.depositPaid);
   }
@@ -383,13 +383,12 @@ function JobChip({ job, crewColor, updating, onDragStart, onJobClick }) {
       onDragStart={(e) => onDragStart(e, job)}
       onClick={(e) => { e.stopPropagation(); onJobClick(job); }}
       title={`${job.name}\n${job.crews?.join(', ') || 'Unassigned'}${isRescheduled ? ` · ${job.rescheduleCount} reschedule(s)` : ''}`}
-      className="relative flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] cursor-pointer select-none truncate max-w-full transition-opacity hover:brightness-125"
+      className="relative flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] cursor-pointer select-none truncate max-w-full transition-opacity hover:brightness-95"
       style={{
         opacity: updating ? 0.5 : 1,
         backgroundColor: colors.bg,
         borderLeft: `2.5px solid ${colors.border}`,
         color: colors.text,
-        textShadow: `0 0 6px ${colors.shadow}80`,
         fontWeight: 600,
       }}
     >
@@ -412,9 +411,9 @@ function WeekJobCard({ job, crewColor, updating, onDragStart, onJobClick }) {
 
   let colors;
   if (isDone) {
-    colors = { bg: 'rgba(34,197,94,0.20)', border: '#22c55e', text: '#86efac', shadow: '#22c55e', unpaid: false };
+    colors = { bg: 'rgba(34,197,94,0.10)', border: '#22c55e', text: '#166534', shadow: 'transparent', unpaid: false };
   } else if (isOverdue) {
-    colors = { bg: 'rgba(239,68,68,0.22)', border: '#ef4444', text: '#fca5a5', shadow: '#ef4444', unpaid: false };
+    colors = { bg: 'rgba(239,68,68,0.10)', border: '#ef4444', text: '#991b1b', shadow: 'transparent', unpaid: false };
   } else {
     colors = jobColors(crewColor, job.depositPaid);
   }
