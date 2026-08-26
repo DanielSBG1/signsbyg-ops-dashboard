@@ -16,7 +16,7 @@ function StatusIcon({ completed }) {
 }
 
 function NotStartedIcon() {
-  return <span className="w-2 h-2 rounded-full border border-white/20 inline-block" />;
+  return <span className="w-2 h-2 rounded-full border border-gray-300 inline-block" />;
 }
 
 export default function JobDrawer({ gid, onClose }) {
@@ -61,7 +61,7 @@ export default function JobDrawer({ gid, onClose }) {
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-slate-card border-l border-white/10 z-50 overflow-y-auto shadow-2xl">
+      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white border-l border-gray-200 z-50 overflow-y-auto shadow-2xl">
         <div className="p-6 space-y-6">
 
           {/* Header */}
@@ -71,13 +71,13 @@ export default function JobDrawer({ gid, onClose }) {
             </h2>
             <button
               onClick={onClose}
-              className="text-white/40 hover:text-white text-xl shrink-0 mt-0.5"
+              className="text-gray-400 hover:text-gray-900 text-xl shrink-0 mt-0.5"
             >
               ×
             </button>
           </div>
 
-          {loading && <p className="text-white/40 text-sm">Fetching job data...</p>}
+          {loading && <p className="text-gray-400 text-sm">Fetching job data...</p>}
           {error && <p className="text-red-400 text-sm">Error: {error}</p>}
 
           {job && (
@@ -86,9 +86,9 @@ export default function JobDrawer({ gid, onClose }) {
               <div className="flex items-center gap-4">
                 <HealthBadge score={job.score} band={job.band} size="lg" />
                 <div>
-                  <p className="text-white/40 text-xs">Client promise date</p>
+                  <p className="text-gray-400 text-xs">Client promise date</p>
                   <p className={`text-sm font-semibold ${
-                    job.due_on && job.due_on < today ? 'text-red-400' : 'text-white'
+                    job.due_on && job.due_on < today ? 'text-red-400' : 'text-gray-900'
                   }`}>
                     {job.due_on ?? 'No due date set'}
                   </p>
@@ -97,16 +97,16 @@ export default function JobDrawer({ gid, onClose }) {
 
               {/* Penalties */}
               {job.penalties.length > 0 && (
-                <div className="bg-white/[0.03] rounded-xl p-4 space-y-2">
-                  <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-3">Score Breakdown</p>
+                <div className="bg-black/[0.02] rounded-xl p-4 space-y-2">
+                  <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-3">Score Breakdown</p>
                   {job.penalties.map((p, i) => (
                     <div key={i} className="flex items-center justify-between">
-                      <span className="text-xs text-white/70">{p.label}</span>
+                      <span className="text-xs text-gray-600">{p.label}</span>
                       <span className="text-xs text-red-400 font-semibold tabular-nums">{p.points}</span>
                     </div>
                   ))}
-                  <div className="border-t border-white/10 pt-2 flex justify-between">
-                    <span className="text-xs text-white/50">Total score</span>
+                  <div className="border-t border-gray-200 pt-2 flex justify-between">
+                    <span className="text-xs text-gray-500">Total score</span>
                     <span className="text-xs font-bold tabular-nums">{job.score}</span>
                   </div>
                 </div>
@@ -114,7 +114,7 @@ export default function JobDrawer({ gid, onClose }) {
 
               {/* Department timeline */}
               <div>
-                <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-3">Department Timeline</p>
+                <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-3">Department Timeline</p>
                 <div className="space-y-2">
                   {DEPT_ORDER.map(dept => {
                     const sub = subtaskByDept[dept];
@@ -122,14 +122,14 @@ export default function JobDrawer({ gid, onClose }) {
                       return (
                         <div key={dept} className="flex items-center gap-3 py-2 opacity-30">
                           <NotStartedIcon />
-                          <span className="text-xs text-white/40">{DEPT_LABELS[dept]}</span>
-                          <span className="text-[10px] text-white/20 ml-auto">not started</span>
+                          <span className="text-xs text-gray-400">{DEPT_LABELS[dept]}</span>
+                          <span className="text-[10px] text-gray-300 ml-auto">not started</span>
                         </div>
                       );
                     }
                     const isOverdueSub = sub.due_on && sub.due_on < today;
                     return (
-                      <div key={dept} className="flex items-start gap-3 py-2 border-b border-white/[0.04] last:border-0">
+                      <div key={dept} className="flex items-start gap-3 py-2 border-b border-gray-200 last:border-0">
                         <div className="mt-0.5">
                           <StatusIcon completed={sub.completed} />
                         </div>
@@ -140,7 +140,7 @@ export default function JobDrawer({ gid, onClose }) {
                               <span className="text-orange-400 text-[10px] font-bold">REDO</span>
                             )}
                           </div>
-                          <p className="text-white/40 text-[10px]">
+                          <p className="text-gray-400 text-[10px]">
                             {sub.assignee ?? 'Unassigned'}
                           </p>
                           {(dept === 'design' || dept === 'permitting') && sub.commentCount != null && (
@@ -148,7 +148,7 @@ export default function JobDrawer({ gid, onClose }) {
                               (dept === 'design' && sub.commentCount > 6) ||
                               (dept === 'permitting' && sub.commentCount > 15)
                                 ? 'text-orange-400'
-                                : 'text-white/30'
+                                : 'text-gray-300'
                             }`}>
                               {sub.commentCount} comments
                             </p>
@@ -156,11 +156,11 @@ export default function JobDrawer({ gid, onClose }) {
                         </div>
                         <div className="text-right shrink-0">
                           {sub.due_on ? (
-                            <span className={`text-[10px] tabular-nums ${isOverdueSub ? 'text-red-400 font-semibold' : 'text-white/40'}`}>
+                            <span className={`text-[10px] tabular-nums ${isOverdueSub ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
                               {sub.due_on}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-white/20">no date</span>
+                            <span className="text-[10px] text-gray-300">no date</span>
                           )}
                         </div>
                       </div>
@@ -172,16 +172,16 @@ export default function JobDrawer({ gid, onClose }) {
               {/* Production sub-subtasks */}
               {job.productionSubtasks.length > 0 && (
                 <div>
-                  <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-3">Production Stages</p>
+                  <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-3">Production Stages</p>
                   <div className="space-y-1.5">
                     {job.productionSubtasks.map(s => {
                       const isOver = s.due_on && s.due_on < today;
                       return (
                         <div key={s.gid} className="flex items-center gap-3 text-xs">
                           <StatusIcon completed={s.completed} />
-                          <span className="flex-1 text-white/70 truncate">{s.name}</span>
-                          <span className="text-white/40 text-[10px]">{s.assignee ?? '—'}</span>
-                          <span className={`text-[10px] tabular-nums ${isOver ? 'text-red-400' : 'text-white/30'}`}>
+                          <span className="flex-1 text-gray-600 truncate">{s.name}</span>
+                          <span className="text-gray-400 text-[10px]">{s.assignee ?? '—'}</span>
+                          <span className={`text-[10px] tabular-nums ${isOver ? 'text-red-400' : 'text-gray-300'}`}>
                             {s.due_on ?? '—'}
                           </span>
                         </div>

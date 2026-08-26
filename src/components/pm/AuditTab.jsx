@@ -123,26 +123,26 @@ function TaskDetailModal({ task, projectGid, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full space-y-5 overflow-hidden"
+        className="bg-white border border-gray-200 rounded-2xl shadow-2xl max-w-lg w-full space-y-5 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Modal header */}
         <div
-          className={`px-6 pt-5 pb-4 border-b border-white/5 ${meta.bg}`}
+          className={`px-6 pt-5 pb-4 border-b border-gray-200 ${meta.bg}`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1.5 flex-1 min-w-0">
               <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded ${meta.badge}`}>
                 {meta.emoji} {meta.label}
               </span>
-              <h3 className="text-base font-semibold text-white leading-snug">{task.name}</h3>
+              <h3 className="text-base font-semibold text-gray-900 leading-snug">{task.name}</h3>
               {task.section && (
-                <p className="text-xs text-white/40 uppercase tracking-wider">{task.section}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">{task.section}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="text-white/30 hover:text-white/80 text-2xl leading-none mt-0.5 flex-shrink-0"
+              className="text-gray-300 hover:text-gray-700 text-2xl leading-none mt-0.5 flex-shrink-0"
             >
               ×
             </button>
@@ -153,7 +153,7 @@ function TaskDetailModal({ task, projectGid, onClose }) {
           {/* Issues */}
           {(task.reasons ?? []).length > 0 && (
             <div>
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Issues Found</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Issues Found</p>
               <ul className="space-y-1.5 pl-4">
                 {task.reasons.map((r, i) => (
                   <li key={i} className={`text-sm ${meta.text} list-disc`}>{r}</li>
@@ -165,20 +165,20 @@ function TaskDetailModal({ task, projectGid, onClose }) {
           {/* Recommended action */}
           {task.recommendedAction && (
             <div className={`${meta.bg} border ${meta.border} rounded-xl px-4 py-3`}>
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Recommended Action</p>
-              <p className="text-sm text-white/80">{task.recommendedAction}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Recommended Action</p>
+              <p className="text-sm text-gray-700">{task.recommendedAction}</p>
             </div>
           )}
 
           {/* Date row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Last Activity</p>
-              <p className="text-sm text-white/70">{formatDate(task.lastActivity)}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Last Activity</p>
+              <p className="text-sm text-gray-600">{formatDate(task.lastActivity)}</p>
             </div>
             <div>
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Due Date</p>
-              <p className={`text-sm ${isPastDue ? 'text-red-400 font-semibold' : 'text-white/70'}`}>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Due Date</p>
+              <p className={`text-sm ${isPastDue ? 'text-red-400 font-semibold' : 'text-gray-600'}`}>
                 {task.dueOn ? formatDate(task.dueOn) : '—'}
                 {isPastDue && <span className="ml-1 text-xs">(overdue)</span>}
               </p>
@@ -191,7 +191,7 @@ function TaskDetailModal({ task, projectGid, onClose }) {
               href={asanaUrl(projectGid, task.gid)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 text-sm text-white/60 hover:text-white border border-white/10 hover:border-white/30 px-4 py-2.5 rounded-xl transition-colors"
+              className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-4 py-2.5 rounded-xl transition-colors"
             >
               Open in Asana ↗
             </a>
@@ -222,13 +222,13 @@ function TaskMiniCard({ task, onClick }) {
         )}
       </div>
       <p
-        className="text-xs text-white/85 leading-snug overflow-hidden"
+        className="text-xs text-gray-800 leading-snug overflow-hidden"
         title={task.name}
         style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
       >
         {task.name}
       </p>
-      <p className="text-[10px] text-white/30 truncate">{formatDate(task.lastActivity)}</p>
+      <p className="text-[10px] text-gray-300 truncate">{formatDate(task.lastActivity)}</p>
     </button>
   );
 }
@@ -269,30 +269,30 @@ function DeptModal({ stage, tasks, projectGid, onClose }) {
         onClick={onClose}
       >
         <div
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
+          className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
           onClick={e => e.stopPropagation()}
         >
           {/* Modal header */}
           <div
-            className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0"
+            className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0"
             style={{ backgroundColor: 'rgba(234,179,8,0.10)' }}
           >
             <div className="flex items-center gap-3">
               <span className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: stage.color }} />
               <span className="text-lg font-bold" style={{ color: '#fde047' }}>{stage.name}</span>
-              <span className="text-sm text-white/40">{tasks.length} job{tasks.length !== 1 ? 's' : ''}</span>
+              <span className="text-sm text-gray-400">{tasks.length} job{tasks.length !== 1 ? 's' : ''}</span>
             </div>
-            <button onClick={onClose} className="text-white/30 hover:text-white/80 text-2xl leading-none">×</button>
+            <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
           </div>
 
           {/* Column headers */}
-          <div className="grid grid-cols-[28px_1fr_130px_120px_100px_28px] gap-4 px-6 py-3 border-b border-white/5 flex-shrink-0 bg-white/[0.02]">
+          <div className="grid grid-cols-[28px_1fr_130px_120px_100px_28px] gap-4 px-6 py-3 border-b border-gray-200 flex-shrink-0 bg-black/[0.01]">
             {COLS.map(col => (
               <button
                 key={col.key}
                 onClick={() => handleColClick(col.key)}
                 className={`text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-                  sortCol === col.key ? 'text-yellow-300' : 'text-white/35 hover:text-white/65'
+                  sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
                 } ${col.cls}`}
               >
                 {col.label}
@@ -303,7 +303,7 @@ function DeptModal({ stage, tasks, projectGid, onClose }) {
           </div>
 
           {/* Scrollable rows */}
-          <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
+          <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
             {rows.map(task => {
               const meta       = FLAG_META[task.flag] ?? FLAG_META.green;
               const isPastDue  = task.dueOn && task.dueOn < today;
@@ -311,13 +311,13 @@ function DeptModal({ stage, tasks, projectGid, onClose }) {
               return (
                 <div
                   key={task.gid ?? task.name}
-                  className="grid grid-cols-[28px_1fr_130px_120px_100px_28px] gap-4 items-center px-6 py-3.5 hover:bg-white/[0.04] cursor-pointer transition-colors group"
+                  className="grid grid-cols-[28px_1fr_130px_120px_100px_28px] gap-4 items-center px-6 py-3.5 hover:bg-black/[0.02] cursor-pointer transition-colors group"
                   onClick={() => setSelectedTask(task)}
                 >
                   <span className="text-base text-center">{meta.emoji}</span>
-                  <span className="text-sm text-white/90 truncate group-hover:text-white" title={task.name}>{task.name}</span>
-                  <span className="text-sm text-white/45 tabular-nums">{formatDate(task.lastActivity)}</span>
-                  <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-white/45'}`}>
+                  <span className="text-sm text-gray-900 truncate group-hover:text-gray-900" title={task.name}>{task.name}</span>
+                  <span className="text-sm text-gray-400 tabular-nums">{formatDate(task.lastActivity)}</span>
+                  <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
                     {task.dueOn ? formatDate(task.dueOn) : '—'}
                   </span>
                   <span>
@@ -331,7 +331,7 @@ function DeptModal({ stage, tasks, projectGid, onClose }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={e => e.stopPropagation()}
-                    className="text-white/20 hover:text-white/70 text-sm transition-colors"
+                    className="text-gray-300 hover:text-gray-600 text-sm transition-colors"
                   >↗</a>
                 </div>
               );
@@ -365,7 +365,7 @@ function DeptSection({ stage, tasks, projectGid }) {
   return (
     <>
       <button
-        className={`w-full text-left rounded-2xl border flex flex-col overflow-hidden transition-all hover:brightness-110 hover:border-white/25 ${hasBad ? 'border-red-500/30' : 'border-white/10'}`}
+        className={`w-full text-left rounded-2xl border flex flex-col overflow-hidden transition-all hover:brightness-110 hover:border-gray-300 ${hasBad ? 'border-red-500/30' : 'border-gray-200'}`}
         onClick={() => setModalOpen(true)}
       >
         {/* Colored header strip */}
@@ -376,18 +376,18 @@ function DeptSection({ stage, tasks, projectGid }) {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
             <span className="text-sm font-bold" style={{ color: '#fde047' }}>{stage.name}</span>
-            <span className="text-xs text-white/40 ml-auto">{tasks.length} jobs</span>
+            <span className="text-xs text-gray-400 ml-auto">{tasks.length} jobs</span>
           </div>
         </div>
 
         {/* Flag chips */}
-        <div className="px-4 py-3 bg-white/[0.02] flex items-center gap-1.5 flex-wrap">
+        <div className="px-4 py-3 bg-black/[0.01] flex items-center gap-1.5 flex-wrap">
           {urgentCount > 0 && <span className="text-xs bg-red-500/25 text-red-400 px-2 py-0.5 rounded-full font-bold">🚨 {urgentCount}</span>}
           {redCount    > 0 && <span className="text-xs bg-red-500/20  text-red-400 px-2 py-0.5 rounded-full font-bold">🔴 {redCount}</span>}
           {yellowCount > 0 && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">🟡 {yellowCount}</span>}
           {greenCount  > 0 && <span className="text-xs bg-green-500/20  text-green-400 px-2 py-0.5 rounded-full">✅ {greenCount}</span>}
-          {tasks.length === 0 && <span className="text-xs text-white/20">No tasks</span>}
-          <span className="ml-auto text-[10px] text-white/25">Click to open ↗</span>
+          {tasks.length === 0 && <span className="text-xs text-gray-300">No tasks</span>}
+          <span className="ml-auto text-[10px] text-gray-300">Click to open ↗</span>
         </div>
       </button>
 
@@ -412,12 +412,12 @@ function PMButton({ pm, isActive, onClick }) {
       onClick={onClick}
       className={`w-full text-left rounded-xl px-3 py-2.5 transition-colors border ${
         isActive
-          ? 'bg-white/10 border-white/15 text-white'
-          : 'bg-transparent border-transparent hover:bg-white/[0.04] text-white/70 hover:text-white/90'
+          ? 'bg-black/[0.05] border-gray-200 text-gray-900'
+          : 'bg-transparent border-transparent hover:bg-black/[0.02] text-gray-600 hover:text-gray-900'
       }`}
     >
       <p className="text-sm font-semibold truncate mb-1">{name}</p>
-      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-white/50">
+      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-gray-500">
         {counts.urgent     > 0 && <span className="text-red-400">🚨 {counts.urgent}</span>}
         {counts.mislabeled > 0 && <span className="text-orange-400">⚠️ {counts.mislabeled}</span>}
         {counts.red        > 0 && <span className="text-red-400">🔴 {counts.red}</span>}
@@ -503,18 +503,18 @@ function PmPipelineHeader({ pm, scorecardMap }) {
   const processedPct  = total ? Math.round(((total - unprocessed) / total) * 100) : 100;
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-5 space-y-5">
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-5">
       {pmScore !== null && (
         <div>
-          <div className="flex items-center justify-between text-sm text-white/50 mb-2">
-            <span className="font-medium text-white/70">PM Performance Score</span>
+          <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+            <span className="font-medium text-gray-600">PM Performance Score</span>
             <span className="font-bold text-xl" style={{ color: healthBarColor(pmScore) }}>{pmScore}</span>
           </div>
-          <div className="h-4 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-4 bg-black/[0.05] rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pmScore}%`, backgroundColor: healthBarColor(pmScore) }} />
           </div>
           {/* Score breakdown */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-white/35">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-400">
             <span className={onTimePct < 60 ? 'text-red-400' : ''}>
               {onTimePct}% on time
             </span>
@@ -528,7 +528,7 @@ function PmPipelineHeader({ pm, scorecardMap }) {
 
       {totalStaged > 0 && (
         <div>
-          <p className="text-sm text-white/40 mb-3">Pipeline — click a stage to see projects</p>
+          <p className="text-sm text-gray-400 mb-3">Pipeline — click a stage to see projects</p>
           {/* Bar */}
           <div className="flex gap-1 items-end" style={{ height: '52px' }}>
             {PIPELINE_STAGES.map(stage => {
@@ -553,7 +553,7 @@ function PmPipelineHeader({ pm, scorecardMap }) {
                   onClick={() => toggleStage(stage.name)}
                 >
                   {(isHovered || isActive) && (
-                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs text-white whitespace-nowrap font-semibold">
+                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs text-gray-900 whitespace-nowrap font-semibold">
                       {tasks.length}
                     </span>
                   )}
@@ -591,8 +591,8 @@ function PmPipelineHeader({ pm, scorecardMap }) {
                   className={`flex items-center gap-1.5 text-sm transition-opacity ${activeStage && !isActive ? 'opacity-30' : 'opacity-100'}`}
                 >
                   <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: stage.color }} />
-                  <span className={isActive ? 'text-white font-semibold' : 'text-white/60'}>{stage.name}</span>
-                  <span className="text-white/30">({count})</span>
+                  <span className={isActive ? 'text-gray-900 font-semibold' : 'text-gray-500'}>{stage.name}</span>
+                  <span className="text-gray-300">({count})</span>
                   {badCount > 0 && (
                     <span className="text-xs text-red-400 font-semibold">· 🔴 {badCount} red</span>
                   )}
@@ -604,11 +604,11 @@ function PmPipelineHeader({ pm, scorecardMap }) {
       )}
 
       {activeStage && (
-        <div className="border-t border-white/5 pt-4 space-y-2">
-          <p className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">
+        <div className="border-t border-gray-200 pt-4 space-y-2">
+          <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
             {activeStage} · {stageTasks.length} project{stageTasks.length !== 1 ? 's' : ''}
           </p>
-          <div className="grid grid-cols-[28px_1fr_90px_90px_70px_32px] gap-3 px-4 pb-1 text-xs text-white/30 uppercase tracking-wider">
+          <div className="grid grid-cols-[28px_1fr_90px_90px_70px_32px] gap-3 px-4 pb-1 text-xs text-gray-300 uppercase tracking-wider">
             <span />
             <span>Project</span><span>Created</span><span>Due Date</span><span>Progress</span><span />
           </div>
@@ -617,18 +617,18 @@ function PmPipelineHeader({ pm, scorecardMap }) {
             const stagesDone  = (sc?.subtasks ?? []).filter(s => s.completed).length;
             return (
               <a key={task.gid} href={asanaUrl(pm.projectGid, task.gid)} target="_blank" rel="noopener noreferrer"
-                className="grid grid-cols-[28px_1fr_90px_90px_70px_32px] gap-3 items-center bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-white/15 rounded-xl px-4 py-3 transition-colors group"
+                className="grid grid-cols-[28px_1fr_90px_90px_70px_32px] gap-3 items-center bg-black/[0.02] hover:bg-black/[0.03] border border-gray-200 hover:border-gray-200 rounded-xl px-4 py-3 transition-colors group"
               >
                 <span className="text-base text-center">{FLAG_META[task.flag]?.emoji ?? '⬜'}</span>
-                <span className="text-sm text-white/90 truncate group-hover:text-white">{task.name}</span>
-                <span className="text-xs text-white/40 tabular-nums">{task.createdAt ? formatDate(task.createdAt) : '—'}</span>
-                <span className={`text-xs tabular-nums ${task.dueOn && task.dueOn < new Date().toISOString().slice(0,10) ? 'text-red-400 font-semibold' : 'text-white/40'}`}>
+                <span className="text-sm text-gray-900 truncate group-hover:text-gray-900">{task.name}</span>
+                <span className="text-xs text-gray-400 tabular-nums">{task.createdAt ? formatDate(task.createdAt) : '—'}</span>
+                <span className={`text-xs tabular-nums ${task.dueOn && task.dueOn < new Date().toISOString().slice(0,10) ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
                   {task.dueOn ? formatDate(task.dueOn) : '—'}
                 </span>
                 <span className="text-sm font-semibold tabular-nums" style={{ color: healthBarColor((stagesDone / 5) * 100) }}>
                   {stagesDone}/5
                 </span>
-                <span className="text-white/20 group-hover:text-white/50 text-sm text-right">↗</span>
+                <span className="text-gray-300 group-hover:text-gray-500 text-sm text-right">↗</span>
               </a>
             );
           })}
@@ -650,7 +650,7 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
   if (!data || !Array.isArray(data.pms) || data.pms.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-white/30 text-sm">Audit data unavailable</p>
+        <p className="text-gray-300 text-sm">Audit data unavailable</p>
       </div>
     );
   }
@@ -675,7 +675,7 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
           ))}
         </div>
         <div className="flex-1 flex items-center justify-center h-48">
-          <p className="text-white/30 text-sm">Select a PM to view their report</p>
+          <p className="text-gray-300 text-sm">Select a PM to view their report</p>
         </div>
       </div>
     );
@@ -691,7 +691,7 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
       if (t.flag === 'mislabeled') { groups['Mislabeled'].push(t);  return; }
       const matched = matchStage(t.section);
       // Normalize section name: collapse spaces around punctuation and trim
-      const rawKey  = matched?.name ?? (t.section ? t.section.replace(/\s*([\/,\-])\s*/g, '$1').trim() : 'Other');
+      const rawKey  = matched?.name ?? (t.section ? t.section.replace(/\s*([\/, \-])\s*/g, '$1').trim() : 'Other');
       const key     = rawKey || 'Other';
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
@@ -704,13 +704,13 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
   return (
     <div className="flex gap-4 items-start">
       {/* Left: PM list */}
-      <div className="w-48 shrink-0 bg-slate-card border border-white/5 rounded-2xl p-2 space-y-0.5">
-        <p className="text-xs uppercase tracking-wider text-white/30 px-2 pt-1 pb-0.5">Project Managers</p>
+      <div className="w-48 shrink-0 bg-white border border-gray-200 rounded-2xl p-2 space-y-0.5">
+        <p className="text-xs uppercase tracking-wider text-gray-300 px-2 pt-1 pb-0.5">Project Managers</p>
         {data.pms.map(pm => (
           <PMButton key={pm.name} pm={pm} isActive={pm.name === activePmName} onClick={() => onSelectPm(pm.name)} />
         ))}
         {data.generatedAt && (
-          <p className="text-[10px] text-white/20 px-2 pt-2 pb-1">Generated {formatDate(data.generatedAt)}</p>
+          <p className="text-[10px] text-gray-300 px-2 pt-2 pb-1">Generated {formatDate(data.generatedAt)}</p>
         )}
       </div>
 
@@ -718,11 +718,11 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
       <div className="flex-1 min-w-0 space-y-4">
 
         {/* Summary header */}
-        <div className="bg-slate-card border border-white/5 rounded-2xl p-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h2 className="text-xl font-semibold">{activePm.name}</h2>
-              <p className="text-white/40 text-sm mt-0.5">{(activePm.tasks ?? []).length} active jobs</p>
+              <p className="text-gray-400 text-sm mt-0.5">{(activePm.tasks ?? []).length} active jobs</p>
             </div>
             <div className="flex gap-4 text-base flex-wrap">
               {counts.urgent     > 0 && <span className="flex items-center gap-1.5 text-red-400 font-semibold">🚨 <span>{counts.urgent} unprocessed</span></span>}
@@ -772,8 +772,8 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
         </div>
 
         {(activePm.tasks ?? []).length === 0 && (
-          <div className="bg-slate-card border border-white/5 rounded-2xl p-8 text-center">
-            <p className="text-white/30 text-sm">No flagged tasks for {activePm.name}</p>
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center">
+            <p className="text-gray-300 text-sm">No flagged tasks for {activePm.name}</p>
           </div>
         )}
       </div>

@@ -66,7 +66,7 @@ function computeOnTimeScore(sc, auditTask) {
 function ScoreBar({ score }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-black/[0.05] rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${score}%`, backgroundColor: healthBarColor(score) }}
@@ -106,7 +106,7 @@ function StageProgress({ subtasks }) {
           />
         );
       })}
-      <span className="text-[10px] text-white/30 ml-1">{done}/{total}</span>
+      <span className="text-[10px] text-gray-300 ml-1">{done}/{total}</span>
     </div>
   );
 }
@@ -174,7 +174,7 @@ export default function OnTimeTab({ data, auditData }) {
   if (!data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-white/30 text-sm">Loading data...</p>
+        <p className="text-gray-300 text-sm">Loading data...</p>
       </div>
     );
   }
@@ -183,43 +183,43 @@ export default function OnTimeTab({ data, auditData }) {
     <div className="space-y-5">
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-slate-card border border-red-500/20 rounded-xl p-4 text-center">
+        <div className="bg-white border border-red-500/20 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-red-400">{atRisk}</p>
-          <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1">At Risk · Score &lt;50</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">At Risk · Score &lt;50</p>
         </div>
-        <div className="bg-slate-card border border-yellow-500/20 rounded-xl p-4 text-center">
+        <div className="bg-white border border-yellow-500/20 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-yellow-400">{watch}</p>
-          <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1">Watch · Score 50–69</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">Watch · Score 50–69</p>
         </div>
-        <div className="bg-slate-card border border-green-500/20 rounded-xl p-4 text-center">
+        <div className="bg-white border border-green-500/20 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-400">{onTrack}</p>
-          <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1">On Track · Score ≥70</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">On Track · Score ≥70</p>
         </div>
       </div>
 
       {/* Controls */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex gap-1 bg-white/5 rounded-lg p-1">
+        <div className="flex gap-1 bg-black/[0.03] rounded-lg p-1">
           {[['all', 'All Jobs'], ['at-risk', 'At Risk'], ['on-track', 'On Track']].map(([val, label]) => (
             <button
               key={val}
               onClick={() => setFilter(val)}
               className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                filter === val ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/70'
+                filter === val ? 'bg-black/[0.05] text-gray-900' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               {label}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 text-xs text-white/40">
+        <div className="flex items-center gap-2 text-xs text-gray-400">
           Sort:
           {[['score', 'Score'], ['due', 'Due Date'], ['pm', 'PM']].map(([val, label]) => (
             <button
               key={val}
               onClick={() => setSortBy(val)}
               className={`px-2 py-1 rounded transition-colors ${
-                sortBy === val ? 'text-white bg-white/10' : 'hover:text-white/70'
+                sortBy === val ? 'text-gray-900 bg-black/[0.05]' : 'hover:text-gray-600'
               }`}
             >
               {label}
@@ -229,7 +229,7 @@ export default function OnTimeTab({ data, auditData }) {
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_80px_140px_100px_130px] gap-4 px-4 text-[10px] text-white/30 uppercase tracking-wider">
+      <div className="grid grid-cols-[1fr_80px_140px_100px_130px] gap-4 px-4 text-[10px] text-gray-300 uppercase tracking-wider">
         <span>Job</span>
         <span>PM</span>
         <span>Stage Progress</span>
@@ -245,24 +245,24 @@ export default function OnTimeTab({ data, auditData }) {
           return (
             <div
               key={job.gid}
-              className="grid grid-cols-[1fr_80px_140px_100px_130px] gap-4 items-center bg-slate-card border border-white/5 rounded-xl px-4 py-3"
+              className="grid grid-cols-[1fr_80px_140px_100px_130px] gap-4 items-center bg-white border border-gray-200 rounded-xl px-4 py-3"
             >
               {/* Name */}
-              <p className="text-sm text-white/90 truncate" title={job.name}>{job.name}</p>
+              <p className="text-sm text-gray-900 truncate" title={job.name}>{job.name}</p>
 
               {/* PM */}
-              <p className="text-xs text-white/50 truncate">{job.pmName}</p>
+              <p className="text-xs text-gray-500 truncate">{job.pmName}</p>
 
               {/* Stage progress dots */}
               <StageProgress subtasks={job.subtasks} />
 
               {/* Due date */}
               <div>
-                <p className={`text-xs tabular-nums ${duePast ? 'text-red-400 font-semibold' : dueSoon ? 'text-yellow-400' : 'text-white/50'}`}>
+                <p className={`text-xs tabular-nums ${duePast ? 'text-red-400 font-semibold' : dueSoon ? 'text-yellow-400' : 'text-gray-500'}`}>
                   {formatDate(job.due_on)}
                 </p>
                 {job.daysLeft !== null && (
-                  <p className="text-[10px] text-white/30">
+                  <p className="text-[10px] text-gray-300">
                     {job.daysLeft < 0
                       ? `${Math.abs(job.daysLeft)}d overdue`
                       : `${job.daysLeft}d left`}
@@ -276,7 +276,7 @@ export default function OnTimeTab({ data, auditData }) {
           );
         })}
         {filtered.length === 0 && (
-          <div className="text-center py-10 text-white/30 text-sm">No jobs match this filter.</div>
+          <div className="text-center py-10 text-gray-300 text-sm">No jobs match this filter.</div>
         )}
       </div>
     </div>

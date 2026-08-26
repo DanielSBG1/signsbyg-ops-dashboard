@@ -13,8 +13,8 @@ const BAND_OPTIONS = [
 function PmAuditSummary({ auditData, onAuditPmClick }) {
   if (!auditData?.pms?.length) return null;
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-4 mb-4">
-      <p className="text-white/40 text-xs font-medium mb-3">PM Pipeline Audit</p>
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+      <p className="text-gray-400 text-xs font-medium mb-3">PM Pipeline Audit</p>
       <div className="flex flex-wrap gap-2">
         {auditData.pms.map(pm => {
           const hasIssues = pm.counts.urgent > 0 || pm.counts.red > 0;
@@ -22,13 +22,13 @@ function PmAuditSummary({ auditData, onAuditPmClick }) {
             <button
               key={pm.name}
               onClick={() => onAuditPmClick(pm.name)}
-              className={`px-3 py-2 rounded-xl border text-left transition-colors hover:bg-white/10 ${
+              className={`px-3 py-2 rounded-xl border text-left transition-colors hover:bg-black/[0.05] ${
                 hasIssues
                   ? 'border-red-500/30 bg-red-500/5'
-                  : 'border-white/10 bg-white/5'
+                  : 'border-gray-200 bg-black/[0.03]'
               }`}
             >
-              <p className="text-sm font-medium text-white/80">{pm.name}</p>
+              <p className="text-sm font-medium text-gray-700">{pm.name}</p>
               <div className="flex gap-1.5 text-xs mt-0.5">
                 {pm.counts.urgent > 0 && <span className="text-red-400">🚨 {pm.counts.urgent}</span>}
                 {pm.counts.red    > 0 && <span className="text-red-400">🔴 {pm.counts.red}</span>}
@@ -63,11 +63,11 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
     <div>
       <PmAuditSummary auditData={auditData} onAuditPmClick={onAuditPmClick} />
 
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
             <h2 className="text-lg font-semibold">PM Scorecards</h2>
-            <p className="text-white/40 text-xs mt-0.5">
+            <p className="text-gray-400 text-xs mt-0.5">
               {filtered.length} of {data.scorecards.length} jobs · worst first
             </p>
           </div>
@@ -76,13 +76,13 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
             <select
               value={bandFilter}
               onChange={e => setBandFilter(e.target.value)}
-              className="bg-white/10 text-white/80 text-xs rounded px-2 py-1 border border-white/10"
+              className="bg-black/[0.05] text-gray-700 text-xs rounded px-2 py-1 border border-gray-200"
             >
               {BAND_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
-            <label className="flex items-center gap-1.5 text-xs text-white/60 cursor-pointer">
+            <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
               <input
                 type="checkbox"
                 checked={redoOnly}
@@ -91,7 +91,7 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
               />
               REDO only
             </label>
-            <label className="flex items-center gap-1.5 text-xs text-white/60 cursor-pointer">
+            <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
               <input
                 type="checkbox"
                 checked={overdueOnly}
@@ -106,28 +106,28 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-white/40 border-b border-white/5">
+              <tr className="text-gray-400 border-b border-gray-200">
                 <th className="text-left py-2 pr-4 font-medium">Score</th>
                 <th className="text-left py-2 pr-4 font-medium">Job</th>
                 <th className="text-left py-2 pr-4 font-medium">Due</th>
                 <th className="text-left py-2 pr-4 font-medium">Flags</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-gray-100">
               {filtered.map(j => (
                 <tr
                   key={j.gid}
-                  className="hover:bg-white/[0.03] cursor-pointer transition-colors"
+                  className="hover:bg-black/[0.02] cursor-pointer transition-colors"
                   onClick={() => onJobClick(j.gid)}
                 >
                   <td className="py-2 pr-4">
                     <HealthBadge score={j.score} band={j.band} />
                   </td>
-                  <td className="py-2 pr-4 text-white/80 max-w-xs truncate">{j.name}</td>
+                  <td className="py-2 pr-4 text-gray-700 max-w-xs truncate">{j.name}</td>
                   <td className={`py-2 pr-4 tabular-nums ${
                     j.due_on && j.due_on < new Date().toISOString().slice(0, 10)
                       ? 'text-red-400'
-                      : 'text-white/40'
+                      : 'text-gray-400'
                   }`}>
                     {j.due_on ?? '—'}
                   </td>
@@ -139,7 +139,7 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-white/30">
+                  <td colSpan={4} className="py-8 text-center text-gray-300">
                     No jobs match the current filters.
                   </td>
                 </tr>

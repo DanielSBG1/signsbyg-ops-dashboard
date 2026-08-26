@@ -9,12 +9,12 @@ export default function DepartmentCard({ deptKey, label, lead, tasks, onJobClick
   const weekTasks = tasks.filter(t => t.due_on && t.due_on >= now && t.due_on <= week);
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-4 flex flex-col">
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col">
       {/* Card header */}
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="text-sm font-semibold">{label}</h3>
-          <p className="text-white/40 text-xs">{lead}</p>
+          <p className="text-gray-400 text-xs">{lead}</p>
         </div>
         <div className="flex gap-1.5">
           {overdueTasks.length > 0 && (
@@ -30,12 +30,12 @@ export default function DepartmentCard({ deptKey, label, lead, tasks, onJobClick
         </div>
       </div>
 
-      <p className="text-white/30 text-[10px] mb-3">{tasks.length} active tasks</p>
+      <p className="text-gray-300 text-[10px] mb-3">{tasks.length} active tasks</p>
 
       {/* Task list */}
       <div className="space-y-0.5 overflow-y-auto max-h-72 flex-1">
         {tasks.length === 0 && (
-          <p className="text-white/20 text-xs py-2">Queue empty</p>
+          <p className="text-gray-300 text-xs py-2">Queue empty</p>
         )}
         {tasks.map(t => {
           const isOverdue = t.due_on && t.due_on < now;
@@ -43,10 +43,10 @@ export default function DepartmentCard({ deptKey, label, lead, tasks, onJobClick
           return (
             <div
               key={t.gid}
-              className="flex items-center gap-2 py-1 px-1 -mx-1 rounded cursor-pointer hover:bg-white/[0.04] transition-colors"
+              className="flex items-center gap-2 py-1 px-1 -mx-1 rounded cursor-pointer hover:bg-black/[0.02] transition-colors"
               onClick={() => onJobClick(t.parentGid || t.gid)}
             >
-              <span className="flex-1 text-xs text-white/75 truncate" title={t.name}>
+              <span className="flex-1 text-xs text-gray-700 truncate" title={t.name}>
                 {t.name.replace(/^(DESIGN|PERMITTING|PRODUCTION|INSTALLATION|INVOICING)\s*[-–]\s*/i, '')}
               </span>
               {t.isRedo && (
@@ -56,13 +56,13 @@ export default function DepartmentCard({ deptKey, label, lead, tasks, onJobClick
                 <span className={`text-[10px] tabular-nums shrink-0 ${
                   isOverdue ? 'text-red-400 font-semibold' :
                   isThisWeek ? 'text-yellow-400' :
-                  'text-white/30'
+                  'text-gray-300'
                 }`}>
                   {t.due_on}
                 </span>
               )}
               {!t.due_on && (
-                <span className="text-white/20 text-[10px] shrink-0">no date</span>
+                <span className="text-gray-300 text-[10px] shrink-0">no date</span>
               )}
             </div>
           );
