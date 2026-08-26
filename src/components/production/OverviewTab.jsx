@@ -90,7 +90,7 @@ function normalizeStageKey(taskName) {
 
 // ─── Data helpers ─────────────────────────────────────────────
 
-// Returns segments sorted critical→at_risk→watch→healthy→no_data
+// Returns segments sorted critical\u2192at_risk\u2192watch\u2192healthy\u2192no_data
 // Each: { band, label, colorHex, count, jobs }
 function buildHealthSegments(scoredJobs) {
   const map = {};
@@ -115,7 +115,7 @@ function buildHealthSegments(scoredJobs) {
 
 // Returns segments in PIPELINE_FLOW order (only departments with tasks)
 // Each: { name (lowercase key), label (display), colorHex, count, taskRows }
-// taskRows: [{ job, stageDueOn }] — job has _health attached (scored)
+// taskRows: [{ job, stageDueOn }] \u2014 job has _health attached (scored)
 function buildStageSegments(scoredJobs) {
   const map = {};
   for (const job of scoredJobs) {
@@ -149,7 +149,7 @@ function buildStageSegments(scoredJobs) {
 // ─── Shared utilities ─────────────────────────────────────────
 
 function formatDate(dateStr) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '\u2014';
   try {
     return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric',
@@ -157,7 +157,7 @@ function formatDate(dateStr) {
   } catch { return dateStr; }
 }
 
-// ─── HealthJobsModal ──────────────────────────────────────────
+// ─── HealthJobsModal ────────────────────────────────────────
 
 function HealthJobsModal({ segment, today, onClose, onJobClick }) {
   const [sortCol, setSortCol] = useState('score');
@@ -196,60 +196,60 @@ function HealthJobsModal({ segment, today, onClose, onJobClick }) {
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+        className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0"
+          className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0"
           style={{ backgroundColor: `${segment.colorHex}22` }}
         >
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: segment.colorHex }} />
-            <span className="text-lg font-bold text-white">
-              {segment.label} — {segment.count} job{segment.count !== 1 ? 's' : ''}
+            <span className="text-lg font-bold text-gray-900">
+              {segment.label} \u2014 {segment.count} job{segment.count !== 1 ? 's' : ''}
             </span>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-white/30 hover:text-white/80 text-2xl leading-none">×</button>
+          <button onClick={onClose} aria-label="Close" className="text-gray-300 hover:text-gray-700 text-2xl leading-none">\u00d7</button>
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[1fr_80px_130px_110px_40px] gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
+        <div className="grid grid-cols-[1fr_80px_130px_110px_40px] gap-4 px-6 py-3 border-b border-gray-200 bg-black/[0.01] flex-shrink-0">
           {COLS.map(col => (
             <button
               key={col.key}
               onClick={() => handleCol(col.key)}
               className={`text-left text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-                sortCol === col.key ? 'text-yellow-300' : 'text-white/35 hover:text-white/65'
+                sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               {col.label}
-              {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+              {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>}
             </button>
           ))}
-          <span className="text-xs uppercase tracking-wider text-white/35">Flags</span>
+          <span className="text-xs uppercase tracking-wider text-gray-400">Flags</span>
           <span />
         </div>
 
         {/* Rows */}
         <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
           {rows.length === 0 && (
-            <p className="px-6 py-8 text-center text-white/30 text-sm">No jobs</p>
+            <p className="px-6 py-8 text-center text-gray-300 text-sm">No jobs</p>
           )}
           {rows.map(job => {
             const isPastDue = job.due_on && job.due_on < today;
             return (
               <div
                 key={job.gid}
-                className="grid grid-cols-[1fr_80px_130px_110px_40px] gap-4 items-center px-6 py-3 hover:bg-white/[0.04] cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_80px_130px_110px_40px] gap-4 items-center px-6 py-3 hover:bg-black/[0.02] cursor-pointer transition-colors"
                 onClick={() => { onJobClick(job); onClose(); }}
               >
-                <span className="text-sm text-white/90 truncate" title={job.name}>{job.name}</span>
+                <span className="text-sm text-gray-900 truncate" title={job.name}>{job.name}</span>
                 <span className="text-sm font-bold tabular-nums" style={{ color: segment.colorHex }}>
-                  {job._health.score ?? '—'}
+                  {job._health.score ?? '\u2014'}
                 </span>
-                <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-white/50'}`}>
-                  {job.due_on ? formatDate(job.due_on) : '—'}
+                <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
+                  {job.due_on ? formatDate(job.due_on) : '\u2014'}
                   {isPastDue && <span className="ml-1 text-xs">(late)</span>}
                 </span>
                 <div className="flex gap-1 flex-wrap">
@@ -260,7 +260,7 @@ function HealthJobsModal({ segment, today, onClose, onJobClick }) {
                     <span className="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded-full">LATE</span>
                   )}
                   {job.projectedLate && (
-                    <span className="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded-full">⚠ PROJ. LATE</span>
+                    <span className="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded-full">\u26a0 PROJ. LATE</span>
                   )}
                 </div>
                 <a
@@ -268,8 +268,8 @@ function HealthJobsModal({ segment, today, onClose, onJobClick }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-white/30 hover:text-white/70 text-xs transition-colors"
-                >↗</a>
+                  className="text-gray-300 hover:text-gray-600 text-xs transition-colors"
+                >\u2197</a>
               </div>
             );
           })}
@@ -279,7 +279,7 @@ function HealthJobsModal({ segment, today, onClose, onJobClick }) {
   );
 }
 
-// ─── StageJobsModal ───────────────────────────────────────────
+// ─── StageJobsModal ─────────────────────────────────────────
 
 function StageJobsModal({ segment, today, onClose, onJobClick }) {
   const [sortCol, setSortCol] = useState('stageDueOn');
@@ -318,46 +318,46 @@ function StageJobsModal({ segment, today, onClose, onJobClick }) {
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+        className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0"
+          className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0"
           style={{ backgroundColor: `${segment.colorHex}22` }}
         >
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: segment.colorHex }} />
-            <span className="text-lg font-bold text-white capitalize">
-              {segment.label} — {segment.count} open task{segment.count !== 1 ? 's' : ''}
+            <span className="text-lg font-bold text-gray-900 capitalize">
+              {segment.label} \u2014 {segment.count} open task{segment.count !== 1 ? 's' : ''}
             </span>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-white/30 hover:text-white/80 text-2xl leading-none">×</button>
+          <button onClick={onClose} aria-label="Close" className="text-gray-300 hover:text-gray-700 text-2xl leading-none">\u00d7</button>
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[1fr_110px_65px_120px_80px_40px] gap-3 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
+        <div className="grid grid-cols-[1fr_110px_65px_120px_80px_40px] gap-3 px-6 py-3 border-b border-gray-200 bg-black/[0.01] flex-shrink-0">
           {COLS.map(col => (
             <button
               key={col.key}
               onClick={() => handleCol(col.key)}
               className={`text-left text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-                sortCol === col.key ? 'text-yellow-300' : 'text-white/35 hover:text-white/65'
+                sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               {col.label}
-              {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+              {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>}
             </button>
           ))}
-          <span className="text-xs uppercase tracking-wider text-white/35">Flags</span>
-          <span className="text-xs uppercase tracking-wider text-white/35">Status</span>
+          <span className="text-xs uppercase tracking-wider text-gray-400">Flags</span>
+          <span className="text-xs uppercase tracking-wider text-gray-400">Status</span>
           <span />
         </div>
 
         {/* Rows */}
         <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
           {rows.length === 0 && (
-            <p className="px-6 py-8 text-center text-white/30 text-sm">No open tasks</p>
+            <p className="px-6 py-8 text-center text-gray-300 text-sm">No open tasks</p>
           )}
           {rows.map((row, i) => {
             const isOverdue   = row.stageDueOn && row.stageDueOn < today;
@@ -366,16 +366,16 @@ function StageJobsModal({ segment, today, onClose, onJobClick }) {
             return (
               <div
                 key={`${row.job.gid}-${row.stageDueOn ?? 'nodate'}-${i}`}
-                className="grid grid-cols-[1fr_110px_65px_120px_80px_40px] gap-3 items-center px-6 py-3 hover:bg-white/[0.04] cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_110px_65px_120px_80px_40px] gap-3 items-center px-6 py-3 hover:bg-black/[0.02] cursor-pointer transition-colors"
                 onClick={() => { onJobClick(row.job); onClose(); }}
               >
-                <span className="text-sm text-white/90 truncate" title={row.job.name}>{row.job.name}</span>
-                <span className={`text-sm tabular-nums ${isOverdue ? 'text-red-400 font-semibold' : 'text-white/50'}`}>
-                  {row.stageDueOn ? formatDate(row.stageDueOn) : '—'}
+                <span className="text-sm text-gray-900 truncate" title={row.job.name}>{row.job.name}</span>
+                <span className={`text-sm tabular-nums ${isOverdue ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
+                  {row.stageDueOn ? formatDate(row.stageDueOn) : '\u2014'}
                   {isOverdue && <span className="ml-1 text-xs">(late)</span>}
                 </span>
                 <span className="text-sm font-bold tabular-nums" style={{ color: healthColor }}>
-                  {healthScore ?? '—'}
+                  {healthScore ?? '\u2014'}
                 </span>
                 <div className="flex gap-1 flex-wrap">
                   {row.job.redoType && (
@@ -385,16 +385,16 @@ function StageJobsModal({ segment, today, onClose, onJobClick }) {
                     <span className="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded-full">LATE</span>
                   )}
                 </div>
-                <span className={`text-xs ${isOverdue ? 'text-red-400' : 'text-white/20'}`}>
-                  {isOverdue ? 'Overdue' : '—'}
+                <span className={`text-xs ${isOverdue ? 'text-red-400' : 'text-gray-300'}`}>
+                  {isOverdue ? 'Overdue' : '\u2014'}
                 </span>
                 <a
                   href={`https://app.asana.com/0/0/${row.job.gid}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-white/30 hover:text-white/70 text-xs transition-colors"
-                >↗</a>
+                  className="text-gray-300 hover:text-gray-600 text-xs transition-colors"
+                >\u2197</a>
               </div>
             );
           })}
@@ -404,7 +404,7 @@ function StageJobsModal({ segment, today, onClose, onJobClick }) {
   );
 }
 
-// ─── SegmentedBar (shared) ────────────────────────────────────
+// ─── SegmentedBar (shared) ──────────────────────────────────
 
 function SegmentedBar({ segments, total, onSegmentClick }) {
   return (
@@ -419,9 +419,9 @@ function SegmentedBar({ segments, total, onSegmentClick }) {
             style={{ width: `${(seg.count / total) * 100}%` }}
           >
             {/* Tooltip */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-[#1e1e30] border border-white/10 rounded-md shadow-xl text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-              <span className="font-bold text-white">{seg.label}</span>
-              <span className="text-white/40 ml-1.5">{seg.count}</span>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-white border border-gray-200 rounded-md shadow-xl text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+              <span className="font-bold text-gray-900">{seg.label}</span>
+              <span className="text-gray-400 ml-1.5">{seg.count}</span>
             </div>
             <button
               className={`w-full h-full hover:brightness-125 transition-all focus:outline-none ${isFirst ? 'rounded-l-lg' : ''} ${isLast ? 'rounded-r-lg' : ''}`}
@@ -435,7 +435,7 @@ function SegmentedBar({ segments, total, onSegmentClick }) {
   );
 }
 
-// ─── PipelineSection ──────────────────────────────────────────
+// ─── PipelineSection ────────────────────────────────────────
 
 function PipelineSection({ scoredJobs, today, onJobClick }) {
   const [activeHealth, setActiveHealth] = useState(null);
@@ -448,26 +448,26 @@ function PipelineSection({ scoredJobs, today, onJobClick }) {
 
   if (totalJobs === 0) {
     return (
-      <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">
+      <div className="bg-black/[0.02] border border-gray-200 rounded-2xl p-5">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           Overall Production Health
         </h2>
-        <p className="text-white/30 text-sm text-center py-4">No active jobs</p>
+        <p className="text-gray-300 text-sm text-center py-4">No active jobs</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-5">
-        <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">
+      <div className="bg-black/[0.02] border border-gray-200 rounded-2xl p-5 space-y-5">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
           Overall Production Health
         </h2>
 
         {/* Health distribution bar */}
         <div>
-          <div className="flex items-center justify-between text-xs text-white/40 mb-2">
-            <span>Job health distribution — click to view jobs</span>
+          <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+            <span>Job health distribution \u2014 click to view jobs</span>
             <span>{totalJobs} jobs</span>
           </div>
           <SegmentedBar segments={healthSegments} total={totalJobs} onSegmentClick={setActiveHealth} />
@@ -476,11 +476,11 @@ function PipelineSection({ scoredJobs, today, onJobClick }) {
               <button
                 key={seg.band}
                 onClick={() => setActiveHealth(seg)}
-                className="flex items-center gap-1.5 text-xs text-white/55 hover:text-white/90 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 transition-colors"
               >
                 <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.colorHex }} />
                 {seg.label}
-                <span className="text-white/30">{seg.count}</span>
+                <span className="text-gray-300">{seg.count}</span>
               </button>
             ))}
           </div>
@@ -489,8 +489,8 @@ function PipelineSection({ scoredJobs, today, onJobClick }) {
         {/* Stage activity bar */}
         {totalTasks > 0 && (
           <div>
-            <div className="flex items-center justify-between text-xs text-white/40 mb-2">
-              <span>Production pipeline — click to view jobs</span>
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+              <span>Production pipeline \u2014 click to view jobs</span>
               <span>{totalTasks} open tasks</span>
             </div>
             <SegmentedBar segments={stageSegments} total={totalTasks} onSegmentClick={setActiveStage} />
@@ -499,11 +499,11 @@ function PipelineSection({ scoredJobs, today, onJobClick }) {
                 <button
                   key={seg.name}
                   onClick={() => setActiveStage(seg)}
-                  className="flex items-center gap-1.5 text-xs text-white/55 hover:text-white/90 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.colorHex }} />
                   <span className="capitalize">{seg.label}</span>
-                  <span className="text-white/30">{seg.count}</span>
+                  <span className="text-gray-300">{seg.count}</span>
                 </button>
               ))}
             </div>
@@ -531,20 +531,20 @@ function PipelineSection({ scoredJobs, today, onJobClick }) {
   );
 }
 
-// ─── KpiCard ──────────────────────────────────────────────────
+// ─── KpiCard ────────────────────────────────────────────────
 
 function KpiCard({ label, value, color }) {
   return (
-    <div className="bg-white/5 rounded-xl p-4 flex flex-col gap-1">
-      <span className="text-white/40 text-xs">{label}</span>
-      <span className={`text-2xl font-bold tabular-nums ${color ?? 'text-white'}`}>{value}</span>
+    <div className="bg-black/[0.03] rounded-xl p-4 flex flex-col gap-1">
+      <span className="text-gray-400 text-xs">{label}</span>
+      <span className={`text-2xl font-bold tabular-nums ${color ?? 'text-gray-900'}`}>{value}</span>
     </div>
   );
 }
 
 // ─── Alert panels ─────────────────────────────────────────────
 
-// ─── ScheduleSection ──────────────────────────────────────────
+// ─── ScheduleSection ────────────────────────────────────────
 
 const STATE_CFG = {
   on_time:     { label: 'On Time',        cls: 'bg-green-500/20 border-green-500/30 text-green-400' },
@@ -570,32 +570,32 @@ function ScheduleSection({ schedule, scoredJobs, today, onJobClick }) {
   ];
 
   return (
-    <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-4">
-      <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">
+    <div className="bg-black/[0.02] border border-gray-200 rounded-2xl p-5 space-y-4">
+      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
         Production Schedule
       </h2>
 
       {/* Three-column stats */}
       <div className="grid grid-cols-3 gap-3">
         {cols.map(({ label, data }) => (
-          <div key={label} className="bg-white/[0.03] border border-white/5 rounded-xl p-3 space-y-2">
-            <div className="text-[11px] text-white/40 font-semibold uppercase tracking-wider">{label}</div>
+          <div key={label} className="bg-black/[0.02] border border-gray-200 rounded-xl p-3 space-y-2">
+            <div className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">{label}</div>
             <div className="space-y-1.5">
               <div className="flex justify-between items-baseline">
-                <span className="text-xs text-white/50">Scheduled</span>
-                <span className="text-xl font-bold text-white tabular-nums">{data.scheduled}</span>
+                <span className="text-xs text-gray-500">Scheduled</span>
+                <span className="text-xl font-bold text-gray-900 tabular-nums">{data.scheduled}</span>
               </div>
               <div className="flex justify-between items-baseline">
-                <span className="text-xs text-white/50">On Time</span>
+                <span className="text-xs text-gray-500">On Time</span>
                 <span className="text-sm font-bold text-green-400 tabular-nums">{data.onTime}</span>
               </div>
               <div className="flex justify-between items-baseline">
-                <span className="text-xs text-white/50">Late</span>
+                <span className="text-xs text-gray-500">Late</span>
                 <span className="text-sm font-bold text-red-400 tabular-nums">{data.late}</span>
               </div>
               {data.inProgress > 0 && (
                 <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-white/50">In Progress</span>
+                  <span className="text-xs text-gray-500">In Progress</span>
                   <span className="text-sm font-bold text-blue-400 tabular-nums">{data.inProgress}</span>
                 </div>
               )}
@@ -609,27 +609,27 @@ function ScheduleSection({ schedule, scoredJobs, today, onJobClick }) {
         <div>
           <button
             onClick={() => setShowJobs(v => !v)}
-            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors mb-2 w-full text-left"
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-2 w-full text-left"
           >
-            <span>{showJobs ? '▾' : '▸'}</span>
+            <span>{showJobs ? '\u25be' : '\u25b8'}</span>
             <span className="font-medium">This week's jobs ({thisWeek.jobs.length})</span>
           </button>
           {showJobs && (
-            <div className="border border-white/5 rounded-xl overflow-hidden divide-y divide-white/[0.04]">
+            <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-white/[0.04]">
               {thisWeek.jobs.map(job => {
                 const cfg = STATE_CFG[job.state] ?? STATE_CFG.in_progress;
                 const fullJob = jobMap[job.gid];
                 return (
                   <div
                     key={job.gid}
-                    className={`flex items-center gap-3 px-4 py-2.5 ${fullJob ? 'hover:bg-white/[0.04] cursor-pointer' : ''} transition-colors`}
+                    className={`flex items-center gap-3 px-4 py-2.5 ${fullJob ? 'hover:bg-black/[0.02] cursor-pointer' : ''} transition-colors`}
                     onClick={() => fullJob && onJobClick(fullJob)}
                   >
                     <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-full border font-semibold ${cfg.cls}`}>
                       {cfg.label}
                     </span>
-                    <span className="flex-1 text-sm text-white/80 truncate">{job.name}</span>
-                    <span className="shrink-0 text-xs text-white/30 tabular-nums">{formatDate(job.due_on)}</span>
+                    <span className="flex-1 text-sm text-gray-700 truncate">{job.name}</span>
+                    <span className="shrink-0 text-xs text-gray-300 tabular-nums">{formatDate(job.due_on)}</span>
                   </div>
                 );
               })}
@@ -646,11 +646,11 @@ function ScheduleSection({ schedule, scoredJobs, today, onJobClick }) {
 function AlertPanel({ title, empty, children }) {
   const hasChildren = React.Children.count(children) > 0;
   return (
-    <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
-      <h3 className="text-sm font-semibold text-white/70 mb-3">{title}</h3>
+    <div className="bg-black/[0.02] border border-gray-200 rounded-2xl p-4">
+      <h3 className="text-sm font-semibold text-gray-600 mb-3">{title}</h3>
       {hasChildren
         ? <div className="space-y-2">{children}</div>
-        : <p className="text-white/30 text-xs">{empty}</p>
+        : <p className="text-gray-300 text-xs">{empty}</p>
       }
     </div>
   );
@@ -661,17 +661,17 @@ function AlertRow({ job, onOpen }) {
   const cfg = BAND_CONFIG[band];
   return (
     <div
-      className="flex items-center gap-2.5 cursor-pointer hover:bg-white/[0.03] rounded-lg px-1 -mx-1 py-1 transition-colors"
+      className="flex items-center gap-2.5 cursor-pointer hover:bg-black/[0.02] rounded-lg px-1 -mx-1 py-1 transition-colors"
       onClick={() => onOpen(job)}
     >
       <span
         className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold border ${cfg.borderClass} ${cfg.badgeBgClass} ${cfg.textClass}`}
       >
-        {score ?? '—'}
+        {score ?? '\u2014'}
       </span>
-      <span className="flex-1 text-xs text-white/80 truncate">{job.name}</span>
+      <span className="flex-1 text-xs text-gray-700 truncate">{job.name}</span>
       {job.due_on && (
-        <span className={`shrink-0 text-[10px] tabular-nums ${job.status === 'late' ? 'text-danger' : 'text-white/30'}`}>
+        <span className={`shrink-0 text-[10px] tabular-nums ${job.status === 'late' ? 'text-danger' : 'text-gray-300'}`}>
           {job.due_on}
         </span>
       )}
@@ -729,13 +729,13 @@ export default function OverviewTab({ data }) {
 
       {/* Alert panels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AlertPanel title="🔴 Critical Jobs" empty="No critical jobs">
+        <AlertPanel title="\ud83d\udd34 Critical Jobs" empty="No critical jobs">
           {criticalJobs.map(j => <AlertRow key={j.gid} job={j} onOpen={setDrawerJob} />)}
         </AlertPanel>
-        <AlertPanel title="🕐 Late Jobs" empty="No late jobs">
+        <AlertPanel title="\ud83d\udd50 Late Jobs" empty="No late jobs">
           {lateJobs.map(j => <AlertRow key={j.gid} job={j} onOpen={setDrawerJob} />)}
         </AlertPanel>
-        <AlertPanel title="🔄 REDOs in Flight" empty="No REDOs">
+        <AlertPanel title="\ud83d\udd04 REDOs in Flight" empty="No REDOs">
           {redoJobs.map(j => <AlertRow key={j.gid} job={j} onOpen={setDrawerJob} />)}
         </AlertPanel>
       </div>
