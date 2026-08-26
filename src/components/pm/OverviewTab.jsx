@@ -45,7 +45,7 @@ function formatDate(dateStr) {
   } catch { return dateStr; }
 }
 
-// ─── Department tasks modal ────────────────────────────────────
+// ─── Department tasks modal ────────────────────────────────
 
 const DEPT_SORT_COLS = [
   { key: 'name',     label: 'Job Name' },
@@ -90,28 +90,28 @@ function DeptTasksModal({ stage, tasks, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden"
+        className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0"
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0"
           style={{ backgroundColor: `${stage.color}20` }}>
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: stage.color }} />
-            <span className="text-lg font-bold text-white">{stage.name}</span>
-            <span className="text-sm text-white/40">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
+            <span className="text-lg font-bold text-gray-900">{stage.name}</span>
+            <span className="text-sm text-gray-400">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
           </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white/80 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[1fr_120px_120px_90px] gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
+        <div className="grid grid-cols-[1fr_120px_120px_90px] gap-4 px-6 py-3 border-b border-gray-200 bg-black/[0.01] flex-shrink-0">
           {DEPT_SORT_COLS.map(col => (
             <button
               key={col.key}
               onClick={() => handleCol(col.key)}
               className={`text-left text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-                sortCol === col.key ? 'text-yellow-300' : 'text-white/35 hover:text-white/65'
+                sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               {col.label}
@@ -121,17 +121,17 @@ function DeptTasksModal({ stage, tasks, onClose }) {
         </div>
 
         {/* Rows */}
-        <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
+        <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
           {rows.map(task => {
             const isOverdue = task.due_on && task.due_on < TODAY;
             return (
               <div
                 key={task.gid}
-                className="grid grid-cols-[1fr_120px_120px_90px] gap-4 items-center px-6 py-3 hover:bg-white/[0.03]"
+                className="grid grid-cols-[1fr_120px_120px_90px] gap-4 items-center px-6 py-3 hover:bg-black/[0.02]"
               >
-                <span className="text-sm text-white/85 truncate" title={task.name}>{task.name}</span>
-                <span className="text-sm text-white/50 truncate">{task.assignee ?? '—'}</span>
-                <span className={`text-sm tabular-nums ${isOverdue ? 'text-red-400 font-semibold' : 'text-white/50'}`}>
+                <span className="text-sm text-gray-800 truncate" title={task.name}>{task.name}</span>
+                <span className="text-sm text-gray-500 truncate">{task.assignee ?? '—'}</span>
+                <span className={`text-sm tabular-nums ${isOverdue ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
                   {formatDate(task.due_on)}
                   {isOverdue && <span className="ml-1 text-xs">(late)</span>}
                 </span>
@@ -140,7 +140,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
                     ? <span className="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2 py-0.5 rounded-full">REDO</span>
                     : isOverdue
                       ? <span className="text-xs text-red-400/70">Overdue</span>
-                      : <span className="text-xs text-white/20">—</span>
+                      : <span className="text-xs text-gray-300">—</span>
                   }
                 </span>
               </div>
@@ -193,50 +193,50 @@ function HealthJobsModal({ segment, onClose, onJobClick }) {
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+        className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0"
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0"
           style={{ backgroundColor: `${segment.color}22` }}>
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: segment.color }} />
-            <span className="text-lg font-bold text-white">{segment.label}</span>
-            <span className="text-sm text-white/40">{segment.count} job{segment.count !== 1 ? 's' : ''}</span>
+            <span className="text-lg font-bold text-gray-900">{segment.label}</span>
+            <span className="text-sm text-gray-400">{segment.count} job{segment.count !== 1 ? 's' : ''}</span>
           </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white/80 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[1fr_80px_120px_80px] gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
+        <div className="grid grid-cols-[1fr_80px_120px_80px] gap-4 px-6 py-3 border-b border-gray-200 bg-black/[0.01] flex-shrink-0">
           {COLS.map(col => (
             <button key={col.key} onClick={() => handleCol(col.key)}
               className={`text-left text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-                sortCol === col.key ? 'text-yellow-300' : 'text-white/35 hover:text-white/65'
+                sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               {col.label}
               {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
             </button>
           ))}
-          <span className="text-xs uppercase tracking-wider text-white/35">Flags</span>
+          <span className="text-xs uppercase tracking-wider text-gray-400">Flags</span>
         </div>
 
         {/* Rows */}
-        <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
+        <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
           {rows.map(job => {
             const isPastDue = job.due_on && job.due_on < TODAY;
             return (
               <div
                 key={job.gid}
-                className="grid grid-cols-[1fr_80px_120px_80px] gap-4 items-center px-6 py-3 hover:bg-white/[0.04] cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_80px_120px_80px] gap-4 items-center px-6 py-3 hover:bg-black/[0.02] cursor-pointer transition-colors"
                 onClick={() => { onJobClick(job.gid); onClose(); }}
               >
-                <span className="text-sm text-white/90 truncate" title={job.name}>{job.name}</span>
+                <span className="text-sm text-gray-900 truncate" title={job.name}>{job.name}</span>
                 <span className="text-sm font-bold tabular-nums" style={{ color: healthBarColor(job.score) }}>
                   {job.score}
                 </span>
-                <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-white/50'}`}>
+                <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
                   {job.due_on ? formatDate(job.due_on) : '—'}
                 </span>
                 <div className="flex gap-1 flex-wrap">
@@ -299,9 +299,9 @@ function CumulativeProgressSection({ data, onJobClick }) {
 
   return (
     <>
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-5 space-y-6">
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Overall Pipeline</h2>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Overall Pipeline</h2>
           {avgHealth !== null && (
             <span className="text-sm font-bold" style={{ color: healthBarColor(avgHealth) }}>
               Avg health {avgHealth}
@@ -312,7 +312,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
         {/* Stage distribution — clickable segments */}
         {totalDeptTasks > 0 && (
           <div>
-            <div className="flex items-center justify-between text-xs text-white/40 mb-2">
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
               <span>Active tasks by stage — click to view projects</span>
               <span>{totalDeptTasks} total</span>
             </div>
@@ -332,11 +332,11 @@ function CumulativeProgressSection({ data, onJobClick }) {
                 <button
                   key={seg.key}
                   onClick={() => setActiveDept(seg)}
-                  className="flex items-center gap-1.5 text-xs text-white/55 hover:text-white/90 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.color }} />
                   {seg.name}
-                  <span className="text-white/30">{seg.count}</span>
+                  <span className="text-gray-300">{seg.count}</span>
                 </button>
               ))}
             </div>
@@ -346,7 +346,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
         {/* Health distribution */}
         {totalJobs > 0 && (
           <div>
-            <div className="flex items-center justify-between text-xs text-white/40 mb-2">
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
               <span>Job health distribution — click to view jobs</span>
               <span>{totalJobs} jobs</span>
             </div>
@@ -364,11 +364,11 @@ function CumulativeProgressSection({ data, onJobClick }) {
             <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-2.5">
               {healthSegments.map(seg => (
                 <button key={seg.label} onClick={() => setActiveHealth(seg)}
-                  className="flex items-center gap-1.5 text-xs text-white/55 hover:text-white/90 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.color }} />
                   {seg.label}
-                  <span className="text-white/30">{seg.count}</span>
+                  <span className="text-gray-300">{seg.count}</span>
                 </button>
               ))}
             </div>
@@ -396,10 +396,10 @@ function CumulativeProgressSection({ data, onJobClick }) {
 
 // ─── KPI card ─────────────────────────────────────────────────
 
-function KpiCard({ label, value, colorClass = 'text-white' }) {
+function KpiCard({ label, value, colorClass = 'text-gray-900' }) {
   return (
-    <div className="bg-slate-card border border-white/5 rounded-xl p-4">
-      <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold ${colorClass}`}>{value}</p>
     </div>
   );
@@ -411,16 +411,16 @@ function AlertPanel({ title, empty, children }) {
   const hasChildren = React.Children.count(children) > 0;
   const count = React.Children.count(children);
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6 min-h-[180px] flex flex-col">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 min-h-[180px] flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold">{title}</h3>
         {hasChildren && (
-          <span className="text-xs text-white/30 tabular-nums">{count}</span>
+          <span className="text-xs text-gray-300 tabular-nums">{count}</span>
         )}
       </div>
       {hasChildren
         ? <div className="space-y-2.5 flex-1">{children}</div>
-        : <p className="text-white/30 text-sm flex-1 flex items-center">{empty}</p>
+        : <p className="text-gray-300 text-sm flex-1 flex items-center">{empty}</p>
       }
     </div>
   );
@@ -429,16 +429,16 @@ function AlertPanel({ title, empty, children }) {
 function AlertRow({ job, onClick }) {
   return (
     <div
-      className="flex items-center gap-2 cursor-pointer hover:bg-white/[0.03] rounded px-1 -mx-1 py-1"
+      className="flex items-center gap-2 cursor-pointer hover:bg-black/[0.02] rounded px-1 -mx-1 py-1"
       onClick={onClick}
     >
       <HealthBadge score={job.score} band={job.band} />
-      <span className="flex-1 text-xs text-white/80 truncate">{job.name}</span>
+      <span className="flex-1 text-xs text-gray-700 truncate">{job.name}</span>
     </div>
   );
 }
 
-// ─── PM Portfolio ──────────────────────────────────────────────
+// ─── PM Portfolio ────────────────────────────────────────────
 
 const TODAY_STR = new Date().toISOString().slice(0, 10);
 
@@ -484,25 +484,25 @@ function PmCard({ pm, onClick }) {
 
   return (
     <div
-      className="bg-slate-card border border-white/5 rounded-2xl p-8 space-y-6 cursor-pointer hover:border-white/20 hover:bg-white/[0.03] transition-colors"
+      className="bg-white border border-gray-200 rounded-2xl p-8 space-y-6 cursor-pointer hover:border-gray-300 hover:bg-black/[0.02] transition-colors"
       onClick={onClick}
     >
       {/* PM name + health score */}
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-2xl text-white">{name}</h3>
+        <h3 className="font-bold text-2xl text-gray-900">{name}</h3>
         {avgHealth !== null && (
           <div className="text-right">
             <span className="text-4xl font-black tabular-nums" style={{ color: healthBarColor(avgHealth) }}>
               {avgHealth}
             </span>
-            <p className="text-[10px] text-white/30 uppercase tracking-wider mt-0.5">Health Score</p>
+            <p className="text-[10px] text-gray-300 uppercase tracking-wider mt-0.5">Health Score</p>
           </div>
         )}
       </div>
 
       {/* Health bar */}
       {avgHealth !== null && (
-        <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-3 bg-black/[0.05] rounded-full overflow-hidden">
           <div className="h-full rounded-full transition-all"
             style={{ width: `${avgHealth}%`, backgroundColor: healthBarColor(avgHealth) }} />
         </div>
@@ -510,24 +510,24 @@ function PmCard({ pm, onClick }) {
 
       {/* KPI row */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white/[0.04] rounded-xl p-4 text-center">
-          <p className="text-3xl font-bold text-white tabular-nums">{jobCount}</p>
-          <p className="text-[11px] text-white/40 mt-1">Total Jobs</p>
+        <div className="bg-black/[0.02] rounded-xl p-4 text-center">
+          <p className="text-3xl font-bold text-gray-900 tabular-nums">{jobCount}</p>
+          <p className="text-[11px] text-gray-400 mt-1">Total Jobs</p>
         </div>
-        <div className="bg-white/[0.04] rounded-xl p-4 text-center">
-          <p className={`text-3xl font-bold tabular-nums ${overdueCount > 0 ? 'text-red-400' : 'text-white/30'}`}>{overdueCount}</p>
-          <p className="text-[11px] text-white/40 mt-1">Overdue</p>
+        <div className="bg-black/[0.02] rounded-xl p-4 text-center">
+          <p className={`text-3xl font-bold tabular-nums ${overdueCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{overdueCount}</p>
+          <p className="text-[11px] text-gray-400 mt-1">Overdue</p>
         </div>
-        <div className="bg-white/[0.04] rounded-xl p-4 text-center">
-          <p className={`text-3xl font-bold tabular-nums ${unprocessedCount > 0 ? 'text-red-400' : 'text-white/30'}`}>{unprocessedCount}</p>
-          <p className="text-[11px] text-white/40 mt-1">Unprocessed</p>
+        <div className="bg-black/[0.02] rounded-xl p-4 text-center">
+          <p className={`text-3xl font-bold tabular-nums ${unprocessedCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{unprocessedCount}</p>
+          <p className="text-[11px] text-gray-400 mt-1">Unprocessed</p>
         </div>
       </div>
 
       {/* Stage breakdown */}
       {(totalStaged > 0 || unprocessedCount > 0) && (
         <div>
-          <div className="text-xs text-white/40 mb-2 font-medium">Stage Distribution</div>
+          <div className="text-xs text-gray-400 mb-2 font-medium">Stage Distribution</div>
           <div className="flex h-4 rounded-lg overflow-hidden gap-px">
             {STAGES.map(stage => {
               const count = stageBreakdown[stage.name];
@@ -547,9 +547,9 @@ function PmCard({ pm, onClick }) {
               const count = stageBreakdown[stage.name];
               if (!count) return null;
               return (
-                <span key={stage.name} className="flex items-center gap-1.5 text-xs text-white/55">
+                <span key={stage.name} className="flex items-center gap-1.5 text-xs text-gray-500">
                   <span className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                  {stage.name} <span className="text-white/30 font-semibold">{count}</span>
+                  {stage.name} <span className="text-gray-300 font-semibold">{count}</span>
                 </span>
               );
             })}
@@ -571,14 +571,14 @@ function MiniPmCard({ pm, onClick }) {
 
   return (
     <div
-      className="bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-3 flex items-center gap-4 cursor-pointer hover:border-white/15 hover:bg-white/[0.05] transition-colors"
+      className="bg-black/[0.02] border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-4 cursor-pointer hover:border-gray-200 hover:bg-black/[0.03] transition-colors"
       onClick={onClick}
     >
       {/* Name + flags */}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-white/80">{name}</p>
+        <p className="text-sm font-medium text-gray-700">{name}</p>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <span className="text-xs text-white/40">{jobCount} jobs</span>
+          <span className="text-xs text-gray-400">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
           )}
@@ -631,16 +631,16 @@ function JobRow({ task, dueOn, showLastActivity }) {
     : formatShortDate(dueOn);
   const dateColor = showLastActivity
     ? 'text-orange-400'
-    : isLate ? 'text-red-400 font-semibold' : 'text-white/40';
+    : isLate ? 'text-red-400 font-semibold' : 'text-gray-400';
 
   return (
     <a
       href={`https://app.asana.com/0/0/${task.gid}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.06] transition-colors border-b border-white/[0.04] last:border-b-0 cursor-pointer group"
+      className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.03] transition-colors border-b border-gray-200 last:border-b-0 cursor-pointer group"
     >
-      <span className="flex-1 text-sm text-white/85 truncate group-hover:text-white" title={task.name}>{task.name}</span>
+      <span className="flex-1 text-sm text-gray-800 truncate group-hover:text-gray-900" title={task.name}>{task.name}</span>
       <span className={`text-xs tabular-nums shrink-0 ${dateColor}`}>{dateLabel}</span>
     </a>
   );
@@ -648,8 +648,8 @@ function JobRow({ task, dueOn, showLastActivity }) {
 
 function JobColumn({ title, count, color, borderColor, tasks, showLastActivity }) {
   return (
-    <div className={`bg-slate-card border ${borderColor} rounded-2xl overflow-hidden flex flex-col`}>
-      <div className="px-5 py-4 border-b border-white/[0.06]">
+    <div className={`bg-white border ${borderColor} rounded-2xl overflow-hidden flex flex-col`}>
+      <div className="px-5 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h4 className={`text-sm font-semibold ${color}`}>{title}</h4>
           <span className={`text-2xl font-bold tabular-nums ${color}`}>{count}</span>
@@ -657,7 +657,7 @@ function JobColumn({ title, count, color, borderColor, tasks, showLastActivity }
       </div>
       <div className="flex-1 overflow-y-auto max-h-[400px]">
         {tasks.length === 0
-          ? <p className="text-white/20 text-sm text-center py-8">None</p>
+          ? <p className="text-gray-300 text-sm text-center py-8">None</p>
           : tasks.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} showLastActivity={showLastActivity} />)
         }
       </div>
@@ -717,20 +717,20 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
   }, [tasks]);
 
   return (
-    <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
       {/* Header with health bar */}
-      <div className="px-6 py-5 border-b border-white/[0.06]">
+      <div className="px-6 py-5 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <h3 className="text-xl font-bold text-white">{pm.name}</h3>
-            <span className="text-sm text-white/40">{tasks.length} total jobs</span>
+            <h3 className="text-xl font-bold text-gray-900">{pm.name}</h3>
+            <span className="text-sm text-gray-400">{tasks.length} total jobs</span>
           </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white/80 text-2xl leading-none px-2">&times;</button>
+          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none px-2">&times;</button>
         </div>
         {/* Health bar */}
         {pm.avgHealth !== null && (
           <div className="flex items-center gap-4">
-            <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+            <div className="flex-1 h-3 bg-black/[0.05] rounded-full overflow-hidden">
               <div className="h-full rounded-full transition-all"
                 style={{ width: `${pm.avgHealth}%`, backgroundColor: healthBarColor(pm.avgHealth) }} />
             </div>
@@ -743,16 +743,16 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
 
       <div className="p-6 space-y-6">
         {/* UNREVIEWED JOBS */}
-        <div className={`rounded-2xl overflow-hidden ${unreviewed.length > 0 ? 'bg-red-500/10 border border-red-500/25' : 'bg-slate-card border border-white/5'}`}>
-          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+        <div className={`rounded-2xl overflow-hidden ${unreviewed.length > 0 ? 'bg-red-500/10 border border-red-500/25' : 'bg-white border border-gray-200'}`}>
+          <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
             <h4 className="text-sm font-black uppercase tracking-widest text-red-400">Unreviewed Jobs</h4>
-            <span className={`text-3xl font-black tabular-nums ${unreviewed.length > 0 ? 'text-red-400' : 'text-white/20'}`}>
+            <span className={`text-3xl font-black tabular-nums ${unreviewed.length > 0 ? 'text-red-400' : 'text-gray-300'}`}>
               {unreviewed.length}
             </span>
           </div>
           <div className="max-h-[250px] overflow-y-auto">
             {unreviewed.length === 0
-              ? <p className="text-white/30 text-sm text-center py-6">All jobs have been reviewed</p>
+              ? <p className="text-gray-300 text-sm text-center py-6">All jobs have been reviewed</p>
               : unreviewed.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} />)
             }
           </div>
@@ -795,7 +795,7 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
   );
 }
 
-// ─── PM Portfolio Section ─────────────────────────────────────
+// ─── PM Portfolio Section ───────────────────────────────────
 
 function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
   const [expandedPm, setExpandedPm] = useState(null);
@@ -821,7 +821,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">PM Portfolio</h2>
+      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">PM Portfolio</h2>
 
       {/* Active PMs — large cards (hidden when one is expanded) */}
       {!expandedPm && activeStats.length > 0 && (
@@ -850,7 +850,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
               Unmanaged Projects &mdash; {unmanagedTotal} jobs need reassignment
             </h3>
           </div>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-gray-400">
             These projects belong to inactive PMs and are not being actively managed. Reassign to Nikhil, Danish, or Barbara.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">
