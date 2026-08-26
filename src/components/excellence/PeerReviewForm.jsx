@@ -28,7 +28,7 @@ function ScoreInput({ value, onChange }) {
           className={`w-7 h-7 rounded text-xs font-bold transition-all ${
             n <= value
               ? n >= 8 ? 'bg-success text-white' : n >= 5 ? 'bg-warning text-black' : 'bg-danger text-white'
-              : 'bg-black/[0.03] text-gray-400 hover:bg-black/[0.05]'
+              : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05]'
           }`}
         >
           {n}
@@ -63,7 +63,7 @@ export default function PeerReviewForm({ onClose }) {
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">Monthly Culture Review</h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-600 text-lg leading-none">×</button>
       </div>
 
       {step === 0 ? (
@@ -83,7 +83,7 @@ export default function PeerReviewForm({ onClose }) {
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep(0)} className="text-gray-400 hover:text-gray-600 text-sm">← Back</button>
+            <button onClick={() => setStep(0)} className="text-gray-500 hover:text-gray-600 text-sm">← Back</button>
             <span className="text-sm text-gray-600">
               {TEAMS.find(t => t.id === selectedTeam)?.emoji} {TEAMS.find(t => t.id === selectedTeam)?.label}
             </span>
@@ -93,7 +93,7 @@ export default function PeerReviewForm({ onClose }) {
             <div key={d.key} className="space-y-2">
               <div>
                 <p className="text-xs font-semibold text-gray-700">{d.label}</p>
-                <p className="text-[11px] text-gray-400">{d.desc}</p>
+                <p className="text-[11px] text-gray-500">{d.desc}</p>
               </div>
               <ScoreInput value={scores[d.key]} onChange={v => setScores(s => ({ ...s, [d.key]: v }))} />
             </div>

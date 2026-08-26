@@ -24,7 +24,7 @@ export default function TeamScorecard({ team, isActive, onClick }) {
         <span className="text-xl leading-none">{team.emoji}</span>
         <span className="text-sm font-semibold text-gray-700">{team.label}</span>
         {team.dataUnavailable && (
-          <span className="ml-auto text-[10px] text-gray-400 border border-gray-200 rounded px-1">loading</span>
+          <span className="ml-auto text-[10px] text-gray-500 border border-gray-200 rounded px-1">loading</span>
         )}
       </div>
 
@@ -35,7 +35,7 @@ export default function TeamScorecard({ team, isActive, onClick }) {
       </div>
 
       {/* Sub-scores */}
-      <div className="flex gap-3 mb-3 text-[10px] text-gray-400">
+      <div className="flex gap-3 mb-3 text-[10px] text-gray-500">
         <span>Ops {team.operational?.score ?? '—'}</span>
         <span>Culture {team.culture?.score ?? '—'}</span>
       </div>

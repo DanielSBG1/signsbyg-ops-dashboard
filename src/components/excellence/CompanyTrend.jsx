@@ -18,7 +18,7 @@ function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-xl min-w-[150px]">
-      <p className="text-xs text-gray-400 mb-2">{label}</p>
+      <p className="text-xs text-gray-500 mb-2">{label}</p>
       {[...payload].sort((a, b) => b.value - a.value).map(p => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4 py-0.5">
           <div className="flex items-center gap-1.5">
@@ -37,7 +37,7 @@ export default function CompanyTrend({ history = [] }) {
     return (
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">Company Trend</h3>
-        <p className="text-gray-400 text-sm text-center py-8">Trend data builds over time — check back next month.</p>
+        <p className="text-gray-500 text-sm text-center py-8">Trend data builds over time — check back next month.</p>
       </div>
     );
   }

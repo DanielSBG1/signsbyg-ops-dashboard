@@ -9,9 +9,9 @@ function KpiRow({ kpi }) {
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs text-gray-700">{kpi.label}</span>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-gray-400">{kpi.rawLabel}</span>
+          <span className="text-[10px] text-gray-500">{kpi.rawLabel}</span>
           <span className={`text-sm font-bold tabular-nums w-8 text-right ${scoreColor(kpi.score)}`}>{kpi.score}</span>
-          <span className="text-[10px] text-gray-300 w-8 text-right">{Math.round((kpi.weight ?? 0) * 100)}%</span>
+          <span className="text-[10px] text-gray-500 w-8 text-right">{Math.round((kpi.weight ?? 0) * 100)}%</span>
         </div>
       </div>
       <div className="h-1 bg-black/[0.03] rounded-full overflow-hidden">
@@ -67,7 +67,7 @@ export default function TeamDrillDown({ team }) {
       </div>
 
       {team.dataUnavailable && (
-        <p className="text-xs text-gray-400 text-center py-2">
+        <p className="text-xs text-gray-500 text-center py-2">
           Installation data loads from cache — visit the Installation tab first to warm it up, then refresh.
         </p>
       )}

@@ -18,7 +18,7 @@ export default function CrewScorecard({ byCrew, unassignedCount, onUnassignedCli
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-gray-400 text-xs uppercase tracking-wider">
+          <tr className="text-gray-500 text-xs uppercase tracking-wider">
             <th className="text-left pb-3 px-3">Crew</th>
             <th className="text-right pb-3 px-3">Open</th>
             <th className="text-right pb-3 px-3">Done</th>
@@ -39,16 +39,16 @@ export default function CrewScorecard({ byCrew, unassignedCount, onUnassignedCli
               <td className="py-3 px-3 text-right tabular-nums text-gray-500">{c.completed}</td>
               <td className="py-3 px-3 text-right tabular-nums text-success">{c.onTime || 0}</td>
               <td className="py-3 px-3 text-right tabular-nums">
-                <span className={c.rescheduled > 0 ? 'text-warning' : 'text-gray-300'}>{c.rescheduled || 0}</span>
+                <span className={c.rescheduled > 0 ? 'text-warning' : 'text-gray-500'}>{c.rescheduled || 0}</span>
               </td>
               <td className="py-3 px-3 text-right tabular-nums">
-                <span className={c.failed > 0 ? 'text-danger' : 'text-gray-300'}>{c.failed || 0}</span>
+                <span className={c.failed > 0 ? 'text-danger' : 'text-gray-500'}>{c.failed || 0}</span>
               </td>
               <td className="py-3 px-3 text-right tabular-nums">
                 <span className={`font-semibold ${
                   c.onTimeRate >= 80 ? 'text-success' :
                   c.onTimeRate >= 60 ? 'text-warning' :
-                  c.completed > 0 ? 'text-danger' : 'text-gray-300'
+                  c.completed > 0 ? 'text-danger' : 'text-gray-500'
                 }`}>
                   {c.completed > 0 ? `${c.onTimeRate}%` : '—'}
                 </span>
