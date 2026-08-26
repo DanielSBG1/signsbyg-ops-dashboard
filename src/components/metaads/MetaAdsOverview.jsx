@@ -175,10 +175,9 @@ export default function MetaAdsOverview({ data }) {
   const cpc = safeRatio(totals.spend, totals.linkClicks);
   const cpm = safeRatio(totals.spend * 1000, totals.impressions);
 
-  // Derive hubspot leads and revenue from campaigns
-  const campaigns = data.campaigns ?? [];
-  const totalHubspotLeads = campaigns.reduce((s, c) => s + (c.hubspotLeads ?? 0), 0);
-  const totalRevenue = campaigns.reduce((s, c) => s + (c.revenue ?? 0), 0);
+  // Use canonical totals from the API, not derived from campaigns
+  const totalHubspotLeads = totals.hubspotLeads ?? 0;
+  const totalRevenue = totals.attributedRevenue ?? 0;
 
   const [drawerMode, setDrawerMode] = useState(null); // 'deals' | 'repeats' | null
   const preset = data?.period?.preset ?? 'year';
@@ -229,9 +228,11 @@ export default function MetaAdsOverview({ data }) {
         />
         <MetricTile
           label="Avg Lead → Close"
-          value={totals.velocityAvg ? `${totals.velocityAvg}d` : '---'}
-          topbar={`linear-gradient(90deg,${totals.velocityAvg <= 30 ? '#34d399,#059669' : totals.velocityAvg <= 60 ? '#fbbf24,#f59e0b' : '#f87171,#ef4444'})`}
-          sub={totals.velocityMin && totals.velocityMax
+          value={totals.velocityAvg != null && totals.velocityAvg > 0 ? `${totals.velocityAvg}d` : '---'}
+          topbar={totals.velocityAvg > 0
+            ? `linear-gradient(90deg,${totals.velocityAvg <= 30 ? '#34d399,#059669' : totals.velocityAvg <= 60 ? '#fbbf24,#f59e0b' : '#f87171,#ef4444'})`
+            : 'linear-gradient(90deg,#d1d5db,#9ca3af)'}
+          sub={totals.velocityMin > 0 && totals.velocityMax > 0
             ? `${totals.velocityMin}d fastest · ${totals.velocityMax}d slowest`
             : undefined}
         />

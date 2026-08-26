@@ -11,8 +11,8 @@ const CACHE_TTL = 900; // 15 minutes
  */
 function getDateRange(preset) {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth(); // 0-based
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth(); // 0-based, UTC to match Vercel's timezone
 
   if (preset === 'year') {
     return { start: `${y}-01-01`, end: `${y}-12-31` };
@@ -252,7 +252,7 @@ async function fetchMetaAdsMetrics(preset) {
         join hs_contacts c on c.id = dc.contact_id
         where d.is_closed_won = true
           and al.spend_category = 'meta_ads'
-          and c.created_at::date between ${start}::date and ${end}::date
+          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
         group by al.campaign_id
       )
       select perf.campaign_id,
@@ -311,10 +311,10 @@ async function fetchMetaAdsMetrics(preset) {
       order by sum(i.spend) desc
     `,
 
-    // 6. Creatives (grouped by creative_slug)
+    // 6. Creatives (grouped by creative_slug only — avoids duplicate keys)
     sql`
-      select a.creative_slug, a.thumbnail_url,
-             s.optimization_goal,
+      select a.creative_slug,
+             min(a.thumbnail_url) as thumbnail_url,
              coalesce(sum(i.spend), 0)       as spend,
              coalesce(sum(i.results), 0)     as meta_leads,
              coalesce(sum(i.link_clicks), 0) as link_clicks,
@@ -322,11 +322,10 @@ async function fetchMetaAdsMetrics(preset) {
              count(distinct i.ad_id)         as ad_count
       from ad_insights_daily i
       join ads a     on a.id = i.ad_id
-      join ad_sets s on s.id = i.ad_set_id
       where i.spend_category = 'meta_ads'
         and a.creative_slug is not null
         and i.day between ${start}::date and ${end}::date
-      group by a.creative_slug, a.thumbnail_url, s.optimization_goal
+      group by a.creative_slug
       order by sum(i.spend) desc
     `,
 
@@ -400,7 +399,7 @@ async function fetchMetaAdsMetrics(preset) {
         from adset_leads al
         join campaign_rev cr on cr.campaign_id = al.campaign_id
         join campaign_total_leads ctl on ctl.campaign_id = al.campaign_id
-        where al.ad_set_id not in (select ad_set_id from direct_rev where revenue > 0)
+        where al.ad_set_id not in (select ad_set_id from direct_rev where revenue > 0 and ad_set_id is not null)
         group by al.ad_set_id
       )
       select ad_set_id, revenue, deals::int, 'direct' as method from direct_rev where revenue > 0
@@ -458,7 +457,7 @@ async function fetchMetaAdsMetrics(preset) {
         from ad_leads al
         join campaign_rev cr on cr.campaign_id = al.campaign_id
         join campaign_total_leads ctl on ctl.campaign_id = al.campaign_id
-        where al.creative_slug not in (select creative_slug from direct_rev where revenue > 0)
+        where al.creative_slug not in (select creative_slug from direct_rev where revenue > 0 and creative_slug is not null)
         group by al.creative_slug
       )
       select creative_slug, revenue, deals, 'direct' as method from direct_rev where revenue > 0
@@ -483,6 +482,7 @@ async function fetchMetaAdsMetrics(preset) {
       where d.is_closed_won = true
         and c.created_at is not null
         and d.close_date is not null
+        and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
       group by ml.ad_set_id, c2.name
     `,
   ]);
@@ -580,7 +580,6 @@ async function fetchMetaAdsMetrics(preset) {
   const creatives = creativeRows.map((r) => ({
     creativeSlug: r.creative_slug,
     thumbnailUrl: r.thumbnail_url,
-    optimizationGoal: r.optimization_goal,
     spend: Number(r.spend || 0),
     metaLeads: Number(r.meta_leads || 0),
     linkClicks: Number(r.link_clicks || 0),
@@ -653,7 +652,7 @@ async function fetchMetaAdsMetrics(preset) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // No CORS header — same-origin only (ops dashboard)
   res.setHeader('Access-Control-Allow-Methods', 'GET');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -670,7 +669,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v8:${preset}`;
+    const cacheKey = `meta-ads:v9:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
@@ -689,6 +688,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, data });
   } catch (err) {
     console.error('[meta-ads-metrics] Error:', err);
-    return res.status(500).json({ ok: false, error: err.message });
+    return res.status(500).json({ ok: false, error: 'Internal server error' });
   }
 }

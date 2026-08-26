@@ -89,7 +89,7 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
               <div className="text-center py-12 text-gray-400 text-sm">No repeat customers found.</div>
             ) : (
               repeatCustomers.map((customer, i) => (
-                <div key={i} className="border-2 border-amber-200 bg-amber-50/50 rounded-2xl overflow-hidden">
+                <div key={customer.contactId || i} className="border-2 border-amber-200 bg-amber-50/50 rounded-2xl overflow-hidden">
                   <div className="px-5 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-amber-500 text-2xl">★</span>

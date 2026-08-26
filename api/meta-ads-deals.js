@@ -11,7 +11,7 @@ import { neon } from '@neondatabase/serverless';
  *   adSetId=...   (optional, filter to one ad set)
  */
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // No CORS header — same-origin only
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
   try {
@@ -21,19 +21,25 @@ export default async function handler(req, res) {
     const sql = neon(url);
     const { preset = 'year', campaignId, adSetId, mode } = req.query;
 
-    // Date range
+    // Calendar date range — matches meta-ads-metrics.js exactly
     const now = new Date();
-    const end = now.toISOString().split('T')[0];
-    let start;
-    if (preset === 'year') start = `${now.getFullYear()}-01-01`;
-    else if (preset === 'quarter') start = new Date(now.getTime() - 90 * 86400000).toISOString().split('T')[0];
-    else start = new Date(now.getTime() - 30 * 86400000).toISOString().split('T')[0];
-
-    // Expand to full months for cohort attribution
-    const pnlStart = start.slice(0, 7) + '-01';
-    const endDate = new Date(end + 'T12:00:00Z');
-    const lastDay = new Date(endDate.getUTCFullYear(), endDate.getUTCMonth() + 1, 0);
-    const pnlEnd = lastDay.toISOString().slice(0, 10);
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    let pnlStart, pnlEnd;
+    if (preset === 'year') {
+      pnlStart = `${y}-01-01`;
+      pnlEnd = `${y}-12-31`;
+    } else if (preset === 'quarter') {
+      const qStart = Math.floor(m / 3) * 3;
+      const qEnd = qStart + 2;
+      const qLastDay = new Date(y, qEnd + 1, 0).getDate();
+      pnlStart = `${y}-${String(qStart + 1).padStart(2, '0')}-01`;
+      pnlEnd = `${y}-${String(qEnd + 1).padStart(2, '0')}-${String(qLastDay).padStart(2, '0')}`;
+    } else {
+      const mLastDay = new Date(y, m + 1, 0).getDate();
+      pnlStart = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+      pnlEnd = `${y}-${String(m + 1).padStart(2, '0')}-${String(mLastDay).padStart(2, '0')}`;
+    }
 
     // Pipeline name mapping (HubSpot pipeline IDs to friendly names)
     // These are fetched dynamically but we'll also maintain a fallback map
@@ -75,6 +81,7 @@ export default async function handler(req, res) {
         and al.spend_category = 'meta_ads'
         and ct.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
         ${campaignId ? sql`and al.campaign_id = ${campaignId}` : sql``}
+        ${adSetId ? sql`and ml.ad_set_id = ${adSetId}` : sql``}
       order by d.amount::numeric desc
     `;
 
@@ -117,60 +124,74 @@ export default async function handler(req, res) {
     // Sort pipelines by revenue desc
     const pipelines = Object.values(byPipeline).sort((a, b) => b.totalRevenue - a.totalRevenue);
 
-    // Repeat customers: contacts with 2+ closed-won deals
+    // Repeat customers: contacts with 2+ closed-won deals — single query, no N+1
     let repeatCustomers = [];
     if (mode === 'repeats') {
-      // First find repeat contacts, then get their deals separately to avoid cartesian products
-      const repeatContacts = await sql`
-        select c.id as contact_id, c.source_detail,
-               count(distinct d.id) as deal_count,
-               sum(distinct d.amount::numeric) as total_revenue
-        from hs_contacts c
-        join deal_contacts dc on dc.contact_id = c.id
-        join hs_deals d on d.id = dc.deal_id
-        where d.is_closed_won = true
-          and c.analytics_source = 'PAID_SOCIAL'
-        group by c.id, c.source_detail
-        having count(distinct d.id) > 1
-        order by sum(distinct d.amount::numeric) desc
-      `;
-
-      // Now get deals for each repeat contact
-      for (const rc of repeatContacts) {
-        const dealRows = await sql`
-          select distinct on (d.id)
-                 d.id as deal_id, d.name, d.amount::numeric as amount,
-                 d.pipeline, d.close_date, o.name as rep,
+      const repeatRows = await sql`
+        with repeat_contacts as (
+          select c.id as contact_id, c.source_detail
+          from hs_contacts c
+          join deal_contacts dc on dc.contact_id = c.id
+          join hs_deals d on d.id = dc.deal_id
+          where d.is_closed_won = true
+            and c.analytics_source = 'PAID_SOCIAL'
+          group by c.id, c.source_detail
+          having count(distinct d.id) > 1
+        ),
+        deal_detail as (
+          select distinct on (d.id, rc.contact_id)
+                 rc.contact_id,
+                 rc.source_detail,
+                 d.id as deal_id,
+                 d.name,
+                 d.amount::numeric as amount,
+                 d.pipeline,
+                 d.close_date,
+                 o.name as rep,
                  (select camp.name from attribution_links al
                   join campaigns camp on camp.id = al.campaign_id
                   where al.deal_id = d.id limit 1) as campaign_name,
                  (select adset.name from meta_leads ml
                   join ad_sets adset on adset.id = ml.ad_set_id
-                  where ml.matched_contact_id = ${rc.contact_id} limit 1) as ad_set_name
-          from hs_deals d
-          join deal_contacts dc on dc.deal_id = d.id and dc.contact_id = ${rc.contact_id}
+                  where ml.matched_contact_id = rc.contact_id limit 1) as ad_set_name
+          from repeat_contacts rc
+          join deal_contacts dc on dc.contact_id = rc.contact_id
+          join hs_deals d on d.id = dc.deal_id
           left join hs_owners o on o.id = d.owner_id
           where d.is_closed_won = true
-          order by d.id, d.close_date
-        `;
+          order by d.id, rc.contact_id, d.close_date
+        )
+        select * from deal_detail order by contact_id, close_date
+      `;
 
-        repeatCustomers.push({
-          contactId: rc.contact_id,
-          source: rc.source_detail || 'Paid Social',
-          dealCount: Number(rc.deal_count),
-          totalRevenue: Number(rc.total_revenue || 0),
-          deals: dealRows.map(d => ({
-            dealId: d.deal_id,
-            name: d.name,
-            amount: Number(d.amount || 0),
-            pipeline: PIPELINE_NAMES[d.pipeline] || d.pipeline || 'Unknown',
-            closeDate: d.close_date ? new Date(d.close_date).toISOString().slice(0, 10) : null,
-            rep: d.rep || 'Unassigned',
-            campaignName: d.campaign_name || null,
-            adSetName: d.ad_set_name || null,
-          })),
+      // Group rows by contact
+      const byContact = {};
+      for (const r of repeatRows) {
+        if (!byContact[r.contact_id]) {
+          byContact[r.contact_id] = {
+            contactId: r.contact_id,
+            source: r.source_detail || 'Paid Social',
+            deals: [],
+            totalRevenue: 0,
+          };
+        }
+        const entry = byContact[r.contact_id];
+        const amt = Number(r.amount || 0);
+        entry.deals.push({
+          dealId: r.deal_id,
+          name: r.name,
+          amount: amt,
+          pipeline: PIPELINE_NAMES[r.pipeline] || r.pipeline || 'Unknown',
+          closeDate: r.close_date ? new Date(r.close_date).toISOString().slice(0, 10) : null,
+          rep: r.rep || 'Unassigned',
+          campaignName: r.campaign_name || null,
+          adSetName: r.ad_set_name || null,
         });
+        entry.totalRevenue += amt;
       }
+      repeatCustomers = Object.values(byContact)
+        .map(c => ({ ...c, dealCount: c.deals.length }))
+        .sort((a, b) => b.totalRevenue - a.totalRevenue);
     }
 
     return res.status(200).json({
@@ -185,6 +206,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('[meta-ads-deals] Error:', err);
-    return res.status(500).json({ ok: false, error: err.message });
+    return res.status(500).json({ ok: false, error: 'Internal server error' });
   }
 }

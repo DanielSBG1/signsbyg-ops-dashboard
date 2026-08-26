@@ -110,7 +110,7 @@ function CreativeCard({ creative, revenue }) {
           <div>
             <p className="text-[9px] font-semibold uppercase tracking-widest text-gray-400">CPL</p>
             <p className={`text-sm tabular-nums font-extrabold ${cpl != null ? 'text-gray-900' : 'text-gray-400'}`}>
-              {cpl != null ? fmtMoney(cpl) : '---'}
+              {cpl != null ? fmtMoney(cpl, 2) : '---'}
             </p>
           </div>
           <div>

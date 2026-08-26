@@ -8,12 +8,11 @@ export function useMetaAdsData(preset = 'month') {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(null);
-  const currentPreset = useRef(preset);
-  currentPreset.current = preset;
+  const abortRef = useRef(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal) => {
     try {
-      const res = await fetch(`/api/meta-ads-metrics?preset=${currentPreset.current}`);
+      const res = await fetch(`/api/meta-ads-metrics?preset=${preset}`, { signal });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!json.ok) throw new Error(json.error ?? 'API error');
@@ -21,18 +20,26 @@ export function useMetaAdsData(preset = 'month') {
       setLastRefreshed(new Date());
       setError(null);
     } catch (e) {
+      if (e.name === 'AbortError') return; // cancelled — ignore
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [preset]);
 
   useEffect(() => {
+    // Abort previous fetch if preset changed
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
-    refresh();
+    refresh(controller.signal);
+    return () => controller.abort();
   }, [preset, refresh]);
 
-  useVisibleInterval(refresh, POLL_MS);
+  // Poll without abort controller (latest preset is already in the callback)
+  const poll = useCallback(() => refresh(), [refresh]);
+  useVisibleInterval(poll, POLL_MS);
 
-  return { data, loading, error, lastRefreshed, refresh };
+  return { data, loading, error, lastRefreshed, refresh: poll };
 }
