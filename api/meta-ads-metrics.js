@@ -86,7 +86,7 @@ async function fetchMetaAdsMetrics(preset) {
         join hs_contacts c on c.id = dc.contact_id
         where d.is_closed_won = true
           and al.spend_category = 'meta_ads'
-          and c.created_at::date between ${start}::date and ${end}::date
+          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
       ),
       -- Funnel: leads that converted into deals (any stage)
       funnel as (
@@ -117,8 +117,7 @@ async function fetchMetaAdsMetrics(preset) {
           having count(distinct d.id) > 1
         ) multi
       ),
-      -- Average lead-to-close velocity
-      -- Velocity uses same date range as deals_won so they're consistent
+      -- Velocity uses full calendar months, same as revenue and P&L
       vel as (
         select
           round(avg(extract(epoch from (d.close_date - c.created_at)) / 86400)) as avg_days,
@@ -133,7 +132,7 @@ async function fetchMetaAdsMetrics(preset) {
           and al.spend_category = 'meta_ads'
           and c.created_at is not null
           and d.close_date is not null
-          and c.created_at::date between ${start}::date and ${end}::date
+          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
       )
       select
         p.spend,
@@ -656,7 +655,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v6:${preset}`;
+    const cacheKey = `meta-ads:v7:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
