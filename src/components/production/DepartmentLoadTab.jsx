@@ -11,7 +11,7 @@ const DEPT_LABELS = {
 };
 
 function HealthBar({ score, band }) {
-  if (score === null) return <span className="text-gray-300 text-xs">—</span>;
+  if (score === null) return <span className="text-gray-500 text-xs">—</span>;
   const cfg = BAND_CONFIG[band];
   return (
     <div className="flex items-center gap-2 flex-1 max-w-[160px]">
@@ -53,7 +53,7 @@ function JobRow({ job, onOpen }) {
         )}
         {job.projectedLate && (
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/20 text-warning font-bold shrink-0">
-            \u26a0 PROJ. LATE
+            ⚠ PROJ. LATE
           </span>
         )}
         {isLate && (
@@ -65,7 +65,7 @@ function JobRow({ job, onOpen }) {
 
       {/* Due date */}
       {job.due_on && (
-        <span className={`shrink-0 text-xs tabular-nums ${isLate ? 'text-danger' : 'text-gray-400'}`}>
+        <span className={`shrink-0 text-xs tabular-nums ${isLate ? 'text-danger' : 'text-gray-500'}`}>
           {job.due_on}
         </span>
       )}
@@ -76,8 +76,8 @@ function JobRow({ job, onOpen }) {
         target="_blank"
         rel="noopener noreferrer"
         onClick={e => e.stopPropagation()}
-        className="shrink-0 text-gray-300 hover:text-gray-600 text-xs transition-colors"
-      >\u2197</a>
+        className="shrink-0 text-gray-500 hover:text-gray-600 text-xs transition-colors"
+      >↗</a>
     </div>
   );
 }
@@ -113,14 +113,14 @@ function DepartmentModule({ deptKey, jobs, today, onOpenDrawer }) {
 
         {/* Late count badge */}
         <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold tabular-nums ${
-          lateCount > 0 ? 'bg-danger/20 text-danger' : 'bg-black/[0.05] text-gray-300'
+          lateCount > 0 ? 'bg-danger/20 text-danger' : 'bg-black/[0.05] text-gray-500'
         }`}>
           {lateCount} late
         </span>
 
         {/* Chevron */}
-        <span className="shrink-0 text-gray-300 text-xs">
-          {expanded ? '\u25b2' : '\u25bc'}
+        <span className="shrink-0 text-gray-500 text-xs">
+          {expanded ? '▲' : '▼'}
         </span>
       </button>
 
@@ -128,7 +128,7 @@ function DepartmentModule({ deptKey, jobs, today, onOpenDrawer }) {
       {expanded && (
         <div className="border-t border-gray-200">
           {sortedJobs.length === 0 && (
-            <p className="px-4 py-6 text-center text-gray-300 text-sm">No jobs</p>
+            <p className="px-4 py-6 text-center text-gray-500 text-sm">No jobs</p>
           )}
           {sortedJobs.map(job => (
             <JobRow key={job.gid} job={job} onOpen={onOpenDrawer} />

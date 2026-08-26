@@ -106,7 +106,7 @@ function StageProgress({ subtasks }) {
           />
         );
       })}
-      <span className="text-[10px] text-gray-300 ml-1">{done}/{total}</span>
+      <span className="text-[10px] text-gray-500 ml-1">{done}/{total}</span>
     </div>
   );
 }
@@ -174,7 +174,7 @@ export default function OnTimeTab({ data, auditData }) {
   if (!data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-300 text-sm">Loading data...</p>
+        <p className="text-gray-500 text-sm">Loading data...</p>
       </div>
     );
   }
@@ -185,15 +185,15 @@ export default function OnTimeTab({ data, auditData }) {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-red-500/20 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-red-400">{atRisk}</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">At Risk · Score &lt;50</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">At Risk · Score &lt;50</p>
         </div>
         <div className="bg-white border border-yellow-500/20 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-yellow-400">{watch}</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">Watch · Score 50–69</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Watch · Score 50–69</p>
         </div>
         <div className="bg-white border border-green-500/20 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-400">{onTrack}</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">On Track · Score ≥70</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">On Track · Score ≥70</p>
         </div>
       </div>
 
@@ -205,14 +205,14 @@ export default function OnTimeTab({ data, auditData }) {
               key={val}
               onClick={() => setFilter(val)}
               className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                filter === val ? 'bg-black/[0.05] text-gray-900' : 'text-gray-400 hover:text-gray-600'
+                filter === val ? 'bg-black/[0.05] text-gray-900' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
               {label}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-gray-500">
           Sort:
           {[['score', 'Score'], ['due', 'Due Date'], ['pm', 'PM']].map(([val, label]) => (
             <button
@@ -229,7 +229,7 @@ export default function OnTimeTab({ data, auditData }) {
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_80px_140px_100px_130px] gap-4 px-4 text-[10px] text-gray-300 uppercase tracking-wider">
+      <div className="grid grid-cols-[1fr_80px_140px_100px_130px] gap-4 px-4 text-[10px] text-gray-500 uppercase tracking-wider">
         <span>Job</span>
         <span>PM</span>
         <span>Stage Progress</span>
@@ -262,7 +262,7 @@ export default function OnTimeTab({ data, auditData }) {
                   {formatDate(job.due_on)}
                 </p>
                 {job.daysLeft !== null && (
-                  <p className="text-[10px] text-gray-300">
+                  <p className="text-[10px] text-gray-500">
                     {job.daysLeft < 0
                       ? `${Math.abs(job.daysLeft)}d overdue`
                       : `${job.daysLeft}d left`}
@@ -276,7 +276,7 @@ export default function OnTimeTab({ data, auditData }) {
           );
         })}
         {filtered.length === 0 && (
-          <div className="text-center py-10 text-gray-300 text-sm">No jobs match this filter.</div>
+          <div className="text-center py-10 text-gray-500 text-sm">No jobs match this filter.</div>
         )}
       </div>
     </div>

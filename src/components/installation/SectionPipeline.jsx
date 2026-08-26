@@ -46,7 +46,7 @@ export default function SectionPipeline({ bySection, onSectionClick }) {
               <div className="w-56 text-sm text-gray-600 shrink-0 py-1">
                 <div>{s.name}</div>
                 {s.completed > 0 && (
-                  <div className="text-gray-300 text-[10px]">
+                  <div className="text-gray-500 text-[10px]">
                     {s.completed} completed
                   </div>
                 )}

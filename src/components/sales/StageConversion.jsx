@@ -68,11 +68,11 @@ function DealModal({ title, deals, onClose, onDealClick }) {
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-900 text-xl leading-none">&times;</button>
         </div>
         <div className="overflow-y-auto flex-1 flex flex-col gap-2">
           {deals.length === 0 ? (
-            <p className="text-gray-300 text-sm text-center py-8">No deals</p>
+            <p className="text-gray-500 text-sm text-center py-8">No deals</p>
           ) : deals.map((deal) => (
             <div
               key={deal.id}
@@ -86,7 +86,7 @@ function DealModal({ title, deals, onClose, onDealClick }) {
                 <div className="min-w-0">
                   <div className="font-medium text-sm truncate">{deal.name}</div>
                   {onDealClick && (
-                    <div className="text-gray-400 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
+                    <div className="text-gray-500 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
                   )}
                 </div>
               </div>
@@ -95,14 +95,14 @@ function DealModal({ title, deals, onClose, onDealClick }) {
                   <div className="text-accent font-semibold text-xs">${deal.amount.toLocaleString()}</div>
                 )}
                 {onDealClick && deal.stageAgeDays != null && (
-                  <div className="text-gray-300 text-[10px]">{deal.stageAgeDays}d in stage</div>
+                  <div className="text-gray-500 text-[10px]">{deal.stageAgeDays}d in stage</div>
                 )}
               </div>
             </div>
           ))}
         </div>
         {onDealClick && deals.length > 0 && (
-          <p className="text-gray-300 text-[10px] mt-3 text-center">Click a deal to see full details</p>
+          <p className="text-gray-500 text-[10px] mt-3 text-center">Click a deal to see full details</p>
         )}
       </div>
     </div>
@@ -215,7 +215,7 @@ function SourceLegend({ entries }) {
         <div key={source} className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: SOURCE_COLORS[source] || '#64748b', opacity: 0.8 }} />
           <span className="text-[11px] text-gray-500">{SOURCE_LABELS[source] || source}</span>
-          <span className="text-[11px] text-gray-300">{count}</span>
+          <span className="text-[11px] text-gray-500">{count}</span>
         </div>
       ))}
     </div>
@@ -259,7 +259,7 @@ export default function StageConversion({ onDealClick }) {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Stage-to-Stage Conversion</h2>
-            <p className="text-gray-400 text-xs mt-0.5">{MODE_DESCRIPTIONS[mode]}</p>
+            <p className="text-gray-500 text-xs mt-0.5">{MODE_DESCRIPTIONS[mode]}</p>
           </div>
           {loading && (
             <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -310,7 +310,7 @@ export default function StageConversion({ onDealClick }) {
               onChange={(e) => setCustomRange((r) => ({ ...r, start: e.target.value }))}
               className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
-            <span className="text-gray-400">to</span>
+            <span className="text-gray-500">to</span>
             <input
               type="date"
               value={customRange.end}
@@ -347,7 +347,7 @@ export default function StageConversion({ onDealClick }) {
           <SourceLegend entries={legendEntries} />
         </>
       ) : data ? (
-        <p className="text-gray-300 text-sm text-center py-12">No deals in this period</p>
+        <p className="text-gray-500 text-sm text-center py-12">No deals in this period</p>
       ) : null}
 
       {/* Hover tooltip for color segments */}

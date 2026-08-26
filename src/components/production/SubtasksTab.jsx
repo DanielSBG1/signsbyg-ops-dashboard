@@ -5,7 +5,7 @@ const TeamMemberProfile = lazy(() => import('./TeamMemberProfile'));
 // ─── Team roster (display order) ─────────────────────────────
 const TEAM_ROSTER = [
   { key: 'Manuel Munoz',                 display: 'Manuel Munoz' },
-  { key: 'Fernando Pe\u00f1a',                display: 'Fernando Pe\u00f1a' },
+  { key: 'Fernando Peña',                display: 'Fernando Peña' },
   { key: 'Ivan Acevedo',                 display: 'Ivan Acevedo' },
   { key: 'jose@signsbyghouston.com',     display: 'Jose' },
   { key: 'Eduardo Menchu',               display: 'Eduardo Menchu' },
@@ -25,18 +25,18 @@ function resolveAssignee(assignee) {
   return { key: '__other__', display: 'Other' };
 }
 
-// ─── Date helpers ────────────────────────────────────────
+// ─── Date helpers ────────────────────────────────────────────
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
 function fmtDate(iso) {
-  if (!iso) return '\u2014';
+  if (!iso) return '—';
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// ─── Status helpers ───────────────────────────────────────
+// ─── Status helpers ─────────────────────────────────────────
 function getStatusKey(subtask, today) {
   if (subtask.completed) {
     const isOnTime = subtask.due_on && subtask.completed_at
@@ -50,7 +50,7 @@ function getStatusKey(subtask, today) {
 
 const STATUS_ORDER = { overdue: 0, late: 1, in_progress: 2, on_time: 3, no_date: 4 };
 
-// ─── Compute per-member stats ──────────────────────────────
+// ─── Compute per-member stats ────────────────────────────────
 function computeMemberStats(subtasks, today) {
   const total     = subtasks.length;
   const completed = subtasks.filter(s => s.completed);
@@ -69,7 +69,7 @@ function computeMemberStats(subtasks, today) {
 
   const overdue = open.filter(s => s.due_on && s.due_on < today);
 
-  // On-time rate includes overdue open tasks as failures \u2014 having overdue
+  // On-time rate includes overdue open tasks as failures — having overdue
   // tasks should bring down your score, not be invisible.
   const denominator = completed.length + overdue.length;
   const onTimeRate = denominator > 0
@@ -88,15 +88,15 @@ function computeMemberStats(subtasks, today) {
   };
 }
 
-// ─── Status badge ────────────────────────────────────────
+// ─── Status badge ────────────────────────────────────────────
 function StatusBadge({ status }) {
   const cfg = {
     on_time:     { label: 'On Time',     cls: 'bg-success/20 text-success' },
     late:        { label: 'Late',        cls: 'bg-danger/20 text-danger' },
     overdue:     { label: 'Overdue',     cls: 'bg-danger/20 text-danger' },
     in_progress: { label: 'In Progress', cls: 'bg-accent/20 text-accent' },
-    no_date:     { label: 'No Date',     cls: 'bg-black/[0.05] text-gray-400' },
-  }[status] || { label: status, cls: 'bg-black/[0.05] text-gray-400' };
+    no_date:     { label: 'No Date',     cls: 'bg-black/[0.05] text-gray-500' },
+  }[status] || { label: status, cls: 'bg-black/[0.05] text-gray-500' };
 
   return (
     <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${cfg.cls}`}>
@@ -105,17 +105,17 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Rate color helper ─────────────────────────────────────
+// ─── Rate color helper ───────────────────────────────────────
 function rateColorClass(rate) {
   if (rate >= 80) return 'text-success';
   if (rate >= 50) return 'text-warning';
   return 'text-danger';
 }
 
-// ─── Sortable column header ───────────────────────────────
+// ─── Sortable column header ─────────────────────────────────
 function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className }) {
   const isActive = currentSort === sortKey;
-  const arrow = isActive ? (currentDir === 'asc' ? ' \u2191' : ' \u2193') : '';
+  const arrow = isActive ? (currentDir === 'asc' ? ' ↑' : ' ↓') : '';
   return (
     <span
       className={`cursor-pointer select-none hover:text-gray-500 transition-colors ${isActive ? 'text-accent' : ''} ${className || ''}`}
@@ -126,7 +126,7 @@ function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className
   );
 }
 
-// ─── Leaderboard sort options ──────────────────────────────
+// ─── Leaderboard sort options ────────────────────────────────
 const LEADERBOARD_SORTS = [
   { key: 'onTimeRate',  label: 'On-Time %' },
   { key: 'completed',   label: 'Completed' },
@@ -137,7 +137,7 @@ const LEADERBOARD_SORTS = [
   { key: 'total',       label: 'Total' },
 ];
 
-const MEDALS = ['\ud83e\udd47', '\ud83e\udd48', '\ud83e\udd49'];
+const MEDALS = ['🥇', '🥈', '🥉'];
 
 function leaderboardBarColor(member) {
   if (member.onTimeRate >= 80) return 'bg-success';
@@ -150,7 +150,7 @@ function fmtLeaderboardValue(member, key) {
   return member[key] ?? 0;
 }
 
-// ─── Leaderboard Component ───────────────────────────────
+// ─── Leaderboard Component ───────────────────────────────────
 function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, onMemberClick }) {
   const sortOpt = LEADERBOARD_SORTS.find(o => o.key === sortKey);
 
@@ -172,7 +172,7 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold">Production Team Leaderboard</h2>
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-300 text-xs mr-1">Sort:</span>
+          <span className="text-gray-500 text-xs mr-1">Sort:</span>
           {LEADERBOARD_SORTS.map(opt => (
             <button
               key={opt.key}
@@ -189,7 +189,7 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
         </div>
       </div>
 
-      {/* Podium \u2014 top 3 */}
+      {/* Podium — top 3 */}
       {sorted.length >= 3 && (
         <div className="grid grid-cols-3 gap-3 mb-4">
           {sorted.slice(0, 3).map((m, idx) => (
@@ -204,19 +204,19 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
                 {fmtLeaderboardValue(m, sortKey)}
               </p>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[10px]">
-                <div><span className="text-gray-300">Done</span> <span className="text-gray-500">{m.completed}</span></div>
-                <div><span className="text-gray-300">Open</span> <span className="text-gray-500">{m.open}</span></div>
-                <div><span className="text-gray-300">On Time</span> <span className="text-success/70">{m.onTime}</span></div>
-                <div><span className="text-gray-300">Late</span> <span className="text-danger/70">{m.late}</span></div>
+                <div><span className="text-gray-500">Done</span> <span className="text-gray-500">{m.completed}</span></div>
+                <div><span className="text-gray-500">Open</span> <span className="text-gray-500">{m.open}</span></div>
+                <div><span className="text-gray-500">On Time</span> <span className="text-success/70">{m.onTime}</span></div>
+                <div><span className="text-gray-500">Late</span> <span className="text-danger/70">{m.late}</span></div>
                 {m.overdue > 0 && (
-                  <div className="col-span-2"><span className="text-gray-300">Overdue</span> <span className="text-danger">{m.overdue}</span> <span className="text-gray-300">\u2014 counts against rate</span></div>
+                  <div className="col-span-2"><span className="text-gray-500">Overdue</span> <span className="text-danger">{m.overdue}</span> <span className="text-gray-500">— counts against rate</span></div>
                 )}
               </div>
               <button
                 className="text-[10px] text-accent hover:underline mt-2"
                 onClick={(e) => { e.stopPropagation(); onViewProfile(m.key); }}
               >
-                View Stats \u2192
+                View Stats →
               </button>
             </div>
           ))}
@@ -239,7 +239,7 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-6 shrink-0 text-center">
-                  <span className="text-gray-300 text-[10px] font-mono">#{rank + 1}</span>
+                  <span className="text-gray-500 text-[10px] font-mono">#{rank + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium text-gray-500 truncate leading-none mb-1.5">{m.display}</div>
@@ -249,9 +249,9 @@ function ProductionLeaderboard({ members, sortKey, onSortChange, onViewProfile, 
                       style={{ width: `${Math.max(barPct, barPct > 0 ? 1.5 : 0)}%` }}
                     />
                   </div>
-                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-gray-300 leading-none">
-                    <span><span className="text-gray-400">{m.completed}</span> done</span>
-                    <span><span className="text-gray-400">{m.open}</span> open</span>
+                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-gray-500 leading-none">
+                    <span><span className="text-gray-500">{m.completed}</span> done</span>
+                    <span><span className="text-gray-500">{m.open}</span> open</span>
                     {m.overdue > 0 && <span className="text-danger">{m.overdue} overdue</span>}
                   </div>
                 </div>
@@ -332,18 +332,18 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
           className="text-[10px] text-accent hover:underline cursor-pointer shrink-0"
           onClick={(e) => { e.stopPropagation(); onViewProfile?.(); }}
         >
-          View Stats \u2192
+          View Stats →
         </span>
         <span className="flex-1" />
         <span className={`text-xs font-semibold tabular-nums ${rateColorClass(member.onTimeRate)}`}>
           {member.onTimeRate}%
         </span>
-        <span className="shrink-0 text-gray-300 text-xs">{expanded ? '\u25b2' : '\u25bc'}</span>
+        <span className="shrink-0 text-gray-500 text-xs">{expanded ? '▲' : '▼'}</span>
       </button>
 
       {expanded && (
         <div className="border-t border-gray-200">
-          <div className="px-4 py-2 grid grid-cols-[1fr_80px_80px_90px] gap-2 text-[10px] uppercase tracking-wider text-gray-400">
+          <div className="px-4 py-2 grid grid-cols-[1fr_80px_80px_90px] gap-2 text-[10px] uppercase tracking-wider text-gray-500">
             <SortHeader label="Task" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
             <SortHeader label="Due" sortKey="due_on" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
             <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
@@ -357,20 +357,20 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
             >
               <span className="text-xs text-gray-700 truncate" title={st.name}>
                 {st._parentName && (
-                  <span className="text-gray-300 mr-1">{st._parentName} /</span>
+                  <span className="text-gray-500 mr-1">{st._parentName} /</span>
                 )}
                 {st.name}
               </span>
               <span className="text-xs tabular-nums text-gray-500">{fmtDate(st.due_on)}</span>
               <StatusBadge status={getStatusKey(st, today)} />
-              <span className="text-xs tabular-nums text-gray-400">
-                {st.completed_at ? fmtDate(st.completed_at.slice(0, 10)) : '\u2014'}
+              <span className="text-xs tabular-nums text-gray-500">
+                {st.completed_at ? fmtDate(st.completed_at.slice(0, 10)) : '—'}
               </span>
             </div>
           ))}
 
           {sortedTasks.length === 0 && (
-            <div className="px-4 py-6 text-center text-xs text-gray-300">No subtasks</div>
+            <div className="px-4 py-6 text-center text-xs text-gray-500">No subtasks</div>
           )}
         </div>
       )}
@@ -378,7 +378,7 @@ function MemberSection({ member, expanded, onToggle, today, sectionRef, onViewPr
   );
 }
 
-// ─── Period helpers ────────────────────────────────────────
+// ─── Period helpers ──────────────────────────────────────────
 function getMondayOf(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
   const day = d.getDay();
@@ -436,7 +436,7 @@ function subtaskInRange(st, range) {
   return (due >= range.start && due <= range.end) || (done >= range.start && done <= range.end);
 }
 
-// ─── Main Component ──────────────────────────────────────
+// ─── Main Component ──────────────────────────────────────────
 export default function SubtasksTab({ data }) {
   const today = useMemo(() => todayStr(), []);
   const [activePeriod, setActivePeriod] = useState('all');
@@ -485,7 +485,7 @@ export default function SubtasksTab({ data }) {
     return initial;
   });
 
-  // Profile view state \u2014 when set, shows the chess.com-style stats page
+  // Profile view state — when set, shows the chess.com-style stats page
   const [profileKey, setProfileKey] = useState(null);
   const profileMember = profileKey ? members.find(m => m.key === profileKey) : null;
 
@@ -523,13 +523,13 @@ export default function SubtasksTab({ data }) {
   }, []);
 
   if (!data) {
-    return <div className="text-center py-20 text-gray-300 text-sm">Loading subtask data...</div>;
+    return <div className="text-center py-20 text-gray-500 text-sm">Loading subtask data...</div>;
   }
 
   // Show profile view when a member is selected
   if (profileMember) {
     return (
-      <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading stats...</div>}>
+      <Suspense fallback={<div className="text-center py-20 text-gray-500">Loading stats...</div>}>
         <TeamMemberProfile
           memberData={profileMember}
           onClose={() => setProfileKey(null)}
@@ -539,12 +539,12 @@ export default function SubtasksTab({ data }) {
   }
 
   if (members.length === 0) {
-    return <div className="text-center py-20 text-gray-300 text-sm">No subtask data available.</div>;
+    return <div className="text-center py-20 text-gray-500 text-sm">No subtask data available.</div>;
   }
 
   return (
     <div className="space-y-6">
-      {/* \u2500\u2500 Period selector \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* ── Period selector ────────────────────────────────── */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -561,7 +561,7 @@ export default function SubtasksTab({ data }) {
         ))}
       </div>
 
-      {/* \u2500\u2500 Leaderboard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* ── Leaderboard ─────────────────────────────────────── */}
       <ProductionLeaderboard
         members={members}
         sortKey={leaderboardSort}
@@ -570,7 +570,7 @@ export default function SubtasksTab({ data }) {
         onMemberClick={(key) => handleScoreCardClick(key)}
       />
 
-      {/* \u2500\u2500 Team member sections (sortable columns) \u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* ── Team member sections (sortable columns) ────────── */}
       <div className="space-y-3">
         {members.map(m => (
           <MemberSection

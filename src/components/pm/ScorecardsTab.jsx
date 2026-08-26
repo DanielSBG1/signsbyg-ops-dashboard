@@ -14,7 +14,7 @@ function PmAuditSummary({ auditData, onAuditPmClick }) {
   if (!auditData?.pms?.length) return null;
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
-      <p className="text-gray-400 text-xs font-medium mb-3">PM Pipeline Audit</p>
+      <p className="text-gray-500 text-xs font-medium mb-3">PM Pipeline Audit</p>
       <div className="flex flex-wrap gap-2">
         {auditData.pms.map(pm => {
           const hasIssues = pm.counts.urgent > 0 || pm.counts.red > 0;
@@ -67,7 +67,7 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
             <h2 className="text-lg font-semibold">PM Scorecards</h2>
-            <p className="text-gray-400 text-xs mt-0.5">
+            <p className="text-gray-500 text-xs mt-0.5">
               {filtered.length} of {data.scorecards.length} jobs · worst first
             </p>
           </div>
@@ -106,7 +106,7 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-gray-400 border-b border-gray-200">
+              <tr className="text-gray-500 border-b border-gray-200">
                 <th className="text-left py-2 pr-4 font-medium">Score</th>
                 <th className="text-left py-2 pr-4 font-medium">Job</th>
                 <th className="text-left py-2 pr-4 font-medium">Due</th>
@@ -127,7 +127,7 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
                   <td className={`py-2 pr-4 tabular-nums ${
                     j.due_on && j.due_on < new Date().toISOString().slice(0, 10)
                       ? 'text-red-400'
-                      : 'text-gray-400'
+                      : 'text-gray-500'
                   }`}>
                     {j.due_on ?? '—'}
                   </td>
@@ -139,7 +139,7 @@ export default function ScorecardsTab({ data, auditData, onJobClick, onAuditPmCl
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-gray-300">
+                  <td colSpan={4} className="py-8 text-center text-gray-500">
                     No jobs match the current filters.
                   </td>
                 </tr>

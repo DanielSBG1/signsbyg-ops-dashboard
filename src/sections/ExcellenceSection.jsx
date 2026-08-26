@@ -44,7 +44,7 @@ export default function ExcellenceSection() {
           <div>
             <h1 className="text-2xl font-bold">Excellence</h1>
             {data && (
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-gray-500 text-xs mt-1">
                 Updated {new Date(data.generatedAt).toLocaleTimeString()}
               </p>
             )}
@@ -58,7 +58,7 @@ export default function ExcellenceSection() {
             </button>
             <button
               onClick={() => refresh(true)}
-              className="text-gray-400 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors"
+              className="text-gray-500 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors"
             >
               Refresh
             </button>
@@ -116,7 +116,7 @@ export default function ExcellenceSection() {
               <span className="text-xl">{teams[activeTeam].emoji}</span>
               <h2 className="text-lg font-bold">{teams[activeTeam].label}</h2>
               <span className="text-3xl font-bold tabular-nums ml-2">{teams[activeTeam].score}</span>
-              <button onClick={() => setActiveTeam(null)} className="ml-auto text-gray-300 hover:text-gray-500 text-xl leading-none">×</button>
+              <button onClick={() => setActiveTeam(null)} className="ml-auto text-gray-500 hover:text-gray-500 text-xl leading-none">×</button>
             </div>
             <TeamDrillDown team={teams[activeTeam]} />
           </div>

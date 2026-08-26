@@ -19,13 +19,13 @@ function TrendBadge({ value, compareLabel, tooltip }) {
   return (
     <span className="text-xs flex items-center gap-1.5" title={tooltip}>
       {isZero ? (
-        <span className="text-gray-300">—</span>
+        <span className="text-gray-500">—</span>
       ) : (
         <span className={`font-medium ${isUp ? 'text-success' : 'text-danger'}`}>
           {isUp ? '↑' : '↓'} {Math.abs(value)}%
         </span>
       )}
-      <span className="text-gray-300">{compareLabel}</span>
+      <span className="text-gray-500">{compareLabel}</span>
     </span>
   );
 }
@@ -49,9 +49,9 @@ function Card({ label, value, trend, format, compareLabel, tooltip, onClick, isA
           : 'border-gray-200 hover:border-white/15 hover:bg-black/[0.02]'
       }`}
     >
-      <span className="text-xs uppercase tracking-wider text-gray-400 font-medium" title={tooltip}>{label}</span>
+      <span className="text-xs uppercase tracking-wider text-gray-500 font-medium" title={tooltip}>{label}</span>
       <span className="text-3xl font-bold tracking-tight">{displayValue}</span>
-      {subline && <span className="text-[10px] text-gray-300 -mt-1">{subline}</span>}
+      {subline && <span className="text-[10px] text-gray-500 -mt-1">{subline}</span>}
       <TrendBadge value={trend} compareLabel={compareLabel} tooltip={tooltip} />
     </button>
   );

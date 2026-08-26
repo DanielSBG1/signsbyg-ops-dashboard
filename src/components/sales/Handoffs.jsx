@@ -38,7 +38,7 @@ function SummaryCards({ summary }) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {cards.map((c) => (
         <div key={c.label} className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-wider text-gray-400 font-medium">{c.label}</span>
+          <span className="text-xs uppercase tracking-wider text-gray-500 font-medium">{c.label}</span>
           <span className={`text-3xl font-bold tracking-tight ${c.className || ''}`}>{c.value}</span>
         </div>
       ))}
@@ -54,7 +54,7 @@ function RepScorecard({ reps }) {
       <h2 className="text-lg font-semibold mb-4">Rep Scorecard</h2>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-gray-400 text-xs uppercase tracking-wider">
+          <tr className="text-gray-500 text-xs uppercase tracking-wider">
             <th className="pb-3 px-3 text-left">Rep</th>
             <th className="pb-3 px-3 text-right"># Deals</th>
             <th className="pb-3 px-3 text-right">Avg Completeness</th>
@@ -141,7 +141,7 @@ function DealTable({ deals }) {
       <h2 className="text-lg font-semibold mb-4">Deal Details</h2>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-gray-400 text-xs uppercase tracking-wider">
+          <tr className="text-gray-500 text-xs uppercase tracking-wider">
             <SortHeader label="Deal" sortKeyName="name" align="left" />
             <SortHeader label="Rep" sortKeyName="rep" align="left" />
             <SortHeader label="Close Date" sortKeyName="closeDate" align="left" />
@@ -194,7 +194,7 @@ export default function Handoffs({ data, loading, error }) {
         <div className="flex items-center justify-center h-64">
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-400 text-sm">Loading handoff data...</p>
+            <p className="text-gray-500 text-sm">Loading handoff data...</p>
           </div>
         </div>
       ) : data ? (

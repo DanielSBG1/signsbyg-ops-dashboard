@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 
-// ─── Constants ──────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const PERIODS = [
   { id: 'thisWeek',    label: 'This Week'     },
@@ -14,7 +14,7 @@ const STATUS_BADGE = {
   bled_over:   { label: 'Bled Over',   cls: 'bg-warning/20 text-warning' },
   scheduled:   { label: 'Scheduled',   cls: 'bg-accent/20 text-accent' },
   in_progress: { label: 'Upcoming',    cls: 'bg-accent/20 text-accent' },
-  pending:     { label: 'No Date',     cls: 'bg-black/[0.05] text-gray-400' },
+  pending:     { label: 'No Date',     cls: 'bg-black/[0.05] text-gray-500' },
   late:        { label: 'Late',        cls: 'bg-danger/20 text-danger' },
   overdue:     { label: 'Overdue',     cls: 'bg-danger/20 text-danger' },
   rescheduled: { label: 'Rescheduled', cls: 'bg-warning/20 text-warning' },
@@ -32,7 +32,7 @@ const STATUS_CARD = {
   failed:      { borderClass: 'border-danger/40',    dotClass: 'bg-danger'   },
 };
 
-// ─── Helpers ────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getWeekDays(today) {
   const d = new Date(today + 'T12:00:00Z');
@@ -58,7 +58,7 @@ function formatDate(dateStr) {
   });
 }
 
-// ─── Alert card (grid-cols-3 top section) ─────────────────────────────
+// ─── Alert card (grid-cols-3 top section) ─────────────────────────────────────
 
 function AlertCard({ label, value, sub, active, onClick }) {
   return (
@@ -72,19 +72,19 @@ function AlertCard({ label, value, sub, active, onClick }) {
             : 'border-gray-200 hover:border-gray-300'
       }`}
     >
-      <p className="text-gray-400 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
-      <p className={`text-6xl font-black tabular-nums leading-none ${value > 0 ? 'text-danger' : 'text-gray-300'}`}>
+      <p className="text-gray-500 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
+      <p className={`text-6xl font-black tabular-nums leading-none ${value > 0 ? 'text-danger' : 'text-gray-500'}`}>
         {value ?? 0}
       </p>
-      {sub && <p className="text-gray-300 text-xs mt-2">{sub}</p>}
-      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-danger' : 'text-gray-300'}`}>
+      {sub && <p className="text-gray-500 text-xs mt-2">{sub}</p>}
+      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-danger' : 'text-gray-500'}`}>
         {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
       </p>
     </button>
   );
 }
 
-// ─── KPI card ─────────────────────────────────────────────────────────
+// ─── KPI card ─────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, color, active, onClick }) {
   const cls = { success: 'text-success', danger: 'text-danger', warning: 'text-warning' }[color] ?? 'text-gray-900';
@@ -97,23 +97,23 @@ function KpiCard({ label, value, sub, color, active, onClick }) {
           : 'border-gray-200 hover:border-gray-300'
       }`}
     >
-      <p className="text-gray-400 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
+      <p className="text-gray-500 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
       <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '\u2014'}</p>
-      {sub && <p className="text-gray-300 text-xs mt-2">{sub}</p>}
-      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-gray-300'}`}>
+      {sub && <p className="text-gray-500 text-xs mt-2">{sub}</p>}
+      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-gray-500'}`}>
         {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
       </p>
     </button>
   );
 }
 
-// ─── Job panel (expandable list from alert / KPI clicks) ────────────────
+// ─── Job panel (expandable list from alert / KPI clicks) ──────────────────────
 
 function JobPanel({ jobs, accentColor }) {
   const borderCls = accentColor === 'danger' ? 'border-danger/30' : 'border-accent/20';
   if (jobs.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-300 text-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-500 text-sm">
         No jobs for this selection.
       </div>
     );
@@ -121,8 +121,8 @@ function JobPanel({ jobs, accentColor }) {
   return (
     <div className={`bg-white border ${borderCls} rounded-2xl overflow-hidden`}>
       <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">Jobs</p>
-        <p className="text-xs text-gray-300">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
+        <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">Jobs</p>
+        <p className="text-xs text-gray-500">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
       </div>
       <div className="divide-y divide-gray-100">
         {jobs.map((job, i) => {
@@ -140,10 +140,10 @@ function JobPanel({ jobs, accentColor }) {
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{job.name}</p>
-                {meta && <p className="text-[11px] text-gray-400 mt-0.5">{meta}</p>}
+                {meta && <p className="text-[11px] text-gray-500 mt-0.5">{meta}</p>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] text-gray-400 tabular-nums">{formatDate(job.installDate)}</span>
+                <span className="text-[11px] text-gray-500 tabular-nums">{formatDate(job.installDate)}</span>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${badge.cls}`}>{badge.label}</span>
               </div>
             </a>
@@ -154,7 +154,7 @@ function JobPanel({ jobs, accentColor }) {
   );
 }
 
-// ─── Install job card (inside day column) ───────────────────────────
+// ─── Install job card (inside day column) ─────────────────────────────────────
 
 function InstallJobCard({ job }) {
   const cfg   = STATUS_CARD[job.status] ?? STATUS_CARD.scheduled;
@@ -195,7 +195,7 @@ function InstallJobCard({ job }) {
   );
 }
 
-// ─── Day column ───────────────────────────────────────────────────────
+// ─── Day column ───────────────────────────────────────────────────────────────
 
 function DayColumn({ day, jobs, isToday, crewColorMap }) {
   const uniqueCrews = useMemo(() => {
@@ -215,20 +215,20 @@ function DayColumn({ day, jobs, isToday, crewColorMap }) {
       {/* Day header */}
       <div className={`px-4 pt-4 pb-3 ${isToday ? 'border-b border-accent/20' : 'border-b border-gray-200'}`}>
         <div className="flex items-center justify-between mb-1">
-          <span className={`text-[11px] font-bold uppercase tracking-widest ${isToday ? 'text-accent' : 'text-gray-400'}`}>
+          <span className={`text-[11px] font-bold uppercase tracking-widest ${isToday ? 'text-accent' : 'text-gray-500'}`}>
             {day.label}
           </span>
           {isToday && <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full font-semibold">Today</span>}
         </div>
         <div className="flex items-baseline gap-1.5">
           <span className={`text-3xl font-bold leading-none ${isToday ? 'text-gray-900' : 'text-gray-600'}`}>{day.dayNum}</span>
-          <span className="text-sm text-gray-300">{day.month}</span>
+          <span className="text-sm text-gray-500">{day.month}</span>
         </div>
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-[11px] text-gray-400">{jobs.length} install{jobs.length !== 1 ? 's' : ''}</span>
+          <span className="text-[11px] text-gray-500">{jobs.length} install{jobs.length !== 1 ? 's' : ''}</span>
           {lateCount > 0 && (
             <>
-              <span className="text-gray-300">&middot;</span>
+              <span className="text-gray-500">&middot;</span>
               <span className="text-[11px] text-danger font-semibold">{lateCount} late</span>
             </>
           )}
@@ -238,14 +238,14 @@ function DayColumn({ day, jobs, isToday, crewColorMap }) {
       {/* Crew count strip */}
       {uniqueCrews > 0 && (
         <div className="px-4 py-2 border-b border-gray-100">
-          <span className="text-[10px] text-gray-300 font-medium">{uniqueCrews} crew{uniqueCrews !== 1 ? 's' : ''} active</span>
+          <span className="text-[10px] text-gray-500 font-medium">{uniqueCrews} crew{uniqueCrews !== 1 ? 's' : ''} active</span>
         </div>
       )}
 
       {/* Job cards */}
       <div className="flex-1 p-3 space-y-2">
         {jobs.length === 0
-          ? <p className="text-gray-300 text-xs text-center py-6">No installs</p>
+          ? <p className="text-gray-500 text-xs text-center py-6">No installs</p>
           : jobs.map((job, i) => <InstallJobCard key={job.id ?? i} job={job} />)
         }
       </div>
@@ -253,7 +253,7 @@ function DayColumn({ day, jobs, isToday, crewColorMap }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function InstallationOverview({ data }) {
   const [activePeriod, setActivePeriod] = useState('thisWeek');
@@ -422,7 +422,7 @@ export default function InstallationOverview({ data }) {
         ].map(({ label, cls }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${cls}`} />
-            <span className="text-[11px] text-gray-400">{label}</span>
+            <span className="text-[11px] text-gray-500">{label}</span>
           </div>
         ))}
       </div>
@@ -430,9 +430,9 @@ export default function InstallationOverview({ data }) {
       {/* ── Bottom: Mon-Fri day columns (This Week) ── */}
       <div className="space-y-3">
         <div className="flex items-center gap-3">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 shrink-0">This Week</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500 shrink-0">This Week</p>
           <div className="flex-1 h-px bg-gray-200" />
-          <p className="text-[10px] text-gray-300 shrink-0">
+          <p className="text-[10px] text-gray-500 shrink-0">
             {weekDays[0]?.dayNum} {weekDays[0]?.month} &ndash; {weekDays[4]?.dayNum} {weekDays[4]?.month}
           </p>
         </div>

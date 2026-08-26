@@ -45,7 +45,7 @@ function formatDate(dateStr) {
   } catch { return dateStr; }
 }
 
-// ─── Department tasks modal ────────────────────────────────
+// ─── Department tasks modal ────────────────────────────────────
 
 const DEPT_SORT_COLS = [
   { key: 'name',     label: 'Job Name' },
@@ -99,9 +99,9 @@ function DeptTasksModal({ stage, tasks, onClose }) {
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: stage.color }} />
             <span className="text-lg font-bold text-gray-900">{stage.name}</span>
-            <span className="text-sm text-gray-400">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
+            <span className="text-sm text-gray-500">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
           </div>
-          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
 
         {/* Column headers */}
@@ -111,7 +111,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
               key={col.key}
               onClick={() => handleCol(col.key)}
               className={`text-left text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-                sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
+                sortCol === col.key ? 'text-yellow-300' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
               {col.label}
@@ -140,7 +140,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
                     ? <span className="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2 py-0.5 rounded-full">REDO</span>
                     : isOverdue
                       ? <span className="text-xs text-red-400/70">Overdue</span>
-                      : <span className="text-xs text-gray-300">—</span>
+                      : <span className="text-xs text-gray-500">—</span>
                   }
                 </span>
               </div>
@@ -202,9 +202,9 @@ function HealthJobsModal({ segment, onClose, onJobClick }) {
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: segment.color }} />
             <span className="text-lg font-bold text-gray-900">{segment.label}</span>
-            <span className="text-sm text-gray-400">{segment.count} job{segment.count !== 1 ? 's' : ''}</span>
+            <span className="text-sm text-gray-500">{segment.count} job{segment.count !== 1 ? 's' : ''}</span>
           </div>
-          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
 
         {/* Column headers */}
@@ -212,14 +212,14 @@ function HealthJobsModal({ segment, onClose, onJobClick }) {
           {COLS.map(col => (
             <button key={col.key} onClick={() => handleCol(col.key)}
               className={`text-left text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-                sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
+                sortCol === col.key ? 'text-yellow-300' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
               {col.label}
               {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
             </button>
           ))}
-          <span className="text-xs uppercase tracking-wider text-gray-400">Flags</span>
+          <span className="text-xs uppercase tracking-wider text-gray-500">Flags</span>
         </div>
 
         {/* Rows */}
@@ -312,7 +312,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
         {/* Stage distribution — clickable segments */}
         {totalDeptTasks > 0 && (
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
               <span>Active tasks by stage — click to view projects</span>
               <span>{totalDeptTasks} total</span>
             </div>
@@ -336,7 +336,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
                 >
                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.color }} />
                   {seg.name}
-                  <span className="text-gray-300">{seg.count}</span>
+                  <span className="text-gray-500">{seg.count}</span>
                 </button>
               ))}
             </div>
@@ -346,7 +346,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
         {/* Health distribution */}
         {totalJobs > 0 && (
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
               <span>Job health distribution — click to view jobs</span>
               <span>{totalJobs} jobs</span>
             </div>
@@ -368,7 +368,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
                 >
                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.color }} />
                   {seg.label}
-                  <span className="text-gray-300">{seg.count}</span>
+                  <span className="text-gray-500">{seg.count}</span>
                 </button>
               ))}
             </div>
@@ -399,7 +399,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
 function KpiCard({ label, value, colorClass = 'text-gray-900' }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold ${colorClass}`}>{value}</p>
     </div>
   );
@@ -415,12 +415,12 @@ function AlertPanel({ title, empty, children }) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold">{title}</h3>
         {hasChildren && (
-          <span className="text-xs text-gray-300 tabular-nums">{count}</span>
+          <span className="text-xs text-gray-500 tabular-nums">{count}</span>
         )}
       </div>
       {hasChildren
         ? <div className="space-y-2.5 flex-1">{children}</div>
-        : <p className="text-gray-300 text-sm flex-1 flex items-center">{empty}</p>
+        : <p className="text-gray-500 text-sm flex-1 flex items-center">{empty}</p>
       }
     </div>
   );
@@ -438,7 +438,7 @@ function AlertRow({ job, onClick }) {
   );
 }
 
-// ─── PM Portfolio ────────────────────────────────────────────
+// ─── PM Portfolio ──────────────────────────────────────────────
 
 const TODAY_STR = new Date().toISOString().slice(0, 10);
 
@@ -495,7 +495,7 @@ function PmCard({ pm, onClick }) {
             <span className="text-4xl font-black tabular-nums" style={{ color: healthBarColor(avgHealth) }}>
               {avgHealth}
             </span>
-            <p className="text-[10px] text-gray-300 uppercase tracking-wider mt-0.5">Health Score</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Health Score</p>
           </div>
         )}
       </div>
@@ -512,22 +512,22 @@ function PmCard({ pm, onClick }) {
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-black/[0.02] rounded-xl p-4 text-center">
           <p className="text-3xl font-bold text-gray-900 tabular-nums">{jobCount}</p>
-          <p className="text-[11px] text-gray-400 mt-1">Total Jobs</p>
+          <p className="text-[11px] text-gray-500 mt-1">Total Jobs</p>
         </div>
         <div className="bg-black/[0.02] rounded-xl p-4 text-center">
-          <p className={`text-3xl font-bold tabular-nums ${overdueCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{overdueCount}</p>
-          <p className="text-[11px] text-gray-400 mt-1">Overdue</p>
+          <p className={`text-3xl font-bold tabular-nums ${overdueCount > 0 ? 'text-red-400' : 'text-gray-500'}`}>{overdueCount}</p>
+          <p className="text-[11px] text-gray-500 mt-1">Overdue</p>
         </div>
         <div className="bg-black/[0.02] rounded-xl p-4 text-center">
-          <p className={`text-3xl font-bold tabular-nums ${unprocessedCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{unprocessedCount}</p>
-          <p className="text-[11px] text-gray-400 mt-1">Unprocessed</p>
+          <p className={`text-3xl font-bold tabular-nums ${unprocessedCount > 0 ? 'text-red-400' : 'text-gray-500'}`}>{unprocessedCount}</p>
+          <p className="text-[11px] text-gray-500 mt-1">Unprocessed</p>
         </div>
       </div>
 
       {/* Stage breakdown */}
       {(totalStaged > 0 || unprocessedCount > 0) && (
         <div>
-          <div className="text-xs text-gray-400 mb-2 font-medium">Stage Distribution</div>
+          <div className="text-xs text-gray-500 mb-2 font-medium">Stage Distribution</div>
           <div className="flex h-4 rounded-lg overflow-hidden gap-px">
             {STAGES.map(stage => {
               const count = stageBreakdown[stage.name];
@@ -549,7 +549,7 @@ function PmCard({ pm, onClick }) {
               return (
                 <span key={stage.name} className="flex items-center gap-1.5 text-xs text-gray-500">
                   <span className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                  {stage.name} <span className="text-gray-300 font-semibold">{count}</span>
+                  {stage.name} <span className="text-gray-500 font-semibold">{count}</span>
                 </span>
               );
             })}
@@ -578,7 +578,7 @@ function MiniPmCard({ pm, onClick }) {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-gray-700">{name}</p>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <span className="text-xs text-gray-400">{jobCount} jobs</span>
+          <span className="text-xs text-gray-500">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
           )}
@@ -631,7 +631,7 @@ function JobRow({ task, dueOn, showLastActivity }) {
     : formatShortDate(dueOn);
   const dateColor = showLastActivity
     ? 'text-orange-400'
-    : isLate ? 'text-red-400 font-semibold' : 'text-gray-400';
+    : isLate ? 'text-red-400 font-semibold' : 'text-gray-500';
 
   return (
     <a
@@ -657,7 +657,7 @@ function JobColumn({ title, count, color, borderColor, tasks, showLastActivity }
       </div>
       <div className="flex-1 overflow-y-auto max-h-[400px]">
         {tasks.length === 0
-          ? <p className="text-gray-300 text-sm text-center py-8">None</p>
+          ? <p className="text-gray-500 text-sm text-center py-8">None</p>
           : tasks.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} showLastActivity={showLastActivity} />)
         }
       </div>
@@ -723,9 +723,9 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <h3 className="text-xl font-bold text-gray-900">{pm.name}</h3>
-            <span className="text-sm text-gray-400">{tasks.length} total jobs</span>
+            <span className="text-sm text-gray-500">{tasks.length} total jobs</span>
           </div>
-          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none px-2">&times;</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none px-2">&times;</button>
         </div>
         {/* Health bar */}
         {pm.avgHealth !== null && (
@@ -746,13 +746,13 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
         <div className={`rounded-2xl overflow-hidden ${unreviewed.length > 0 ? 'bg-red-500/10 border border-red-500/25' : 'bg-white border border-gray-200'}`}>
           <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
             <h4 className="text-sm font-black uppercase tracking-widest text-red-400">Unreviewed Jobs</h4>
-            <span className={`text-3xl font-black tabular-nums ${unreviewed.length > 0 ? 'text-red-400' : 'text-gray-300'}`}>
+            <span className={`text-3xl font-black tabular-nums ${unreviewed.length > 0 ? 'text-red-400' : 'text-gray-500'}`}>
               {unreviewed.length}
             </span>
           </div>
           <div className="max-h-[250px] overflow-y-auto">
             {unreviewed.length === 0
-              ? <p className="text-gray-300 text-sm text-center py-6">All jobs have been reviewed</p>
+              ? <p className="text-gray-500 text-sm text-center py-6">All jobs have been reviewed</p>
               : unreviewed.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} />)
             }
           </div>
@@ -795,7 +795,7 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
   );
 }
 
-// ─── PM Portfolio Section ───────────────────────────────────
+// ─── PM Portfolio Section ─────────────────────────────────────
 
 function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
   const [expandedPm, setExpandedPm] = useState(null);
@@ -850,7 +850,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
               Unmanaged Projects &mdash; {unmanagedTotal} jobs need reassignment
             </h3>
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             These projects belong to inactive PMs and are not being actively managed. Reassign to Nikhil, Danish, or Barbara.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">

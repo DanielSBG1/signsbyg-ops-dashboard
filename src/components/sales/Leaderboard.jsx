@@ -41,7 +41,7 @@ function primaryLabel(rep, sortKey) {
 function StatRow({ label, value }) {
   return (
     <>
-      <span className="text-gray-400">{label}</span>
+      <span className="text-gray-500">{label}</span>
       <span className="text-white/90 tabular-nums font-medium text-right">{value}</span>
     </>
   );
@@ -56,7 +56,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
     return (
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h2 className="text-lg font-semibold mb-2">Sales Rep Leaderboard</h2>
-        <p className="text-gray-400 text-sm">No rep activity in this period yet.</p>
+        <p className="text-gray-500 text-sm">No rep activity in this period yet.</p>
       </div>
     );
   }
@@ -100,7 +100,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold">Sales Rep Leaderboard</h2>
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-300 text-xs mr-1">Sort:</span>
+          <span className="text-gray-500 text-xs mr-1">Sort:</span>
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt.key}
@@ -145,19 +145,19 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
                 {/* Mini stats 2x2 */}
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-3">
                   <div>
-                    <div className="text-[10px] text-gray-300">Leads</div>
+                    <div className="text-[10px] text-gray-500">Leads</div>
                     <div className="text-xs text-gray-500">{rep.leadsAssigned}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-gray-300">Won</div>
+                    <div className="text-[10px] text-gray-500">Won</div>
                     <div className="text-xs text-gray-500">{rep.dealsWon}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-gray-300">Bids</div>
+                    <div className="text-[10px] text-gray-500">Bids</div>
                     <div className="text-xs text-gray-500">{rep.bidsSent}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-gray-300">Revenue</div>
+                    <div className="text-[10px] text-gray-500">Revenue</div>
                     <div className="text-xs text-gray-500">${Number(rep.revenueClosed ?? 0).toLocaleString()}</div>
                   </div>
                 </div>
@@ -211,7 +211,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
               <div className="flex items-center gap-2.5">
                 {/* Rank badge */}
                 <div className="w-6 shrink-0 text-center">
-                  <span className="text-gray-300 text-[10px] font-mono">#{rank + 1}</span>
+                  <span className="text-gray-500 text-[10px] font-mono">#{rank + 1}</span>
                 </div>
 
                 {/* Left: name + stats */}
@@ -225,7 +225,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
                     />
                   </div>
                   {/* Quick stats */}
-                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-gray-300 leading-none">
+                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-gray-500 leading-none">
                     <span><span className="text-white/45">{rep.leadsAssigned}</span>L</span>
                     <span><span className="text-white/45">{rep.dealsCreated}</span>D</span>
                     <span><span className="text-white/45">{rep.dealsWon}</span>W</span>
@@ -263,7 +263,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
 
             <div className="space-y-3">
               <section>
-                <p className="text-gray-300 text-[10px] uppercase tracking-widest mb-1.5">Lead Activity</p>
+                <p className="text-gray-500 text-[10px] uppercase tracking-widest mb-1.5">Lead Activity</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                   <StatRow label="Leads Assigned" value={hoveredRep.leadsAssigned} />
                   <StatRow label="FB Leads" value={hoveredRep.fbLeads} />
@@ -274,7 +274,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
               </section>
 
               <section>
-                <p className="text-gray-300 text-[10px] uppercase tracking-widest mb-1.5">Deal Activity</p>
+                <p className="text-gray-500 text-[10px] uppercase tracking-widest mb-1.5">Deal Activity</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                   <StatRow label="Deals Created" value={hoveredRep.dealsCreated} />
                   <StatRow label="Deals Won" value={hoveredRep.dealsWon} />
@@ -289,7 +289,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
               </section>
 
               <section>
-                <p className="text-gray-300 text-[10px] uppercase tracking-widest mb-1.5">Cold Outreach & Bids</p>
+                <p className="text-gray-500 text-[10px] uppercase tracking-widest mb-1.5">Cold Outreach & Bids</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                   <StatRow label="Bids Sent" value={hoveredRep.bidsSent ?? '—'} />
                   <StatRow label="Same-Period Bids" value={hoveredRep.samePeriodBidsSent ?? '—'} />
@@ -299,7 +299,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
               </section>
 
               <section>
-                <p className="text-gray-300 text-[10px] uppercase tracking-widest mb-1.5">Speed to Lead</p>
+                <p className="text-gray-500 text-[10px] uppercase tracking-widest mb-1.5">Speed to Lead</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                   <StatRow label="Avg Response" value={fmt(hoveredRep.avgResponseMinutes, 'avgResponseMinutes')} />
                   <StatRow label="Cohort Won" value={hoveredRep.cohortWon} />
@@ -307,7 +307,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
               </section>
             </div>
 
-            <div className="mt-3 pt-3 border-t border-white/8 text-[10px] text-gray-300 text-center">
+            <div className="mt-3 pt-3 border-t border-white/8 text-[10px] text-gray-500 text-center">
               {['leadsAssigned', 'avgResponseMinutes', 'coldLeads'].includes(sortKey)
                 ? 'Click to see contacts ↓'
                 : 'Click to see deals ↓'}

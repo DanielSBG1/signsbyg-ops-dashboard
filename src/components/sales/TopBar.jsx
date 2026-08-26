@@ -84,7 +84,7 @@ export default function TopBar({ tab, setTab, period, setPeriod, customRange, se
               onChange={(e) => setCustomRange((r) => ({ ...r, start: e.target.value }))}
               className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
-            <span className="text-gray-400">to</span>
+            <span className="text-gray-500">to</span>
             <input
               type="date"
               value={customRange.end}
@@ -94,7 +94,7 @@ export default function TopBar({ tab, setTab, period, setPeriod, customRange, se
           </div>
         )}
 
-        <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
+        <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
           <button
             onClick={onRefresh}
             disabled={loading}

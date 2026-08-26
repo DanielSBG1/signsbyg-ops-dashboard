@@ -27,15 +27,15 @@ function JobListModal({ label, color, jobs, onClose }) {
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
             <span className="text-lg font-bold text-gray-900">{label}</span>
-            <span className="text-sm text-gray-400">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</span>
+            <span className="text-sm text-gray-500">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</span>
           </div>
-          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
 
         <div className="grid grid-cols-[1fr_130px_110px] gap-4 px-6 py-3 border-b border-gray-200 bg-black/[0.02] flex-shrink-0">
-          <span className="text-xs uppercase tracking-wider text-gray-400">Job Name</span>
-          <span className="text-xs uppercase tracking-wider text-gray-400">Crew</span>
-          <span className="text-xs uppercase tracking-wider text-gray-400">Install Date</span>
+          <span className="text-xs uppercase tracking-wider text-gray-500">Job Name</span>
+          <span className="text-xs uppercase tracking-wider text-gray-500">Crew</span>
+          <span className="text-xs uppercase tracking-wider text-gray-500">Install Date</span>
         </div>
 
         <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
@@ -97,7 +97,7 @@ export default function PipelineBar({ summary, jobs }) {
         {/* Status distribution */}
         {totalOpen > 0 && (
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
               <span>Open jobs by status — click to view</span>
               <span>{totalOpen} open</span>
             </div>
@@ -121,7 +121,7 @@ export default function PipelineBar({ summary, jobs }) {
                 >
                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.color }} />
                   {seg.label}
-                  <span className="text-gray-300">{seg.count}</span>
+                  <span className="text-gray-500">{seg.count}</span>
                 </button>
               ))}
             </div>
@@ -130,7 +130,7 @@ export default function PipelineBar({ summary, jobs }) {
 
         {/* On-time rate bar */}
         <div>
-          <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
             <span>On-time rate (completed jobs)</span>
             <span>{summary.early + summary.onTime} of {summary.early + summary.onTime + summary.failed} completed</span>
           </div>

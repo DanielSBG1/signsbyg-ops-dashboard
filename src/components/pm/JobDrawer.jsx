@@ -71,13 +71,13 @@ export default function JobDrawer({ gid, onClose }) {
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-900 text-xl shrink-0 mt-0.5"
+              className="text-gray-500 hover:text-gray-900 text-xl shrink-0 mt-0.5"
             >
               ×
             </button>
           </div>
 
-          {loading && <p className="text-gray-400 text-sm">Fetching job data...</p>}
+          {loading && <p className="text-gray-500 text-sm">Fetching job data...</p>}
           {error && <p className="text-red-400 text-sm">Error: {error}</p>}
 
           {job && (
@@ -86,7 +86,7 @@ export default function JobDrawer({ gid, onClose }) {
               <div className="flex items-center gap-4">
                 <HealthBadge score={job.score} band={job.band} size="lg" />
                 <div>
-                  <p className="text-gray-400 text-xs">Client promise date</p>
+                  <p className="text-gray-500 text-xs">Client promise date</p>
                   <p className={`text-sm font-semibold ${
                     job.due_on && job.due_on < today ? 'text-red-400' : 'text-gray-900'
                   }`}>
@@ -122,8 +122,8 @@ export default function JobDrawer({ gid, onClose }) {
                       return (
                         <div key={dept} className="flex items-center gap-3 py-2 opacity-30">
                           <NotStartedIcon />
-                          <span className="text-xs text-gray-400">{DEPT_LABELS[dept]}</span>
-                          <span className="text-[10px] text-gray-300 ml-auto">not started</span>
+                          <span className="text-xs text-gray-500">{DEPT_LABELS[dept]}</span>
+                          <span className="text-[10px] text-gray-500 ml-auto">not started</span>
                         </div>
                       );
                     }
@@ -140,7 +140,7 @@ export default function JobDrawer({ gid, onClose }) {
                               <span className="text-orange-400 text-[10px] font-bold">REDO</span>
                             )}
                           </div>
-                          <p className="text-gray-400 text-[10px]">
+                          <p className="text-gray-500 text-[10px]">
                             {sub.assignee ?? 'Unassigned'}
                           </p>
                           {(dept === 'design' || dept === 'permitting') && sub.commentCount != null && (
@@ -148,7 +148,7 @@ export default function JobDrawer({ gid, onClose }) {
                               (dept === 'design' && sub.commentCount > 6) ||
                               (dept === 'permitting' && sub.commentCount > 15)
                                 ? 'text-orange-400'
-                                : 'text-gray-300'
+                                : 'text-gray-500'
                             }`}>
                               {sub.commentCount} comments
                             </p>
@@ -156,11 +156,11 @@ export default function JobDrawer({ gid, onClose }) {
                         </div>
                         <div className="text-right shrink-0">
                           {sub.due_on ? (
-                            <span className={`text-[10px] tabular-nums ${isOverdueSub ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
+                            <span className={`text-[10px] tabular-nums ${isOverdueSub ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
                               {sub.due_on}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-gray-300">no date</span>
+                            <span className="text-[10px] text-gray-500">no date</span>
                           )}
                         </div>
                       </div>
@@ -180,8 +180,8 @@ export default function JobDrawer({ gid, onClose }) {
                         <div key={s.gid} className="flex items-center gap-3 text-xs">
                           <StatusIcon completed={s.completed} />
                           <span className="flex-1 text-gray-600 truncate">{s.name}</span>
-                          <span className="text-gray-400 text-[10px]">{s.assignee ?? '—'}</span>
-                          <span className={`text-[10px] tabular-nums ${isOver ? 'text-red-400' : 'text-gray-300'}`}>
+                          <span className="text-gray-500 text-[10px]">{s.assignee ?? '—'}</span>
+                          <span className={`text-[10px] tabular-nums ${isOver ? 'text-red-400' : 'text-gray-500'}`}>
                             {s.due_on ?? '—'}
                           </span>
                         </div>

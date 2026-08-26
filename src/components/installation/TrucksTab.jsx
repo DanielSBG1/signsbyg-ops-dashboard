@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
-// ─── Constants ──────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const API_BASE = '/api/trucks';
 
@@ -31,6 +31,7 @@ const DEFAULT_THRESHOLDS = {
   transmission: { miles: 60000, months: 36 },
 };
 
+// Maps threshold key → maintenance log type key
 const THRESHOLD_TO_LOG_TYPE = {
   oilChange: 'oil_change',
   tires: 'tires',
@@ -39,7 +40,7 @@ const THRESHOLD_TO_LOG_TYPE = {
   transmission: 'transmission',
 };
 
-// ─── Helpers ────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -74,6 +75,10 @@ function formatNumber(val) {
   return Number(val).toLocaleString('en-US');
 }
 
+/**
+ * Compute maintenance status for a single threshold category.
+ * Returns { lastDate, lastMiles, nextDate, nextMiles, status, daysUntil, milesUntil }
+ */
 function computeMaintenanceStatus(thresholdKey, threshold, logs, currentMiles) {
   const logType = THRESHOLD_TO_LOG_TYPE[thresholdKey];
   const relevant = (logs || [])
@@ -99,7 +104,8 @@ function computeMaintenanceStatus(thresholdKey, threshold, logs, currentMiles) {
     }
   }
 
-  let status = 'unknown';
+  // Determine status
+  let status = 'unknown'; // no service history
   if (last) {
     const dateOverdue = nextDate && nextDate < today;
     const milesOverdue = nextMiles && currentMiles >= nextMiles;
@@ -126,6 +132,10 @@ function computeMaintenanceStatus(thresholdKey, threshold, logs, currentMiles) {
   };
 }
 
+/**
+ * Get the overall maintenance status for a truck given its logs.
+ * Returns 'ok' | 'due_soon' | 'overdue' | 'unknown'
+ */
 function getOverallStatus(truck, logs) {
   const statuses = THRESHOLD_KEYS.map((tk) => {
     const threshold = truck.thresholds?.[tk.id];
@@ -142,10 +152,10 @@ const STATUS_CONFIG = {
   ok:       { label: 'All Good',  cls: 'bg-success/20 text-success', dotCls: 'bg-success' },
   due_soon: { label: 'Due Soon',  cls: 'bg-warning/20 text-warning', dotCls: 'bg-warning' },
   overdue:  { label: 'Overdue',   cls: 'bg-danger/20 text-danger',   dotCls: 'bg-danger' },
-  unknown:  { label: 'No History', cls: 'bg-black/[0.05] text-gray-400', dotCls: 'bg-gray-300' },
+  unknown:  { label: 'No History', cls: 'bg-black/[0.05] text-gray-500', dotCls: 'bg-gray-300' },
 };
 
-// ─── API helpers ────────────────────────────────────────────────────────
+// ─── API helpers ──────────────────────────────────────────────────────────────
 
 async function fetchJSON(url, opts) {
   const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
@@ -154,7 +164,7 @@ async function fetchJSON(url, opts) {
   return json.data;
 }
 
-// ─── Status Badge ───────────────────────────────────────────────────────
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.unknown;
@@ -165,7 +175,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Maintenance Status Card ────────────────────────────────────────────
+// ─── Maintenance Status Card (inside truck profile) ──────────────────────────
 
 function MaintenanceCard({ thresholdKey, threshold, logs, currentMiles }) {
   const info = computeMaintenanceStatus(thresholdKey, threshold, logs, currentMiles);
@@ -181,14 +191,14 @@ function MaintenanceCard({ thresholdKey, threshold, logs, currentMiles }) {
 
       <div className="grid grid-cols-2 gap-3 text-xs">
         <div>
-          <p className="text-gray-400 mb-0.5">Last Service</p>
+          <p className="text-gray-500 mb-0.5">Last Service</p>
           <p className="text-gray-900 font-medium">{formatDate(info.lastDate)}</p>
           {info.lastMiles != null && (
             <p className="text-gray-500">{formatNumber(info.lastMiles)} mi</p>
           )}
         </div>
         <div>
-          <p className="text-gray-400 mb-0.5">Next Due</p>
+          <p className="text-gray-500 mb-0.5">Next Due</p>
           <p className="text-gray-900 font-medium">{formatDate(info.nextDate)}</p>
           {info.nextMiles != null && (
             <p className="text-gray-500">{formatNumber(info.nextMiles)} mi</p>
@@ -214,7 +224,7 @@ function MaintenanceCard({ thresholdKey, threshold, logs, currentMiles }) {
   );
 }
 
-// ─── Sortable Log Table ────────────────────────────────────────────────
+// ─── Sortable Log Table ──────────────────────────────────────────────────────
 
 function LogTable({ logs }) {
   const [sortKey, setSortKey] = useState('date');
@@ -257,7 +267,7 @@ function LogTable({ logs }) {
 
   if (logs.length === 0) {
     return (
-      <div className="text-center py-10 text-gray-300 text-sm">
+      <div className="text-center py-10 text-gray-500 text-sm">
         No maintenance logs yet.
       </div>
     );
@@ -272,7 +282,7 @@ function LogTable({ logs }) {
               <th
                 key={col.key}
                 onClick={() => handleSort(col.key)}
-                className="text-left px-3 py-2.5 text-[11px] text-gray-400 font-semibold uppercase tracking-widest cursor-pointer hover:text-gray-600 transition-colors select-none"
+                className="text-left px-3 py-2.5 text-[11px] text-gray-500 font-semibold uppercase tracking-widest cursor-pointer hover:text-gray-600 transition-colors select-none"
               >
                 <span className="inline-flex items-center gap-1">
                   {col.label}
@@ -306,7 +316,7 @@ function LogTable({ logs }) {
   );
 }
 
-// ─── Add Log Entry Form ────────────────────────────────────────────────
+// ─── Add Log Entry Form ──────────────────────────────────────────────────────
 
 function AddLogForm({ truckId, onSaved, onCancel }) {
   const [form, setForm] = useState({
@@ -347,7 +357,7 @@ function AddLogForm({ truckId, onSaved, onCancel }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <label className="space-y-1">
-          <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Type</span>
+          <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Type</span>
           <select
             value={form.type}
             onChange={(e) => update('type', e.target.value)}
@@ -360,7 +370,7 @@ function AddLogForm({ truckId, onSaved, onCancel }) {
         </label>
 
         <label className="space-y-1">
-          <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Date</span>
+          <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Date</span>
           <input
             type="date"
             value={form.date}
@@ -370,7 +380,7 @@ function AddLogForm({ truckId, onSaved, onCancel }) {
         </label>
 
         <label className="space-y-1">
-          <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Miles</span>
+          <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Miles</span>
           <input
             type="number"
             value={form.miles}
@@ -381,7 +391,7 @@ function AddLogForm({ truckId, onSaved, onCancel }) {
         </label>
 
         <label className="space-y-1">
-          <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Hours</span>
+          <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Hours</span>
           <input
             type="number"
             value={form.hours}
@@ -394,7 +404,7 @@ function AddLogForm({ truckId, onSaved, onCancel }) {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <label className="space-y-1">
-          <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Cost ($)</span>
+          <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Cost ($)</span>
           <input
             type="number"
             step="0.01"
@@ -406,7 +416,7 @@ function AddLogForm({ truckId, onSaved, onCancel }) {
         </label>
 
         <label className="space-y-1">
-          <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Vendor</span>
+          <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Vendor</span>
           <input
             type="text"
             value={form.vendor}
@@ -417,7 +427,7 @@ function AddLogForm({ truckId, onSaved, onCancel }) {
         </label>
 
         <label className="space-y-1 col-span-2 md:col-span-1">
-          <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Notes</span>
+          <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Notes</span>
           <input
             type="text"
             value={form.notes}
@@ -448,7 +458,7 @@ function AddLogForm({ truckId, onSaved, onCancel }) {
   );
 }
 
-// ─── Add/Edit Truck Form ───────────────────────────────────────────────
+// ─── Add/Edit Truck Form ─────────────────────────────────────────────────────
 
 function TruckForm({ truck, onSaved, onCancel }) {
   const isEdit = !!truck;
@@ -515,62 +525,127 @@ function TruckForm({ truck, onSaved, onCancel }) {
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">{isEdit ? 'Edit Truck' : 'Add Truck'}</h2>
-          <button type="button" onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+          <button type="button" onClick={onCancel} className="text-gray-500 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
 
         {/* Basic info */}
         <div className="grid grid-cols-2 gap-3">
           <label className="space-y-1 col-span-2 sm:col-span-1">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Name *</span>
-            <input type="text" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="e.g. Truck 1" className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none" />
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Name *</span>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => update('name', e.target.value)}
+              placeholder="e.g. Truck 1"
+              className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none"
+            />
           </label>
+
           <label className="space-y-1 col-span-2 sm:col-span-1">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">VIN</span>
-            <input type="text" value={form.vin} onChange={(e) => update('vin', e.target.value)} placeholder="Vehicle identification number" className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none" />
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">VIN</span>
+            <input
+              type="text"
+              value={form.vin}
+              onChange={(e) => update('vin', e.target.value)}
+              placeholder="Vehicle identification number"
+              className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none"
+            />
           </label>
+
           <label className="space-y-1">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Year</span>
-            <input type="text" value={form.year} onChange={(e) => update('year', e.target.value)} placeholder="2024" className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none" />
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Year</span>
+            <input
+              type="text"
+              value={form.year}
+              onChange={(e) => update('year', e.target.value)}
+              placeholder="2024"
+              className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none"
+            />
           </label>
+
           <label className="space-y-1">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Make</span>
-            <input type="text" value={form.make} onChange={(e) => update('make', e.target.value)} placeholder="e.g. Ford" className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none" />
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Make</span>
+            <input
+              type="text"
+              value={form.make}
+              onChange={(e) => update('make', e.target.value)}
+              placeholder="e.g. Ford"
+              className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none"
+            />
           </label>
+
           <label className="space-y-1">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Model</span>
-            <input type="text" value={form.model} onChange={(e) => update('model', e.target.value)} placeholder="e.g. F-250" className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none" />
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Model</span>
+            <input
+              type="text"
+              value={form.model}
+              onChange={(e) => update('model', e.target.value)}
+              placeholder="e.g. F-250"
+              className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none"
+            />
           </label>
+
           <label className="space-y-1">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">License Plate</span>
-            <input type="text" value={form.licensePlate} onChange={(e) => update('licensePlate', e.target.value)} placeholder="ABC-1234" className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none" />
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">License Plate</span>
+            <input
+              type="text"
+              value={form.licensePlate}
+              onChange={(e) => update('licensePlate', e.target.value)}
+              placeholder="ABC-1234"
+              className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none"
+            />
           </label>
+
           <label className="space-y-1">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Current Miles</span>
-            <input type="number" value={form.currentMiles} onChange={(e) => update('currentMiles', e.target.value)} placeholder="0" className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none" />
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Current Miles</span>
+            <input
+              type="number"
+              value={form.currentMiles}
+              onChange={(e) => update('currentMiles', e.target.value)}
+              placeholder="0"
+              className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none"
+            />
           </label>
+
           <label className="space-y-1">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Current Hours</span>
-            <input type="number" value={form.currentHours} onChange={(e) => update('currentHours', e.target.value)} placeholder="0" className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none" />
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Current Hours</span>
+            <input
+              type="number"
+              value={form.currentHours}
+              onChange={(e) => update('currentHours', e.target.value)}
+              placeholder="0"
+              className="w-full bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-accent/50 focus:outline-none"
+            />
           </label>
         </div>
 
         {/* Thresholds */}
         <div className="space-y-3">
-          <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Maintenance Thresholds</p>
+          <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Maintenance Thresholds</p>
           <div className="space-y-2">
             {THRESHOLD_KEYS.map((tk) => (
               <div key={tk.id} className="flex items-center gap-3 bg-black/[0.02] rounded-lg px-3 py-2">
                 <span className="text-sm text-gray-600 w-28 shrink-0">{tk.label}</span>
                 {tk.hasMiles && (
                   <label className="flex items-center gap-1.5">
-                    <input type="number" value={form.thresholds[tk.id]?.miles ?? ''} onChange={(e) => updateThreshold(tk.id, 'miles', e.target.value)} className="w-20 bg-black/[0.03] border border-gray-200 rounded px-2 py-1 text-xs text-gray-900 focus:border-accent/50 focus:outline-none tabular-nums" />
-                    <span className="text-[10px] text-gray-300">mi</span>
+                    <input
+                      type="number"
+                      value={form.thresholds[tk.id]?.miles ?? ''}
+                      onChange={(e) => updateThreshold(tk.id, 'miles', e.target.value)}
+                      className="w-20 bg-black/[0.03] border border-gray-200 rounded px-2 py-1 text-xs text-gray-900 focus:border-accent/50 focus:outline-none tabular-nums"
+                    />
+                    <span className="text-[10px] text-gray-500">mi</span>
                   </label>
                 )}
                 {tk.hasMonths && (
                   <label className="flex items-center gap-1.5">
-                    <input type="number" value={form.thresholds[tk.id]?.months ?? ''} onChange={(e) => updateThreshold(tk.id, 'months', e.target.value)} className="w-16 bg-black/[0.03] border border-gray-200 rounded px-2 py-1 text-xs text-gray-900 focus:border-accent/50 focus:outline-none tabular-nums" />
-                    <span className="text-[10px] text-gray-300">mo</span>
+                    <input
+                      type="number"
+                      value={form.thresholds[tk.id]?.months ?? ''}
+                      onChange={(e) => updateThreshold(tk.id, 'months', e.target.value)}
+                      className="w-16 bg-black/[0.03] border border-gray-200 rounded px-2 py-1 text-xs text-gray-900 focus:border-accent/50 focus:outline-none tabular-nums"
+                    />
+                    <span className="text-[10px] text-gray-500">mo</span>
                   </label>
                 )}
               </div>
@@ -580,10 +655,18 @@ function TruckForm({ truck, onSaved, onCancel }) {
 
         {/* Actions */}
         <div className="flex items-center gap-2 pt-2">
-          <button type="submit" disabled={saving} className="px-5 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent/80 transition-colors disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-5 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent/80 transition-colors disabled:opacity-50"
+          >
             {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Truck'}
           </button>
-          <button type="button" onClick={onCancel} className="px-5 py-2.5 bg-black/[0.03] text-gray-500 rounded-lg text-sm font-medium hover:bg-black/[0.05] transition-colors">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-5 py-2.5 bg-black/[0.03] text-gray-500 rounded-lg text-sm font-medium hover:bg-black/[0.05] transition-colors"
+          >
             Cancel
           </button>
         </div>
@@ -592,7 +675,7 @@ function TruckForm({ truck, onSaved, onCancel }) {
   );
 }
 
-// ─── Truck Card ────────────────────────────────────────────────────────
+// ─── Truck Card (grid item) ──────────────────────────────────────────────────
 
 function TruckCard({ truck, logs, onClick }) {
   const status = getOverallStatus(truck, logs);
@@ -607,31 +690,31 @@ function TruckCard({ truck, logs, onClick }) {
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <p className="text-base font-semibold text-gray-900 group-hover:text-gray-800 truncate">{truck.name}</p>
-          {ymm && <p className="text-xs text-gray-400 mt-0.5 truncate">{ymm}</p>}
+          {ymm && <p className="text-xs text-gray-500 mt-0.5 truncate">{ymm}</p>}
         </div>
         <StatusBadge status={status} />
       </div>
 
       <div className="flex items-center gap-4">
         <div>
-          <p className="text-[10px] text-gray-300 uppercase tracking-widest">Miles</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest">Miles</p>
           <p className="text-lg font-bold text-gray-900 tabular-nums">{formatNumber(truck.currentMiles)}</p>
         </div>
         <div className="w-px h-8 bg-gray-200" />
         <div>
-          <p className="text-[10px] text-gray-300 uppercase tracking-widest">Hours</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest">Hours</p>
           <p className="text-lg font-bold text-gray-900 tabular-nums">{formatNumber(truck.currentHours)}</p>
         </div>
       </div>
 
       {truck.licensePlate && (
-        <p className="text-[11px] text-gray-300 font-mono tracking-wider">{truck.licensePlate}</p>
+        <p className="text-[11px] text-gray-500 font-mono tracking-wider">{truck.licensePlate}</p>
       )}
     </button>
   );
 }
 
-// ─── Truck Profile View ────────────────────────────────────────────────
+// ─── Truck Profile View ──────────────────────────────────────────────────────
 
 function TruckProfile({ truckId, onBack }) {
   const [truck, setTruck] = useState(null);
@@ -690,7 +773,7 @@ function TruckProfile({ truckId, onBack }) {
 
   if (loading) {
     return (
-      <div className="text-center py-20 text-gray-400">Loading truck details...</div>
+      <div className="text-center py-20 text-gray-500">Loading truck details...</div>
     );
   }
 
@@ -698,7 +781,7 @@ function TruckProfile({ truckId, onBack }) {
     return (
       <div className="space-y-4">
         <button onClick={onBack} className="text-accent text-sm hover:underline">&larr; Back to trucks</button>
-        <div className="text-center py-20 text-gray-400">Truck not found.</div>
+        <div className="text-center py-20 text-gray-500">Truck not found.</div>
       </div>
     );
   }
@@ -719,8 +802,18 @@ function TruckProfile({ truckId, onBack }) {
           Back to trucks
         </button>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowEditTruck(true)} className="text-xs px-3 py-1.5 bg-black/[0.03] text-gray-500 rounded-lg hover:bg-black/[0.05] transition-colors">Edit Truck</button>
-          <button onClick={handleDeleteTruck} className="text-xs px-3 py-1.5 bg-danger/10 text-danger rounded-lg hover:bg-danger/20 transition-colors">Delete</button>
+          <button
+            onClick={() => setShowEditTruck(true)}
+            className="text-xs px-3 py-1.5 bg-black/[0.03] text-gray-500 rounded-lg hover:bg-black/[0.05] transition-colors"
+          >
+            Edit Truck
+          </button>
+          <button
+            onClick={handleDeleteTruck}
+            className="text-xs px-3 py-1.5 bg-danger/10 text-danger rounded-lg hover:bg-danger/20 transition-colors"
+          >
+            Delete
+          </button>
         </div>
       </div>
 
@@ -730,23 +823,41 @@ function TruckProfile({ truckId, onBack }) {
           <h2 className="text-xl font-bold text-gray-900">{truck.name}</h2>
           {ymm && <p className="text-sm text-gray-500 mt-0.5">{ymm}</p>}
         </div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-400">
-          {truck.vin && <span>VIN: <span className="text-gray-500 font-mono">{truck.vin}</span></span>}
-          {truck.licensePlate && <span>Plate: <span className="text-gray-500 font-mono">{truck.licensePlate}</span></span>}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-500">
+          {truck.vin && (
+            <span>VIN: <span className="text-gray-500 font-mono">{truck.vin}</span></span>
+          )}
+          {truck.licensePlate && (
+            <span>Plate: <span className="text-gray-500 font-mono">{truck.licensePlate}</span></span>
+          )}
         </div>
 
         {/* Editable odometer */}
         <div className="flex items-end gap-4 pt-2 border-t border-gray-200">
           <label className="space-y-1">
-            <span className="text-[10px] text-gray-300 uppercase tracking-widest font-semibold">Current Miles</span>
-            <input type="number" value={editMiles} onChange={(e) => setEditMiles(e.target.value)} className="w-32 bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 font-bold tabular-nums focus:border-accent/50 focus:outline-none" />
+            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Current Miles</span>
+            <input
+              type="number"
+              value={editMiles}
+              onChange={(e) => setEditMiles(e.target.value)}
+              className="w-32 bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 font-bold tabular-nums focus:border-accent/50 focus:outline-none"
+            />
           </label>
           <label className="space-y-1">
-            <span className="text-[10px] text-gray-300 uppercase tracking-widest font-semibold">Current Hours</span>
-            <input type="number" value={editHours} onChange={(e) => setEditHours(e.target.value)} className="w-32 bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 font-bold tabular-nums focus:border-accent/50 focus:outline-none" />
+            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Current Hours</span>
+            <input
+              type="number"
+              value={editHours}
+              onChange={(e) => setEditHours(e.target.value)}
+              className="w-32 bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 font-bold tabular-nums focus:border-accent/50 focus:outline-none"
+            />
           </label>
           {odometerDirty && (
-            <button onClick={handleSaveOdometer} disabled={savingOdometer} className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/80 transition-colors disabled:opacity-50">
+            <button
+              onClick={handleSaveOdometer}
+              disabled={savingOdometer}
+              className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/80 transition-colors disabled:opacity-50"
+            >
               {savingOdometer ? 'Saving...' : 'Save'}
             </button>
           )}
@@ -755,13 +866,19 @@ function TruckProfile({ truckId, onBack }) {
 
       {/* Maintenance status grid */}
       <div className="space-y-3">
-        <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Maintenance Status</p>
+        <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Maintenance Status</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {THRESHOLD_KEYS.map((tk) => {
             const threshold = truck.thresholds?.[tk.id];
             if (!threshold) return null;
             return (
-              <MaintenanceCard key={tk.id} thresholdKey={tk.id} threshold={threshold} logs={logs} currentMiles={truck.currentMiles} />
+              <MaintenanceCard
+                key={tk.id}
+                thresholdKey={tk.id}
+                threshold={threshold}
+                logs={logs}
+                currentMiles={truck.currentMiles}
+              />
             );
           })}
         </div>
@@ -770,14 +887,23 @@ function TruckProfile({ truckId, onBack }) {
       {/* Maintenance log */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Maintenance Log</p>
+          <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Maintenance Log</p>
           {!showAddLog && (
-            <button onClick={() => setShowAddLog(true)} className="text-xs px-3 py-1.5 bg-accent text-white rounded-lg font-medium hover:bg-accent/80 transition-colors">+ Add Entry</button>
+            <button
+              onClick={() => setShowAddLog(true)}
+              className="text-xs px-3 py-1.5 bg-accent text-white rounded-lg font-medium hover:bg-accent/80 transition-colors"
+            >
+              + Add Entry
+            </button>
           )}
         </div>
 
         {showAddLog && (
-          <AddLogForm truckId={truckId} onSaved={() => { setShowAddLog(false); loadTruck(); }} onCancel={() => setShowAddLog(false)} />
+          <AddLogForm
+            truckId={truckId}
+            onSaved={() => { setShowAddLog(false); loadTruck(); }}
+            onCancel={() => setShowAddLog(false)}
+          />
         )}
 
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
@@ -787,13 +913,17 @@ function TruckProfile({ truckId, onBack }) {
 
       {/* Edit truck modal */}
       {showEditTruck && (
-        <TruckForm truck={truck} onSaved={() => { setShowEditTruck(false); loadTruck(); }} onCancel={() => setShowEditTruck(false)} />
+        <TruckForm
+          truck={truck}
+          onSaved={() => { setShowEditTruck(false); loadTruck(); }}
+          onCancel={() => setShowEditTruck(false)}
+        />
       )}
     </div>
   );
 }
 
-// ─── Main: TrucksTab ───────────────────────────────────────────────────
+// ─── Main: TrucksTab ─────────────────────────────────────────────────────────
 
 export default function TrucksTab() {
   const [trucks, setTrucks] = useState([]);
@@ -808,6 +938,7 @@ export default function TrucksTab() {
       const data = await fetchJSON(API_BASE);
       setTrucks(data);
 
+      // Fetch logs for each truck to compute status badges on cards
       const logEntries = {};
       await Promise.all(
         data.map(async (t) => {
@@ -829,6 +960,7 @@ export default function TrucksTab() {
 
   useEffect(() => { loadTrucks(); }, [loadTrucks]);
 
+  // Show truck profile
   if (selectedTruckId) {
     return (
       <TruckProfile
@@ -838,12 +970,13 @@ export default function TrucksTab() {
     );
   }
 
+  // Truck list view
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">Fleet</p>
-          <p className="text-gray-300 text-xs mt-0.5">
+          <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-widest">Fleet</p>
+          <p className="text-gray-500 text-xs mt-0.5">
             {trucks.length} truck{trucks.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -856,13 +989,13 @@ export default function TrucksTab() {
       </div>
 
       {loading && trucks.length === 0 && (
-        <div className="text-center py-16 text-gray-400 text-sm">Loading trucks...</div>
+        <div className="text-center py-16 text-gray-500 text-sm">Loading trucks...</div>
       )}
 
       {!loading && trucks.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center space-y-3">
           <div className="text-4xl text-gray-200">&#x1F69A;</div>
-          <p className="text-gray-400 text-sm">No trucks added yet.</p>
+          <p className="text-gray-500 text-sm">No trucks added yet.</p>
           <button
             onClick={() => setShowAddTruck(true)}
             className="text-accent text-sm font-medium hover:underline"

@@ -64,7 +64,7 @@ const MONTH_NAMES = [
 ];
 const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-// ─── Multi-day bar helpers ──────────────────────────────────
+// ─── Multi-day bar helpers ────────────────────────────────────
 
 const BAR_H = 20;
 const BAR_GAP = 2;
@@ -110,7 +110,7 @@ function getBarsForWeek(weekDays, multiDayJobs) {
   });
 }
 
-// ─── Multi-day spanning bar ─────────────────────────────────
+// ─── Multi-day spanning bar ───────────────────────────────────
 
 function MultiDayBar({ bar, color, updating, onDragStart }) {
   const radius = bar.isStart && bar.isEnd ? '4px'
@@ -122,7 +122,7 @@ function MultiDayBar({ bar, color, updating, onDragStart }) {
     <div
       draggable
       onDragStart={(e) => onDragStart(e, bar.job)}
-      title={`${bar.job.name}\n${bar.job.dept}\n${bar.job.startDate} \u2192 ${bar.job.dueDate}`}
+      title={`${bar.job.name}\n${bar.job.dept}\n${bar.job.startDate} → ${bar.job.dueDate}`}
       style={{
         position: 'absolute',
         top: bar.lane * (BAR_H + 2) + BAR_GAP,
@@ -177,7 +177,7 @@ function MultiDayBar({ bar, color, updating, onDragStart }) {
   );
 }
 
-// ─── Job chip (single-day) ──────────────────────────────────
+// ─── Job chip (single-day) ────────────────────────────────────
 
 function JobChip({ job, updating, onDragStart }) {
   const today = todayISO();
@@ -196,7 +196,7 @@ function JobChip({ job, updating, onDragStart }) {
     <div
       draggable
       onDragStart={(e) => onDragStart(e, job)}
-      title={`${job.name}\n${job.dept}${isRedo ? ' \u00b7 Redo' : ''}`}
+      title={`${job.name}\n${job.dept}${isRedo ? ' · Redo' : ''}`}
       className={`
         relative flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] cursor-grab active:cursor-grabbing
         select-none truncate max-w-full transition-opacity
@@ -242,7 +242,7 @@ function DayCell({ day, jobs, updatingSet, dragOver, expanded, topOffset, onDrag
       <div style={{ height: topOffset }} />
       <div className="px-1.5 pb-1 flex flex-col gap-0.5">
         <span className={`text-[11px] font-semibold leading-none mb-0.5
-          ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-gray-500' : 'text-gray-300'}
+          ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-gray-500' : 'text-gray-500'}
         `}>
           {day.num}
         </span>
@@ -257,9 +257,9 @@ function DayCell({ day, jobs, updatingSet, dragOver, expanded, topOffset, onDrag
         {overflow > 0 && (
           <button
             onClick={onToggleExpand}
-            className="text-[10px] text-gray-400 hover:text-gray-600 pt-0.5 text-left transition-colors"
+            className="text-[10px] text-gray-500 hover:text-gray-600 pt-0.5 text-left transition-colors"
           >
-            {expanded ? '\u25b2 less' : `+${overflow} more`}
+            {expanded ? '▲ less' : `+${overflow} more`}
           </button>
         )}
       </div>
@@ -267,7 +267,7 @@ function DayCell({ day, jobs, updatingSet, dragOver, expanded, topOffset, onDrag
   );
 }
 
-// ─── Main CalendarView ──────────────────────────────────────
+// ─── Main CalendarView ────────────────────────────────────────
 
 /**
  * `rawJobs` — the `jobs` array from /api/production-metrics.
@@ -335,7 +335,7 @@ export default function CalendarView({ rawJobs, onRefresh }) {
     );
   }, [jobs, grid]);
 
-  // ── Navigation ──────────────────────────────────────────
+  // ── Navigation ────────────────────────────────────────────
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1); }
     else setMonth(m => m - 1);
@@ -349,14 +349,14 @@ export default function CalendarView({ rawJobs, onRefresh }) {
     setMonth(today.getMonth());
   }
 
-  // ── Toast ─────────────────────────────────────────────
+  // ── Toast ─────────────────────────────────────────────────
   function showToast(msg, type = 'error') {
     clearTimeout(toastTimer.current);
     setToast({ msg, type });
     toastTimer.current = setTimeout(() => setToast(null), 4000);
   }
 
-  // ── Drag handlers ───────────────────────────────────────
+  // ── Drag handlers ─────────────────────────────────────────
   function handleDragStart(e, job) {
     setDragging({ job, fromDate: job.dueDate?.slice(0, 10) });
     e.dataTransfer.effectAllowed = 'move';
@@ -437,7 +437,7 @@ export default function CalendarView({ rawJobs, onRefresh }) {
     }
   }, [dragging, onRefresh]);
 
-  // ── Render ────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 relative">
       {/* Header */}
@@ -448,18 +448,18 @@ export default function CalendarView({ rawJobs, onRefresh }) {
         <div className="flex items-center gap-1">
           <button
             onClick={goToday}
-            className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded border border-gray-200 hover:border-gray-200 transition-colors mr-2"
+            className="text-xs text-gray-500 hover:text-gray-600 px-2 py-1 rounded border border-gray-200 hover:border-gray-200 transition-colors mr-2"
           >
             Today
           </button>
           <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/[0.05] text-gray-500 hover:text-gray-900 transition-colors">
-            \u2039
+            ‹
           </button>
           <span className="text-sm font-semibold text-gray-700 w-32 text-center">
             {MONTH_NAMES[month]} {year}
           </span>
           <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/[0.05] text-gray-500 hover:text-gray-900 transition-colors">
-            \u203a
+            ›
           </button>
         </div>
       </div>
@@ -471,7 +471,7 @@ export default function CalendarView({ rawJobs, onRefresh }) {
           {/* Day-of-week header */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {DAY_LABELS.map(d => (
-              <div key={d} className="text-center text-[10px] font-semibold text-gray-300 uppercase tracking-wider py-1">
+              <div key={d} className="text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider py-1">
                 {d}
               </div>
             ))}
@@ -518,7 +518,7 @@ export default function CalendarView({ rawJobs, onRefresh }) {
 
         {/* Legend sidebar */}
         <div className="w-36 shrink-0 flex flex-col gap-3 pt-8">
-          <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider">Departments</p>
+          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Departments</p>
           <div className="flex flex-col gap-1.5">
             {(activeDepts.length > 0 ? activeDepts : DEPT_LEGEND).map(d => (
               <div key={d.key} className="flex items-center gap-2">
@@ -532,7 +532,7 @@ export default function CalendarView({ rawJobs, onRefresh }) {
           </div>
 
           <div className="mt-2 pt-2 border-t border-gray-200 flex flex-col gap-2">
-            <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider">Status</p>
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Status</p>
             {[
               { color: '#ef4444', label: 'Overdue' },
               { color: '#eab308', label: 'Redo', dot: true },

@@ -123,11 +123,11 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
           <div>
             <h2 className="text-lg font-semibold">Conversion Funnel</h2>
             {isCohortView ? (
-              <p className="text-gray-300 text-[10px] mt-0.5">
+              <p className="text-gray-500 text-[10px] mt-0.5">
                 Cohort: same leads traced through stages. "Became Customer" counts contacts whose associated deal has reached a closed-won stage. Contacts without an associated deal — or with only open/lost deals — won't appear here.
               </p>
             ) : (
-              <p className="text-gray-300 text-[10px] mt-0.5">
+              <p className="text-gray-500 text-[10px] mt-0.5">
                 Activity: rows are <span className="italic">independent period counts</span>, not a cohort. "Won" can exceed "Deals Created" because you're closing deals built up in prior periods.
               </p>
             )}
@@ -170,7 +170,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs text-gray-400">
+        <div className="flex items-center gap-4 text-xs text-gray-500">
           <span>Leads: <span className="text-gray-900 font-medium">{totals.leads}</span></span>
           <span>Deals: <span className="text-gray-900 font-medium">{totals.deals}</span></span>
           <span>Won: <span className="text-gray-900 font-medium">{totals.won}</span></span>
@@ -181,7 +181,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
         <table className="w-full text-sm">
           <thead>
             <tr>
-              <th className="text-left text-gray-400 text-xs uppercase tracking-wider pb-3 px-2 w-32"></th>
+              <th className="text-left text-gray-500 text-xs uppercase tracking-wider pb-3 px-2 w-32"></th>
               {sources.map((s) => (
                 <th key={s.key} className="text-center pb-3 px-2">
                   <div className="flex flex-col items-center gap-1">
@@ -192,7 +192,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                     <span className="text-xs text-gray-500 font-medium">{s.label}</span>
                     {s.originalSources && (
                       <span
-                        className="text-[9px] text-gray-300 leading-tight text-center max-w-[80px]"
+                        className="text-[9px] text-gray-500 leading-tight text-center max-w-[80px]"
                         title={Object.entries(s.originalSources).map(([k, v]) => `${SOURCE_LABELS[k] || k}: ${v}`).join(', ')}
                       >
                         {Object.entries(s.originalSources)
@@ -206,7 +206,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                 </th>
               ))}
               <th className="text-center pb-3 px-2">
-                <span className="text-xs text-gray-400 font-medium uppercase">Total</span>
+                <span className="text-xs text-gray-500 font-medium uppercase">Total</span>
               </th>
             </tr>
           </thead>
@@ -222,7 +222,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                   <td className="py-4 px-2">
                     <div className="text-gray-700 font-medium text-sm">{label}</div>
                     {convRate !== null && (
-                      <div className="text-gray-300 text-xs mt-0.5">
+                      <div className="text-gray-500 text-xs mt-0.5">
                         {convRate}% {i === 1 ? 'conversion' : 'close rate'}
                       </div>
                     )}
@@ -268,7 +268,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                             />
                           </div>
                           {cellRate !== null && val > 0 && (
-                            <span className="text-gray-300 text-xs">{cellRate}%</span>
+                            <span className="text-gray-500 text-xs">{cellRate}%</span>
                           )}
                         </div>
                       </td>
@@ -299,7 +299,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
               <tr className="border-t border-gray-200">
                 <td className="py-3 px-2">
                   <div className="text-gray-700 font-medium text-sm">Avg Response</div>
-                  <div className="text-gray-300 text-xs mt-0.5">created → first contacted</div>
+                  <div className="text-gray-500 text-xs mt-0.5">created → first contacted</div>
                 </td>
                 {sources.map((s) => (
                   <td key={s.key} className="py-3 px-2 text-center">
@@ -308,7 +308,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                     </span>
                   </td>
                 ))}
-                <td className="py-3 px-2 text-center text-gray-300 text-sm">—</td>
+                <td className="py-3 px-2 text-center text-gray-500 text-sm">—</td>
               </tr>
             )}
             {sources.some((s) => s.winRate != null || s.revenue != null) && (
@@ -316,7 +316,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                 <tr className="border-t border-gray-200">
                   <td className="py-3 px-2">
                     <div className="text-gray-700 font-medium text-sm">Win Rate</div>
-                    <div className="text-gray-300 text-xs mt-0.5">won ÷ (won + lost)</div>
+                    <div className="text-gray-500 text-xs mt-0.5">won ÷ (won + lost)</div>
                   </td>
                   {sources.map((s) => (
                     <td key={s.key} className="py-3 px-2 text-center">
@@ -331,7 +331,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                           view,
                         })}
                         className={`text-sm font-semibold tabular-nums hover:underline disabled:cursor-default ${
-                          s.winRate == null ? 'text-gray-300' :
+                          s.winRate == null ? 'text-gray-500' :
                           s.winRate >= 50 ? 'text-success' :
                           s.winRate >= 25 ? 'text-yellow-400' : 'text-danger'
                         }`}
@@ -345,7 +345,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                       type="button"
                       disabled={!onCellClick}
                       onClick={() => onCellClick && onCellClick({ type: 'total', key: null, label: 'All', row: 'decided', view })}
-                      className="text-gray-400 text-sm hover:text-accent"
+                      className="text-gray-500 text-sm hover:text-accent"
                     >
                       —
                     </button>
@@ -354,7 +354,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                 <tr className="border-t border-gray-200">
                   <td className="py-3 px-2">
                     <div className="text-gray-700 font-medium text-sm">Avg Deal $</div>
-                    <div className="text-gray-300 text-xs mt-0.5">mean of won deals</div>
+                    <div className="text-gray-500 text-xs mt-0.5">mean of won deals</div>
                   </td>
                   {sources.map((s) => (
                     <td key={s.key} className="py-3 px-2 text-center">
@@ -374,12 +374,12 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                       </button>
                     </td>
                   ))}
-                  <td className="py-3 px-2 text-center text-gray-300 text-sm">—</td>
+                  <td className="py-3 px-2 text-center text-gray-500 text-sm">—</td>
                 </tr>
                 <tr className="border-t border-gray-200">
                   <td className="py-3 px-2">
                     <div className="text-gray-700 font-medium text-sm">Revenue</div>
-                    <div className="text-gray-300 text-xs mt-0.5">sum of won deal amounts</div>
+                    <div className="text-gray-500 text-xs mt-0.5">sum of won deal amounts</div>
                   </td>
                   {sources.map((s) => (
                     <td key={s.key} className="py-3 px-2 text-center">

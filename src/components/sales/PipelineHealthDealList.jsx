@@ -65,7 +65,7 @@ export default function PipelineHealthDealList({ pipelines, columns, emptyMessag
 
   if (nonEmpty.length === 0) {
     return (
-      <p className="text-gray-300 text-sm text-center py-6">{emptyMessage || 'No deals.'}</p>
+      <p className="text-gray-500 text-sm text-center py-6">{emptyMessage || 'No deals.'}</p>
     );
   }
 
@@ -77,13 +77,13 @@ export default function PipelineHealthDealList({ pipelines, columns, emptyMessag
           <div key={key}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-semibold text-gray-700">{p.label}</h4>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-500">
                 {p.deals.length} {p.deals.length === 1 ? 'deal' : 'deals'} · {formatMoney(subtotal)}
               </span>
             </div>
             <div className="bg-black/[0.03] rounded-lg overflow-hidden">
               <table className="w-full text-xs">
-                <thead className="bg-black/[0.03] text-gray-400 uppercase text-[10px] tracking-wider">
+                <thead className="bg-black/[0.03] text-gray-500 uppercase text-[10px] tracking-wider">
                   <tr>
                     {columns.map((col) => {
                       const isActive = sort && sort.key === col.key;

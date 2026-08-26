@@ -42,7 +42,7 @@ function StatCol({ label, data, showDailyBreakdown }) {
 
   return (
     <div className="bg-black/[0.02] border border-gray-200 rounded-xl p-4 space-y-3">
-      <div className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">{label}</div>
+      <div className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">{label}</div>
       <div className="space-y-2">
         <div className="flex justify-between items-baseline">
           <span className="text-xs text-gray-500">Scheduled</span>
@@ -88,7 +88,7 @@ function StatCol({ label, data, showDailyBreakdown }) {
             const count = dailyMap[dateStr];
             return (
               <div key={dateStr} className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-400 w-24 shrink-0">{getDayLabel(dateStr)}</span>
+                <span className="text-[10px] text-gray-500 w-24 shrink-0">{getDayLabel(dateStr)}</span>
                 <div className="flex-1 h-3 bg-gray-100 rounded-sm overflow-hidden">
                   <div
                     className="h-full rounded-sm bg-blue-500/60"
@@ -114,7 +114,7 @@ function CrewCard({ crew }) {
       <div className="border border-gray-200 rounded-xl overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 py-3" style={{ borderLeft: `3px solid ${color}` }}>
           <span className="text-sm font-semibold text-gray-600">{name}</span>
-          <span className="text-xs text-gray-300">No jobs this week</span>
+          <span className="text-xs text-gray-500">No jobs this week</span>
         </div>
       </div>
     );
@@ -128,8 +128,8 @@ function CrewCard({ crew }) {
         onClick={() => setExpanded(v => !v)}
       >
         <span className="text-sm font-semibold text-gray-800 flex-1">{name}</span>
-        <span className="text-xs text-gray-400 tabular-nums">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</span>
-        <span className="text-gray-300 text-xs">{expanded ? '▾' : '▸'}</span>
+        <span className="text-xs text-gray-500 tabular-nums">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</span>
+        <span className="text-gray-500 text-xs">{expanded ? '▾' : '▸'}</span>
       </button>
 
       {expanded && (
@@ -151,7 +151,7 @@ function CrewCard({ crew }) {
                 >
                   {job.name}
                 </a>
-                <span className="shrink-0 text-xs text-gray-300 tabular-nums">{formatDate(job.installDate)}</span>
+                <span className="shrink-0 text-xs text-gray-500 tabular-nums">{formatDate(job.installDate)}</span>
               </div>
             );
           })}
@@ -185,7 +185,7 @@ export default function ScheduleSection({ schedule }) {
         <div>
           <button
             onClick={() => setShowCrews(v => !v)}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-3 w-full text-left"
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-600 transition-colors mb-3 w-full text-left"
           >
             <span>{showCrews ? '▾' : '▸'}</span>
             <span className="font-medium">This week's jobs by crew ({thisWeek.jobs.length})</span>
@@ -201,7 +201,7 @@ export default function ScheduleSection({ schedule }) {
       )}
 
       {thisWeek.jobs.length === 0 && (
-        <p className="text-gray-300 text-sm text-center py-2">No jobs scheduled this week</p>
+        <p className="text-gray-500 text-sm text-center py-2">No jobs scheduled this week</p>
       )}
     </div>
   );

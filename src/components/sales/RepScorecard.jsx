@@ -32,7 +32,7 @@ function fmtShortDate(dateStr) {
 }
 
 function responseTimeColor(minutes) {
-  if (minutes == null) return 'text-gray-400';
+  if (minutes == null) return 'text-gray-500';
   if (minutes <= 5) return 'text-success';
   if (minutes <= 60) return 'text-warning';
   if (minutes <= 240) return 'text-orange-400';
@@ -49,17 +49,17 @@ function truncate(str, len = 28) {
 function StatModule({ label, value, valueClass, subline, subline2 }) {
   return (
     <div className="bg-black/[0.03] rounded-xl p-6 flex flex-col gap-1.5">
-      <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">
+      <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">
         {label}
       </span>
       <span className={`text-4xl font-bold tabular-nums ${valueClass || 'text-gray-900'}`}>
         {value}
       </span>
       {subline && (
-        <span className="text-sm text-gray-400">{subline}</span>
+        <span className="text-sm text-gray-500">{subline}</span>
       )}
       {subline2 && (
-        <span className="text-xs text-gray-300">{subline2}</span>
+        <span className="text-xs text-gray-500">{subline2}</span>
       )}
     </div>
   );
@@ -234,7 +234,7 @@ function DealCard({ deal }) {
           ) : (
             <span className="text-sm text-gray-700 block truncate" title={deal.name}>{name}</span>
           )}
-          <span className="text-[10px] text-gray-300 block mt-0.5">
+          <span className="text-[10px] text-gray-500 block mt-0.5">
             {deal.stageLabel || deal.stage || '—'}
           </span>
         </div>
@@ -263,7 +263,7 @@ function TimeColumn({ group }) {
           <div>
             <span className="text-sm font-semibold text-gray-900">{group.label}</span>
             {group.sublabel && (
-              <span className="text-[10px] text-gray-300 block mt-0.5">{group.sublabel}</span>
+              <span className="text-[10px] text-gray-500 block mt-0.5">{group.sublabel}</span>
             )}
           </div>
           <div className="text-right">
@@ -328,7 +328,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
   if (!reps || reps.length === 0) {
     return (
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
-        <p className="text-gray-400 text-sm text-center">No rep data available.</p>
+        <p className="text-gray-500 text-sm text-center">No rep data available.</p>
       </div>
     );
   }
@@ -358,7 +358,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
       {/* ── Placeholder when nothing selected ──────── */}
       {!rep && (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 flex items-center justify-center">
-          <p className="text-gray-300 text-sm">Select a rep to view their scorecard</p>
+          <p className="text-gray-500 text-sm">Select a rep to view their scorecard</p>
         </div>
       )}
 
@@ -411,7 +411,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
             <span className="text-sm text-gray-600 font-medium">
               Bid Pipeline: <span className="text-accent font-bold">{fmtCurrency(rep.bidsRevenue)}</span>
             </span>
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-gray-500">
               Avg Lead → Bid: <span className="text-gray-600 tabular-nums font-medium">{fmtTime(rep.avgTimeToBidMinutes)}</span>
             </span>
           </div>
@@ -420,7 +420,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
           {dealsLoading && (
             <div className="bg-black/[0.03] rounded-xl p-8 flex items-center justify-center gap-3">
               <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-              <span className="text-gray-400 text-sm">Loading deal details...</span>
+              <span className="text-gray-500 text-sm">Loading deal details...</span>
             </div>
           )}
 
@@ -428,7 +428,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
           {timeGroups.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs uppercase tracking-wider text-gray-300 font-medium">
+                <span className="text-xs uppercase tracking-wider text-gray-500 font-medium">
                   {repDeals.length} Deals · Grouped by {
                     period === 'week' || period === 'lastweek' ? 'Day' :
                     period === 'month' || period === 'lastmonth' ? 'Week' :
@@ -436,7 +436,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
                     period === 'twoweeks' ? 'Week' : 'Day'
                   }
                 </span>
-                <span className="text-xs text-gray-300">
+                <span className="text-xs text-gray-500">
                   {fmtCurrency(repDeals.reduce((s, d) => s + (d.amount || 0), 0))} total pipeline
                 </span>
               </div>
@@ -451,7 +451,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
           {/* ── No deals message ───────────────────── */}
           {!dealsLoading && repDeals.length === 0 && (
             <div className="bg-black/[0.03] rounded-xl p-8 text-center">
-              <p className="text-gray-300 text-sm">No deals found for this period</p>
+              <p className="text-gray-500 text-sm">No deals found for this period</p>
             </div>
           )}
         </>

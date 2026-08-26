@@ -116,7 +116,7 @@ export default function SalesSection() {
               <div className="flex items-center justify-center h-64">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-                  <p className="text-gray-400 text-sm">Loading dashboard...</p>
+                  <p className="text-gray-500 text-sm">Loading dashboard...</p>
                 </div>
               </div>
             ) : metrics.data ? (
@@ -196,7 +196,7 @@ export default function SalesSection() {
         )}
 
         {tab === 'rep' && (
-          <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading scorecards...</div>}>
+          <Suspense fallback={<div className="text-center py-20 text-gray-500">Loading scorecards...</div>}>
             <RepScorecard
               reps={metrics.data?.reps}
               selectedRepId={selectedRepTab}
@@ -230,7 +230,7 @@ export default function SalesSection() {
               <div className="flex items-center justify-center h-64">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-                  <p className="text-gray-400 text-sm">Loading dashboard...</p>
+                  <p className="text-gray-500 text-sm">Loading dashboard...</p>
                 </div>
               </div>
             ) : metrics.data ? (

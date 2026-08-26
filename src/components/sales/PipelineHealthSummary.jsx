@@ -60,7 +60,7 @@ export default function PipelineHealthSummary({ pipelineHealth, onViewFullReport
         )}
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-gray-400 text-xs">
+        <span className="text-gray-500 text-xs">
           Total open: {formatMoney(totals.openValue)} · {totals.open} deals
         </span>
         <button onClick={onViewFullReport} className="text-accent text-xs hover:underline">
@@ -76,8 +76,8 @@ function Chip({ icon, count, value, colorClass, label, sub }) {
     <span className={`inline-flex items-center gap-1 text-xs ${colorClass}`} title={sub || undefined}>
       <span>{icon}</span>
       <span className="font-semibold tabular-nums">{count}</span>
-      <span className="text-gray-400">{label}</span>
-      <span className="text-gray-400">·</span>
+      <span className="text-gray-500">{label}</span>
+      <span className="text-gray-500">·</span>
       <span className="text-gray-500 tabular-nums">{value}</span>
       {sub && <span className="text-yellow-400/70 ml-1">({sub})</span>}
     </span>

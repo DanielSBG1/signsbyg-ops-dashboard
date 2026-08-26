@@ -14,7 +14,7 @@ export default function DepartmentCard({ deptKey, label, lead, tasks, onJobClick
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="text-sm font-semibold">{label}</h3>
-          <p className="text-gray-400 text-xs">{lead}</p>
+          <p className="text-gray-500 text-xs">{lead}</p>
         </div>
         <div className="flex gap-1.5">
           {overdueTasks.length > 0 && (
@@ -30,12 +30,12 @@ export default function DepartmentCard({ deptKey, label, lead, tasks, onJobClick
         </div>
       </div>
 
-      <p className="text-gray-300 text-[10px] mb-3">{tasks.length} active tasks</p>
+      <p className="text-gray-500 text-[10px] mb-3">{tasks.length} active tasks</p>
 
       {/* Task list */}
       <div className="space-y-0.5 overflow-y-auto max-h-72 flex-1">
         {tasks.length === 0 && (
-          <p className="text-gray-300 text-xs py-2">Queue empty</p>
+          <p className="text-gray-500 text-xs py-2">Queue empty</p>
         )}
         {tasks.map(t => {
           const isOverdue = t.due_on && t.due_on < now;
@@ -56,13 +56,13 @@ export default function DepartmentCard({ deptKey, label, lead, tasks, onJobClick
                 <span className={`text-[10px] tabular-nums shrink-0 ${
                   isOverdue ? 'text-red-400 font-semibold' :
                   isThisWeek ? 'text-yellow-400' :
-                  'text-gray-300'
+                  'text-gray-500'
                 }`}>
                   {t.due_on}
                 </span>
               )}
               {!t.due_on && (
-                <span className="text-gray-300 text-[10px] shrink-0">no date</span>
+                <span className="text-gray-500 text-[10px] shrink-0">no date</span>
               )}
             </div>
           );

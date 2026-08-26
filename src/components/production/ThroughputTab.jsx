@@ -13,7 +13,7 @@ function WeekBar({ label, onTime, late }) {
       </div>
       <div className="h-7 rounded-lg overflow-hidden flex bg-black/[0.03]">
         {total === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-[10px] text-gray-300">
+          <div className="flex-1 flex items-center justify-center text-[10px] text-gray-500">
             No data
           </div>
         ) : (
@@ -44,7 +44,7 @@ function WeekBar({ label, onTime, late }) {
 export default function ThroughputTab({ data }) {
   if (!data) {
     return (
-      <div className="text-center py-20 text-gray-300 text-sm">Loading throughput data...</div>
+      <div className="text-center py-20 text-gray-500 text-sm">Loading throughput data...</div>
     );
   }
 
@@ -54,20 +54,20 @@ export default function ThroughputTab({ data }) {
     <div className="space-y-6 max-w-2xl">
       {/* On-time rate summary */}
       <div className="bg-black/[0.02] rounded-xl p-5">
-        <p className="text-gray-400 text-xs mb-1">4-Week On-Time Rate</p>
+        <p className="text-gray-500 text-xs mb-1">4-Week On-Time Rate</p>
         <p className={`text-4xl font-bold tabular-nums ${
-          onTimeRate === null  ? 'text-gray-300' :
+          onTimeRate === null  ? 'text-gray-500' :
           onTimeRate >= 80    ? 'text-success'  :
           onTimeRate >= 60    ? 'text-warning'  : 'text-danger'
         }`}>
-          {onTimeRate !== null ? `${onTimeRate}%` : '\u2014'}
+          {onTimeRate !== null ? `${onTimeRate}%` : '—'}
         </p>
       </div>
 
       {/* Weekly breakdown */}
       <div className="bg-black/[0.02] rounded-xl p-5 space-y-5">
         {/* Legend */}
-        <div className="flex items-center gap-4 text-[10px] text-gray-400">
+        <div className="flex items-center gap-4 text-[10px] text-gray-500">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-2 rounded bg-success/60 inline-block" /> On Time
           </span>

@@ -137,12 +137,12 @@ function TaskDetailModal({ task, projectGid, onClose }) {
               </span>
               <h3 className="text-base font-semibold text-gray-900 leading-snug">{task.name}</h3>
               {task.section && (
-                <p className="text-xs text-gray-400 uppercase tracking-wider">{task.section}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">{task.section}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="text-gray-300 hover:text-gray-700 text-2xl leading-none mt-0.5 flex-shrink-0"
+              className="text-gray-500 hover:text-gray-700 text-2xl leading-none mt-0.5 flex-shrink-0"
             >
               ×
             </button>
@@ -153,7 +153,7 @@ function TaskDetailModal({ task, projectGid, onClose }) {
           {/* Issues */}
           {(task.reasons ?? []).length > 0 && (
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Issues Found</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Issues Found</p>
               <ul className="space-y-1.5 pl-4">
                 {task.reasons.map((r, i) => (
                   <li key={i} className={`text-sm ${meta.text} list-disc`}>{r}</li>
@@ -165,7 +165,7 @@ function TaskDetailModal({ task, projectGid, onClose }) {
           {/* Recommended action */}
           {task.recommendedAction && (
             <div className={`${meta.bg} border ${meta.border} rounded-xl px-4 py-3`}>
-              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Recommended Action</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Recommended Action</p>
               <p className="text-sm text-gray-700">{task.recommendedAction}</p>
             </div>
           )}
@@ -173,11 +173,11 @@ function TaskDetailModal({ task, projectGid, onClose }) {
           {/* Date row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Last Activity</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Last Activity</p>
               <p className="text-sm text-gray-600">{formatDate(task.lastActivity)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Due Date</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Due Date</p>
               <p className={`text-sm ${isPastDue ? 'text-red-400 font-semibold' : 'text-gray-600'}`}>
                 {task.dueOn ? formatDate(task.dueOn) : '—'}
                 {isPastDue && <span className="ml-1 text-xs">(overdue)</span>}
@@ -228,7 +228,7 @@ function TaskMiniCard({ task, onClick }) {
       >
         {task.name}
       </p>
-      <p className="text-[10px] text-gray-300 truncate">{formatDate(task.lastActivity)}</p>
+      <p className="text-[10px] text-gray-500 truncate">{formatDate(task.lastActivity)}</p>
     </button>
   );
 }
@@ -280,9 +280,9 @@ function DeptModal({ stage, tasks, projectGid, onClose }) {
             <div className="flex items-center gap-3">
               <span className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: stage.color }} />
               <span className="text-lg font-bold" style={{ color: '#fde047' }}>{stage.name}</span>
-              <span className="text-sm text-gray-400">{tasks.length} job{tasks.length !== 1 ? 's' : ''}</span>
+              <span className="text-sm text-gray-500">{tasks.length} job{tasks.length !== 1 ? 's' : ''}</span>
             </div>
-            <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
           </div>
 
           {/* Column headers */}
@@ -292,7 +292,7 @@ function DeptModal({ stage, tasks, projectGid, onClose }) {
                 key={col.key}
                 onClick={() => handleColClick(col.key)}
                 className={`text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-                  sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
+                  sortCol === col.key ? 'text-yellow-300' : 'text-gray-500 hover:text-gray-600'
                 } ${col.cls}`}
               >
                 {col.label}
@@ -316,8 +316,8 @@ function DeptModal({ stage, tasks, projectGid, onClose }) {
                 >
                   <span className="text-base text-center">{meta.emoji}</span>
                   <span className="text-sm text-gray-900 truncate group-hover:text-gray-900" title={task.name}>{task.name}</span>
-                  <span className="text-sm text-gray-400 tabular-nums">{formatDate(task.lastActivity)}</span>
-                  <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
+                  <span className="text-sm text-gray-500 tabular-nums">{formatDate(task.lastActivity)}</span>
+                  <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
                     {task.dueOn ? formatDate(task.dueOn) : '—'}
                   </span>
                   <span>
@@ -331,7 +331,7 @@ function DeptModal({ stage, tasks, projectGid, onClose }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={e => e.stopPropagation()}
-                    className="text-gray-300 hover:text-gray-600 text-sm transition-colors"
+                    className="text-gray-500 hover:text-gray-600 text-sm transition-colors"
                   >↗</a>
                 </div>
               );
@@ -376,7 +376,7 @@ function DeptSection({ stage, tasks, projectGid }) {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
             <span className="text-sm font-bold" style={{ color: '#fde047' }}>{stage.name}</span>
-            <span className="text-xs text-gray-400 ml-auto">{tasks.length} jobs</span>
+            <span className="text-xs text-gray-500 ml-auto">{tasks.length} jobs</span>
           </div>
         </div>
 
@@ -386,8 +386,8 @@ function DeptSection({ stage, tasks, projectGid }) {
           {redCount    > 0 && <span className="text-xs bg-red-500/20  text-red-400 px-2 py-0.5 rounded-full font-bold">🔴 {redCount}</span>}
           {yellowCount > 0 && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">🟡 {yellowCount}</span>}
           {greenCount  > 0 && <span className="text-xs bg-green-500/20  text-green-400 px-2 py-0.5 rounded-full">✅ {greenCount}</span>}
-          {tasks.length === 0 && <span className="text-xs text-gray-300">No tasks</span>}
-          <span className="ml-auto text-[10px] text-gray-300">Click to open ↗</span>
+          {tasks.length === 0 && <span className="text-xs text-gray-500">No tasks</span>}
+          <span className="ml-auto text-[10px] text-gray-500">Click to open ↗</span>
         </div>
       </button>
 
@@ -514,7 +514,7 @@ function PmPipelineHeader({ pm, scorecardMap }) {
             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pmScore}%`, backgroundColor: healthBarColor(pmScore) }} />
           </div>
           {/* Score breakdown */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-400">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
             <span className={onTimePct < 60 ? 'text-red-400' : ''}>
               {onTimePct}% on time
             </span>
@@ -528,7 +528,7 @@ function PmPipelineHeader({ pm, scorecardMap }) {
 
       {totalStaged > 0 && (
         <div>
-          <p className="text-sm text-gray-400 mb-3">Pipeline — click a stage to see projects</p>
+          <p className="text-sm text-gray-500 mb-3">Pipeline — click a stage to see projects</p>
           {/* Bar */}
           <div className="flex gap-1 items-end" style={{ height: '52px' }}>
             {PIPELINE_STAGES.map(stage => {
@@ -592,7 +592,7 @@ function PmPipelineHeader({ pm, scorecardMap }) {
                 >
                   <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: stage.color }} />
                   <span className={isActive ? 'text-gray-900 font-semibold' : 'text-gray-500'}>{stage.name}</span>
-                  <span className="text-gray-300">({count})</span>
+                  <span className="text-gray-500">({count})</span>
                   {badCount > 0 && (
                     <span className="text-xs text-red-400 font-semibold">· 🔴 {badCount} red</span>
                   )}
@@ -608,7 +608,7 @@ function PmPipelineHeader({ pm, scorecardMap }) {
           <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
             {activeStage} · {stageTasks.length} project{stageTasks.length !== 1 ? 's' : ''}
           </p>
-          <div className="grid grid-cols-[28px_1fr_90px_90px_70px_32px] gap-3 px-4 pb-1 text-xs text-gray-300 uppercase tracking-wider">
+          <div className="grid grid-cols-[28px_1fr_90px_90px_70px_32px] gap-3 px-4 pb-1 text-xs text-gray-500 uppercase tracking-wider">
             <span />
             <span>Project</span><span>Created</span><span>Due Date</span><span>Progress</span><span />
           </div>
@@ -621,14 +621,14 @@ function PmPipelineHeader({ pm, scorecardMap }) {
               >
                 <span className="text-base text-center">{FLAG_META[task.flag]?.emoji ?? '⬜'}</span>
                 <span className="text-sm text-gray-900 truncate group-hover:text-gray-900">{task.name}</span>
-                <span className="text-xs text-gray-400 tabular-nums">{task.createdAt ? formatDate(task.createdAt) : '—'}</span>
-                <span className={`text-xs tabular-nums ${task.dueOn && task.dueOn < new Date().toISOString().slice(0,10) ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
+                <span className="text-xs text-gray-500 tabular-nums">{task.createdAt ? formatDate(task.createdAt) : '—'}</span>
+                <span className={`text-xs tabular-nums ${task.dueOn && task.dueOn < new Date().toISOString().slice(0,10) ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
                   {task.dueOn ? formatDate(task.dueOn) : '—'}
                 </span>
                 <span className="text-sm font-semibold tabular-nums" style={{ color: healthBarColor((stagesDone / 5) * 100) }}>
                   {stagesDone}/5
                 </span>
-                <span className="text-gray-300 group-hover:text-gray-500 text-sm text-right">↗</span>
+                <span className="text-gray-500 group-hover:text-gray-500 text-sm text-right">↗</span>
               </a>
             );
           })}
@@ -650,7 +650,7 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
   if (!data || !Array.isArray(data.pms) || data.pms.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-300 text-sm">Audit data unavailable</p>
+        <p className="text-gray-500 text-sm">Audit data unavailable</p>
       </div>
     );
   }
@@ -675,7 +675,7 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
           ))}
         </div>
         <div className="flex-1 flex items-center justify-center h-48">
-          <p className="text-gray-300 text-sm">Select a PM to view their report</p>
+          <p className="text-gray-500 text-sm">Select a PM to view their report</p>
         </div>
       </div>
     );
@@ -691,7 +691,7 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
       if (t.flag === 'mislabeled') { groups['Mislabeled'].push(t);  return; }
       const matched = matchStage(t.section);
       // Normalize section name: collapse spaces around punctuation and trim
-      const rawKey  = matched?.name ?? (t.section ? t.section.replace(/\s*([\/, \-])\s*/g, '$1').trim() : 'Other');
+      const rawKey  = matched?.name ?? (t.section ? t.section.replace(/\s*([\/,\-])\s*/g, '$1').trim() : 'Other');
       const key     = rawKey || 'Other';
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
@@ -705,12 +705,12 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
     <div className="flex gap-4 items-start">
       {/* Left: PM list */}
       <div className="w-48 shrink-0 bg-white border border-gray-200 rounded-2xl p-2 space-y-0.5">
-        <p className="text-xs uppercase tracking-wider text-gray-300 px-2 pt-1 pb-0.5">Project Managers</p>
+        <p className="text-xs uppercase tracking-wider text-gray-500 px-2 pt-1 pb-0.5">Project Managers</p>
         {data.pms.map(pm => (
           <PMButton key={pm.name} pm={pm} isActive={pm.name === activePmName} onClick={() => onSelectPm(pm.name)} />
         ))}
         {data.generatedAt && (
-          <p className="text-[10px] text-gray-300 px-2 pt-2 pb-1">Generated {formatDate(data.generatedAt)}</p>
+          <p className="text-[10px] text-gray-500 px-2 pt-2 pb-1">Generated {formatDate(data.generatedAt)}</p>
         )}
       </div>
 
@@ -722,7 +722,7 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h2 className="text-xl font-semibold">{activePm.name}</h2>
-              <p className="text-gray-400 text-sm mt-0.5">{(activePm.tasks ?? []).length} active jobs</p>
+              <p className="text-gray-500 text-sm mt-0.5">{(activePm.tasks ?? []).length} active jobs</p>
             </div>
             <div className="flex gap-4 text-base flex-wrap">
               {counts.urgent     > 0 && <span className="flex items-center gap-1.5 text-red-400 font-semibold">🚨 <span>{counts.urgent} unprocessed</span></span>}
@@ -773,7 +773,7 @@ export default function AuditTab({ data, scorecards, selectedPm, onSelectPm }) {
 
         {(activePm.tasks ?? []).length === 0 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center">
-            <p className="text-gray-300 text-sm">No flagged tasks for {activePm.name}</p>
+            <p className="text-gray-500 text-sm">No flagged tasks for {activePm.name}</p>
           </div>
         )}
       </div>

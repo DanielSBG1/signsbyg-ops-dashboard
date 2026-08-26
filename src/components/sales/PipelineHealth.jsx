@@ -26,16 +26,16 @@ function DealModal({ title, deals, onClose }) {
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-900 text-xl leading-none">&times;</button>
         </div>
         <div className="overflow-y-auto flex-1 flex flex-col gap-2">
           {deals.length === 0 ? (
-            <p className="text-gray-300 text-sm text-center py-8">No deals</p>
+            <p className="text-gray-500 text-sm text-center py-8">No deals</p>
           ) : deals.map((deal) => (
             <div key={deal.id} className="bg-black/[0.03] rounded-xl px-4 py-3 flex items-center justify-between gap-4">
               <div className="flex flex-col min-w-0">
                 <span className="font-medium text-sm truncate">{deal.name}</span>
-                {deal.stage && <span className="text-gray-400 text-xs">{deal.stage}</span>}
+                {deal.stage && <span className="text-gray-500 text-xs">{deal.stage}</span>}
               </div>
               <div className="flex items-center gap-3 shrink-0 text-xs">
                 {deal.amount > 0 && (
@@ -67,7 +67,7 @@ function PipelineCard({ name, data, onModal }) {
         <div className="flex items-center gap-3 text-xs">
           <button
             onClick={() => onModal(`${name} — All Deals`, data.dealList)}
-            className="text-gray-400 hover:text-gray-900 transition-colors cursor-pointer"
+            className="text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
           >
             {data.totalDeals} deals
           </button>
@@ -117,7 +117,7 @@ function PipelineCard({ name, data, onModal }) {
           </BarChart>
         </ResponsiveContainer>
       ) : (
-        <p className="text-gray-300 text-sm text-center py-6">No deals in this period</p>
+        <p className="text-gray-500 text-sm text-center py-6">No deals in this period</p>
       )}
     </div>
   );
@@ -138,7 +138,7 @@ export default function PipelineHealth() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Pipeline Health</h2>
           <div className="flex items-center gap-4 text-sm">
-            <span className="text-gray-400">
+            <span className="text-gray-500">
               {period === 'all' ? 'Total Pipeline:' : `Pipeline Created ${selectedLabel}:`}
             </span>
             {loading ? (
@@ -182,7 +182,7 @@ export default function PipelineHealth() {
               onChange={(e) => setCustomRange((r) => ({ ...r, start: e.target.value }))}
               className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
-            <span className="text-gray-400">to</span>
+            <span className="text-gray-500">to</span>
             <input
               type="date"
               value={customRange.end}
@@ -216,7 +216,7 @@ export default function PipelineHealth() {
             ) : (
               <div key={key} className="bg-black/[0.03] rounded-xl p-4">
                 <h3 className="font-semibold text-sm mb-2">{pipelineData.label}</h3>
-                <p className="text-gray-300 text-sm text-center py-6">No deals created in this period</p>
+                <p className="text-gray-500 text-sm text-center py-6">No deals created in this period</p>
               </div>
             )
           )}

@@ -53,7 +53,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
 
   if (!pipelineHealth) {
     return (
-      <div className="text-center py-20 text-gray-400">
+      <div className="text-center py-20 text-gray-500">
         Loading pipeline health...
       </div>
     );
@@ -84,7 +84,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Pipeline Health</h1>
-          <p className="text-gray-400 text-xs mt-1">
+          <p className="text-gray-500 text-xs mt-1">
             Live snapshot · Avg cycle constants generated {pipelineHealth.generatedAt}
           </p>
         </div>
@@ -102,7 +102,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-base font-semibold">Pipeline Coverage</h2>
-          <span className="text-gray-400 text-xs">
+          <span className="text-gray-500 text-xs">
             Open value ÷ trailing-30-day revenue · Target ≥ {pipelineHealth.coverageTarget || 3}×
           </span>
         </div>
@@ -166,7 +166,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
           emptyMessage="No aging deals."
           onDealClick={setSelectedDeal}
         />
-        <p className="text-gray-300 text-[10px] mt-2">
+        <p className="text-gray-500 text-[10px] mt-2">
           * "Days" = days in current stage for stuck/decayed reasons; total deal age for age-based.
         </p>
       </Section>
@@ -240,11 +240,11 @@ function BucketDealListModal({ title, deals, onClose, onDealClick }) {
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-900 text-xl leading-none">&times;</button>
         </div>
         <div className="overflow-y-auto flex-1 flex flex-col gap-2">
           {deals.length === 0 ? (
-            <p className="text-gray-300 text-sm text-center py-8">No deals</p>
+            <p className="text-gray-500 text-sm text-center py-8">No deals</p>
           ) : deals.map((deal) => (
             <div
               key={deal.id}
@@ -253,20 +253,20 @@ function BucketDealListModal({ title, deals, onClose, onDealClick }) {
             >
               <div className="min-w-0">
                 <div className="font-medium text-sm truncate">{deal.name}</div>
-                <div className="text-gray-400 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
+                <div className="text-gray-500 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
               </div>
               <div className="shrink-0 text-right">
                 {deal.amount > 0 && (
                   <div className="text-accent font-semibold text-xs">${deal.amount.toLocaleString()}</div>
                 )}
                 {deal.stageAgeDays != null && (
-                  <div className="text-gray-300 text-[10px]">{deal.stageAgeDays}d in stage</div>
+                  <div className="text-gray-500 text-[10px]">{deal.stageAgeDays}d in stage</div>
                 )}
               </div>
             </div>
           ))}
         </div>
-        <p className="text-gray-300 text-[10px] mt-3 text-center">Click a deal to see full details</p>
+        <p className="text-gray-500 text-[10px] mt-3 text-center">Click a deal to see full details</p>
       </div>
     </div>
   );
@@ -285,9 +285,9 @@ function CoverageCard({ label, coverage, target }) {
   if (!coverage || coverage.ratio == null) {
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
-        <p className="text-2xl font-bold text-gray-300">—</p>
-        <p className="text-gray-400 text-xs mt-1">No revenue last 30 days</p>
+        <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+        <p className="text-2xl font-bold text-gray-500">—</p>
+        <p className="text-gray-500 text-xs mt-1">No revenue last 30 days</p>
       </div>
     );
   }
@@ -298,9 +298,9 @@ function CoverageCard({ label, coverage, target }) {
     { color: 'text-danger', border: 'border-danger/30' };
   return (
     <div className={`bg-white border ${status.border} rounded-xl p-4`}>
-      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-3xl font-bold tabular-nums ${status.color}`}>{ratio}×</p>
-      <p className="text-gray-400 text-xs mt-1">
+      <p className="text-gray-500 text-xs mt-1">
         {formatMoney(openValue)} open ÷ {formatMoney(trailing30Revenue)}/mo
       </p>
     </div>
@@ -314,10 +314,10 @@ function KpiCard({ label, big, sub, colorClass = 'text-gray-900', onClick }) {
       onClick={onClick}
       title={onClick ? `Jump to ${label} section` : undefined}
     >
-      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold ${colorClass}`}>{big}</p>
       <p className="text-gray-500 text-xs mt-1">{sub}</p>
-      {onClick && <p className="text-gray-300 text-[9px] mt-1.5">↓ click to jump</p>}
+      {onClick && <p className="text-gray-500 text-[9px] mt-1.5">↓ click to jump</p>}
     </div>
   );
 }
@@ -328,7 +328,7 @@ function Section({ id, title, subtitle, rightSlot, children }) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-lg font-semibold">{title}</h2>
-          <p className="text-gray-400 text-xs mt-0.5">{subtitle}</p>
+          <p className="text-gray-500 text-xs mt-0.5">{subtitle}</p>
         </div>
         {rightSlot}
       </div>

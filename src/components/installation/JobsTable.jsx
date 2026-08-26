@@ -5,7 +5,7 @@ const STATUS_STYLES = {
   on_time:     'bg-success/20 text-success',
   scheduled:   'bg-accent/20 text-accent',
   at_risk:     'bg-warning/20 text-warning',
-  pending:     'bg-black/[0.05] text-gray-400',
+  pending:     'bg-black/[0.05] text-gray-500',
   late:        'bg-danger/20 text-danger',
   rescheduled: 'bg-warning/20 text-warning',
   bled_over:   'bg-danger/20 text-danger',
@@ -92,8 +92,8 @@ export default function JobsTable({ jobs }) {
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-300">All Jobs</p>
-          <span className="text-xs text-gray-300">{filtered.length} showing</span>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">All Jobs</p>
+          <span className="text-xs text-gray-500">{filtered.length} showing</span>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <input
@@ -126,7 +126,7 @@ export default function JobsTable({ jobs }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200">
+            <tr className="text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
               {COLUMNS.map(col => (
                 <th
                   key={col.key}
@@ -151,10 +151,10 @@ export default function JobsTable({ jobs }) {
                     className="text-sm font-medium text-gray-900 hover:text-accent transition-colors truncate block">
                     {j.name}
                   </a>
-                  {j.address && <p className="text-[11px] text-gray-400 truncate mt-0.5">{j.address}</p>}
+                  {j.address && <p className="text-[11px] text-gray-500 truncate mt-0.5">{j.address}</p>}
                 </td>
                 <td className="py-3 px-3">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-black/[0.05] text-gray-400'}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-black/[0.05] text-gray-500'}`}>
                     {STATUS_LABELS[j.status] || j.status}
                   </span>
                 </td>
@@ -169,7 +169,7 @@ export default function JobsTable({ jobs }) {
                   {j.reschedules > 0 ? (
                     <span className={`font-bold ${j.reschedules >= 2 ? 'text-danger' : 'text-warning'}`}>{j.reschedules}</span>
                   ) : (
-                    <span className="text-gray-300">0</span>
+                    <span className="text-gray-500">0</span>
                   )}
                 </td>
                 <td className="py-3 px-3 text-xs text-gray-500 truncate">{(j.crews || []).join(', ') || '\u2014'}</td>
@@ -182,10 +182,10 @@ export default function JobsTable({ jobs }) {
       </div>
 
       {filtered.length === 0 && (
-        <div className="px-6 py-12 text-center text-gray-300 text-sm">No jobs match your filters.</div>
+        <div className="px-6 py-12 text-center text-gray-500 text-sm">No jobs match your filters.</div>
       )}
       {filtered.length > 200 && (
-        <div className="px-6 py-3 border-t border-gray-100 text-center text-gray-300 text-xs">
+        <div className="px-6 py-3 border-t border-gray-100 text-center text-gray-500 text-xs">
           Showing first 200 of {filtered.length} jobs
         </div>
       )}

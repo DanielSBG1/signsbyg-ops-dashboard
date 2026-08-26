@@ -13,7 +13,7 @@ const CLASS_STYLES = {
   existing_lead: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   existing_deal: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
   existing_customer: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  unknown: 'bg-black/[0.05] text-gray-400 border-gray-200',
+  unknown: 'bg-black/[0.05] text-gray-500 border-gray-200',
 };
 
 const STATUS_STYLES = {
@@ -60,7 +60,7 @@ export default function CallsPage({ data, loading, error }) {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">Loading calls...</p>
+          <p className="text-gray-500 text-sm">Loading calls...</p>
         </div>
       </div>
     );
@@ -144,12 +144,12 @@ export default function CallsPage({ data, loading, error }) {
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">📡 How Callers Found Us</h2>
-            <span className="text-gray-300 text-xs">identified inbound callers only</span>
+            <span className="text-gray-500 text-xs">identified inbound callers only</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {summary.bySource.map((s) => (
               <div key={s.source} className="bg-black/[0.03] rounded-xl p-4">
-                <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1 truncate">{s.source}</p>
+                <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-1 truncate">{s.source}</p>
                 <p className="text-2xl font-bold tabular-nums text-gray-900">{s.count}</p>
               </div>
             ))}
@@ -164,7 +164,7 @@ export default function CallsPage({ data, loading, error }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-400 text-xs uppercase tracking-wider">
+                <tr className="text-gray-500 text-xs uppercase tracking-wider">
                   <th className="pb-3 text-left">Date</th>
                   <th className="pb-3 text-right">Total</th>
                   <th className="pb-3 text-right">Inbound</th>
@@ -192,7 +192,7 @@ export default function CallsPage({ data, loading, error }) {
 
       {/* Calls table — hidden for wide periods */}
       {summaryOnly ? (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center text-gray-400 text-sm py-10">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center text-gray-500 text-sm py-10">
           Call log and classification breakdown are only available for periods up to 2 weeks.<br />
           Switch to <span className="text-gray-500">Today</span>, <span className="text-gray-500">This Week</span>, or a custom range ≤14 days to see individual calls.
         </div>
@@ -201,7 +201,7 @@ export default function CallsPage({ data, loading, error }) {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Call Log</h2>
-            <span className="text-gray-400 text-sm">{filtered.length} of {calls.length} showing</span>
+            <span className="text-gray-500 text-sm">{filtered.length} of {calls.length} showing</span>
           </div>
           <div className="flex items-center gap-2">
             <select
@@ -225,12 +225,12 @@ export default function CallsPage({ data, loading, error }) {
         </div>
 
         {filtered.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-8">No calls match these filters.</p>
+          <p className="text-gray-500 text-sm text-center py-8">No calls match these filters.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-400 text-xs uppercase tracking-wider">
+                <tr className="text-gray-500 text-xs uppercase tracking-wider">
                   <th className="pb-3 px-3 text-left">Time</th>
                   <th className="pb-3 px-3 text-left">Direction</th>
                   <th className="pb-3 px-3 text-left">Caller</th>
@@ -256,7 +256,7 @@ export default function CallsPage({ data, loading, error }) {
                         <span className="text-purple-300">📤 Out</span>
                       ) : '—'}
                     </td>
-                    <td className="py-3 px-3 text-gray-900 font-medium">{c.contactName || <span className="text-gray-400 italic">Unknown</span>}</td>
+                    <td className="py-3 px-3 text-gray-900 font-medium">{c.contactName || <span className="text-gray-500 italic">Unknown</span>}</td>
                     <td className="py-3 px-3 text-gray-500 tabular-nums">{formatPhone(c.customerPhone)}</td>
                     <td className="py-3 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${CLASS_STYLES[c.classification] || ''}`}>
@@ -283,9 +283,9 @@ export default function CallsPage({ data, loading, error }) {
 function Kpi({ label, value, colorClass = 'text-gray-900', subtext }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold tabular-nums ${colorClass}`}>{value}</p>
-      {subtext && <p className="text-gray-400 text-[10px] mt-0.5">{subtext}</p>}
+      {subtext && <p className="text-gray-500 text-[10px] mt-0.5">{subtext}</p>}
     </div>
   );
 }

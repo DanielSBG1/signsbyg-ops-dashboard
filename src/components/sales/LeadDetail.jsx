@@ -36,7 +36,7 @@ const STATUS_COLORS = {
   qualified: 'bg-green-500/20 text-green-300 border-green-500/30',
   new_lead: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   manual_entry: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  unqualified: 'bg-black/[0.05] text-gray-400 border-gray-200',
+  unqualified: 'bg-black/[0.05] text-gray-500 border-gray-200',
   internal: 'bg-red-500/20 text-red-300 border-red-500/30',
 };
 
@@ -122,7 +122,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
             { key: 'qualified', label: 'Qualified', count: leadCounts.qualified, color: 'bg-green-500/15 text-green-300' },
             { key: 'new_lead', label: 'New Leads', count: leadCounts.newLead, color: 'bg-blue-500/15 text-blue-300' },
             { key: 'manual_entry', label: 'Manual Entry', count: leadCounts.manualEntry, color: 'bg-amber-500/15 text-amber-300' },
-            { key: 'unqualified', label: 'Unqualified', count: leadCounts.unqualified, color: 'bg-black/[0.03] text-gray-400' },
+            { key: 'unqualified', label: 'Unqualified', count: leadCounts.unqualified, color: 'bg-black/[0.03] text-gray-500' },
             { key: 'internal', label: 'Internal', count: leadCounts.internal, color: 'bg-red-500/15 text-red-300' },
           ].map((s) => (
             <button
@@ -139,7 +139,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
       )}
 
       {!showTable ? (
-        <div className="text-center text-gray-400 text-sm py-10">
+        <div className="text-center text-gray-500 text-sm py-10">
           Contact list is not shown for monthly or longer periods.<br />
           Switch to <span className="text-gray-500">Today</span> or <span className="text-gray-500">This Week</span> to see individual contacts,<br />
           or click a rep in the leaderboard to see their contacts.
@@ -155,7 +155,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">Lead Details</h2>
-              <span className="text-gray-400 text-sm">{filtered.length} showing</span>
+              <span className="text-gray-500 text-sm">{filtered.length} showing</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {funnelFilter && (
@@ -190,7 +190,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-400 text-xs uppercase tracking-wider">
+                <tr className="text-gray-500 text-xs uppercase tracking-wider">
                   {[
                     { key: 'name', label: 'Name', align: 'left' },
                     { key: 'email', label: 'Email', align: 'left' },
@@ -248,14 +248,14 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
                         {SOURCE_LABELS[lead.source] || lead.source}
                       </span>
                       {lead.sourceDetail && lead.sourceDetail !== lead.sourceRaw && (
-                        <span className="ml-2 text-gray-300 text-xs">{lead.sourceDetail}</span>
+                        <span className="ml-2 text-gray-500 text-xs">{lead.sourceDetail}</span>
                       )}
                     </td>
                     <td className="py-3 px-3 text-center tabular-nums">
                       {lead.numDeals > 0 ? (
                         <span className="text-green-400 font-medium">{lead.numDeals}</span>
                       ) : (
-                        <span className="text-gray-300">0</span>
+                        <span className="text-gray-500">0</span>
                       )}
                     </td>
                     <td className="py-3 px-3 text-left text-gray-700">{lead.rep}</td>
@@ -268,7 +268,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
                           href={lead.hubspotUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-gray-300 hover:text-accent transition-colors text-sm"
+                          className="text-gray-500 hover:text-accent transition-colors text-sm"
                           onClick={(e) => e.stopPropagation()}
                           title="Open in HubSpot"
                         >

@@ -90,7 +90,7 @@ function BucketRow({ label, count, value, colorClass, onClick, clickable }) {
       onClick={interactive ? onClick : undefined}
     >
       <span className={colorClass}>
-        {label} <span className="text-gray-400">{count}</span>
+        {label} <span className="text-gray-500">{count}</span>
       </span>
       <span className="text-gray-500 text-[11px]">{formatMoney(value)}</span>
     </div>

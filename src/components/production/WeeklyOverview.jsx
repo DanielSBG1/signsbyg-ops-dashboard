@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import JobDrawer from './JobDrawer';
 import { computeProductionHealth, BAND_CONFIG } from '../../utils/health.js';
 
-// ─── Constants ───────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const DEPT_META = [
   { key: 'channel_letters', label: 'Channel Letters', short: 'CL',    color: '#06b6d4' },
@@ -35,7 +35,7 @@ const STATE_BADGE = {
   projected_late: { label: 'Projected Late', cls: 'bg-orange-400/20 text-orange-400' },
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getWeekDays(today) {
   const d = new Date(today + 'T12:00:00Z');
@@ -75,7 +75,7 @@ function isAtRisk(job, today) {
   return job.subTasks.some(s => !s.completed && s.due_on && s.due_on <= today);
 }
 
-// ─── Alert card (large red numbers for critical attention items) ────────────
+// ─── Alert card (large red numbers for critical attention items) ──────────────
 
 function AlertCard({ label, value, sub, active, onClick }) {
   return (
@@ -89,19 +89,19 @@ function AlertCard({ label, value, sub, active, onClick }) {
             : 'border-gray-200 hover:border-gray-200'
       }`}
     >
-      <p className="text-gray-400 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
-      <p className={`text-6xl font-black tabular-nums leading-none ${value > 0 ? 'text-danger' : 'text-gray-300'}`}>
+      <p className="text-gray-500 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
+      <p className={`text-6xl font-black tabular-nums leading-none ${value > 0 ? 'text-danger' : 'text-gray-500'}`}>
         {value ?? 0}
       </p>
-      {sub && <p className="text-gray-300 text-xs mt-2">{sub}</p>}
-      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-danger' : 'text-gray-300'}`}>
-        {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
+      {sub && <p className="text-gray-500 text-xs mt-2">{sub}</p>}
+      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-danger' : 'text-gray-500'}`}>
+        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
       </p>
     </button>
   );
 }
 
-// ─── KPI card ────────────────────────────────────────────────────────
+// ─── KPI card ────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, color, icon, active, onClick }) {
   const colorMap = {
@@ -120,25 +120,25 @@ function KpiCard({ label, value, sub, color, icon, active, onClick }) {
           : 'border-gray-200 hover:border-gray-200'
       }`}
     >
-      <p className="text-gray-400 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
+      <p className="text-gray-500 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
       <div className="flex items-baseline gap-2">
-        <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '\u2014'}</p>
+        <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '—'}</p>
         {icon && <span className="text-2xl leading-none">{icon}</span>}
       </div>
-      {sub && <p className="text-gray-300 text-xs mt-2">{sub}</p>}
-      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-gray-300'}`}>
-        {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
+      {sub && <p className="text-gray-500 text-xs mt-2">{sub}</p>}
+      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-gray-500'}`}>
+        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
       </p>
     </button>
   );
 }
 
-// ─── Unreviewed job panel (shows promised date + days waiting) ──────────────
+// ─── Unreviewed job panel (shows promised date + days waiting) ────────────────
 
 function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
   if (jobs.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-300 text-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-500 text-sm">
         No unreviewed jobs right now.
       </div>
     );
@@ -147,15 +147,15 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
   return (
     <div className="bg-white border border-danger/30 rounded-2xl overflow-hidden">
       <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">Unreviewed Jobs</p>
-        <p className="text-xs text-gray-300">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
+        <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">Unreviewed Jobs</p>
+        <p className="text-xs text-gray-500">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
       </div>
       {/* Column headers */}
       <div className="px-5 py-2 border-b border-gray-100 grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center">
-        <span className="text-[10px] text-gray-300 font-semibold uppercase tracking-widest">Job</span>
-        <span className="text-[10px] text-gray-300 font-semibold uppercase tracking-widest text-right">Promised Date</span>
-        <span className="text-[10px] text-gray-300 font-semibold uppercase tracking-widest text-right">Prod Due</span>
-        <span className="text-[10px] text-gray-300 font-semibold uppercase tracking-widest text-right">Days Waiting</span>
+        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Job</span>
+        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest text-right">Promised Date</span>
+        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest text-right">Prod Due</span>
+        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest text-right">Days Waiting</span>
       </div>
       <div className="divide-y divide-white/[0.04]">
         {jobs.map(job => {
@@ -175,12 +175,12 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
               <div className="text-right shrink-0">
                 {job.promisedDate
                   ? <span className="text-[11px] text-warning font-semibold">{formatDate(job.promisedDate)}</span>
-                  : <span className="text-[11px] text-gray-300">\u2014</span>}
+                  : <span className="text-[11px] text-gray-500">—</span>}
               </div>
               <div className="text-right shrink-0">
                 {job.due_on
                   ? <span className="text-[11px] text-gray-500">{formatDate(job.due_on)}</span>
-                  : <span className="text-[11px] text-gray-300">\u2014</span>}
+                  : <span className="text-[11px] text-gray-500">—</span>}
               </div>
               <div className="text-right shrink-0">
                 <span className={`text-sm font-bold tabular-nums ${urgency}`}>
@@ -195,13 +195,13 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
   );
 }
 
-// ─── Inline job panel ───────────────────────────────────────────────────
+// ─── Inline job panel ─────────────────────────────────────────────────────────
 
 function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
   const borderCls = accentColor === 'danger' ? 'border-danger/30' : 'border-accent/20';
   if (jobs.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-300 text-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-500 text-sm">
         No jobs for this metric in the selected period.
       </div>
     );
@@ -210,8 +210,8 @@ function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
   return (
     <div className={`bg-white border ${borderCls} rounded-2xl overflow-hidden`}>
       <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">Jobs</p>
-        <p className="text-xs text-gray-300">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
+        <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">Jobs</p>
+        <p className="text-xs text-gray-500">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
       </div>
       <div className="divide-y divide-white/[0.04]">
         {jobs.map(job => {
@@ -229,7 +229,7 @@ function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
             >
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium truncate ${isDone ? 'text-gray-500 line-through decoration-white/20' : 'text-gray-900'}`}>{job.name}</p>
-                <p className="text-[11px] text-gray-400 mt-0.5 font-medium">{formatDate(job.due_on)}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5 font-medium">{formatDate(job.due_on)}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {!isDone && (
@@ -257,7 +257,7 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
 
   if (jobs.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-300 text-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-500 text-sm">
         No rescheduled jobs right now.
       </div>
     );
@@ -266,14 +266,14 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
   return (
     <div className="bg-white border border-warning/30 rounded-2xl overflow-hidden">
       <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">Rescheduled Jobs</p>
-        <p className="text-xs text-gray-300">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
+        <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">Rescheduled Jobs</p>
+        <p className="text-xs text-gray-500">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
       </div>
       {/* Column headers */}
       <div className="px-5 py-2 border-b border-gray-100 grid grid-cols-[1fr_auto_auto] gap-4 items-center">
-        <span className="text-[10px] text-gray-300 font-semibold uppercase tracking-widest">Job</span>
-        <span className="text-[10px] text-gray-300 font-semibold uppercase tracking-widest text-right">Current Due</span>
-        <span className="text-[10px] text-gray-300 font-semibold uppercase tracking-widest text-right">Reschedules</span>
+        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Job</span>
+        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest text-right">Current Due</span>
+        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest text-right">Reschedules</span>
       </div>
       <div className="divide-y divide-white/[0.04]">
         {jobs.map(job => {
@@ -290,11 +290,11 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
                 <div className="text-right shrink-0">
                   {job.due_on
                     ? <span className="text-[11px] text-gray-500">{formatDate(job.due_on)}</span>
-                    : <span className="text-[11px] text-gray-300">&mdash;</span>}
+                    : <span className="text-[11px] text-gray-500">&mdash;</span>}
                 </div>
                 <div className="text-right shrink-0">
                   <span className="inline-flex items-center gap-1 text-sm font-bold tabular-nums text-warning">
-                    \u21bb{job.reschedules}
+                    ↻{job.reschedules}
                   </span>
                 </div>
               </button>
@@ -317,7 +317,7 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
                             Changed from <span className="text-gray-600 font-medium">{fromStr}</span>
                             {' '}&rarr;{' '}
                             <span className="text-gray-600 font-medium">{toStr}</span>
-                            {atStr && <span className="text-gray-300"> on {atStr}</span>}
+                            {atStr && <span className="text-gray-500"> on {atStr}</span>}
                           </span>
                         </div>
                       );
@@ -338,7 +338,7 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
               )}
               {isExpanded && job.rescheduleLog.length === 0 && (
                 <div className="px-5 pb-4">
-                  <p className="text-[11px] text-gray-300 ml-2">No detailed log available.</p>
+                  <p className="text-[11px] text-gray-500 ml-2">No detailed log available.</p>
                 </div>
               )}
             </div>
@@ -349,7 +349,7 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
   );
 }
 
-// ─── Job card (inside a day column) ────────────────────────────────────
+// ─── Job card (inside a day column) ──────────────────────────────────────────
 
 function JobCard({ job, today, onClick }) {
   const { band } = job._health;
@@ -388,7 +388,7 @@ function JobCard({ job, today, onClick }) {
         )}
         {job.reschedules > 0 && (
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-warning/20 text-warning font-semibold tabular-nums">
-            \u21bb{job.reschedules}
+            ↻{job.reschedules}
           </span>
         )}
       </div>
@@ -411,7 +411,7 @@ function JobCard({ job, today, onClick }) {
             />
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-300">{completed}/{total} stages</span>
+            <span className="text-[10px] text-gray-500">{completed}/{total} stages</span>
             {overdue > 0 && (
               <span className="text-[10px] text-danger font-semibold">{overdue} overdue</span>
             )}
@@ -422,7 +422,7 @@ function JobCard({ job, today, onClick }) {
   );
 }
 
-// ─── Department stage summary (bottom of each day column) ────────────────
+// ─── Department stage summary (bottom of each day column) ────────────────────
 
 function DeptStageSummary({ subTasksByDept }) {
   const hasAny = DEPT_META.some(d => (subTasksByDept[d.key]?.length ?? 0) > 0);
@@ -432,7 +432,7 @@ function DeptStageSummary({ subTasksByDept }) {
 
   return (
     <div className="space-y-2 pt-3 border-t border-gray-100">
-      <p className="text-[10px] text-gray-300 uppercase tracking-widest font-semibold">Stages due \u2014 click to see tasks</p>
+      <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Stages due — click to see tasks</p>
       {DEPT_META.map(dept => {
         const tasks = subTasksByDept[dept.key] ?? [];
         if (tasks.length === 0) return null;
@@ -450,11 +450,11 @@ function DeptStageSummary({ subTasksByDept }) {
                 <span className="text-[11px] text-gray-500 truncate">{dept.label}</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[11px] text-gray-300 tabular-nums">{done}/{tasks.length}</span>
+                <span className="text-[11px] text-gray-500 tabular-nums">{done}/{tasks.length}</span>
                 {openTasks.length > 0 && (
                   <span className="text-[10px] text-danger tabular-nums font-semibold">({openTasks.length} open)</span>
                 )}
-                <span className="text-gray-300 text-[10px]">{isExpanded ? '\u25b2' : '\u25bc'}</span>
+                <span className="text-gray-500 text-[10px]">{isExpanded ? '▲' : '▼'}</span>
               </div>
             </button>
             {isExpanded && (
@@ -468,15 +468,15 @@ function DeptStageSummary({ subTasksByDept }) {
                       <div className="flex items-start gap-2 text-[11px]">
                         <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${t.completed ? 'bg-success' : 'bg-danger'}`} />
                         <div className="min-w-0 flex-1">
-                          <span className={`block text-wrap break-words ${t.completed ? 'text-gray-300 line-through' : 'text-gray-600'}`}>
+                          <span className={`block text-wrap break-words ${t.completed ? 'text-gray-500 line-through' : 'text-gray-600'}`}>
                             {t.name}
                           </span>
                           {t.assignee && (
-                            <span className="text-gray-300 text-[10px]">{t.assignee}</span>
+                            <span className="text-gray-500 text-[10px]">{t.assignee}</span>
                           )}
                         </div>
                         {t.completed && t.completed_at && (
-                          <span className="text-success/60 shrink-0 text-[10px]">\u2713</span>
+                          <span className="text-success/60 shrink-0 text-[10px]">✓</span>
                         )}
                       </div>
                     </button>
@@ -485,32 +485,32 @@ function DeptStageSummary({ subTasksByDept }) {
                       <div className="ml-4 mt-1 mb-2 bg-black/[0.03] border border-gray-200 rounded-lg p-3 space-y-2">
                         {t._parentName && (
                           <div>
-                            <span className="text-[9px] uppercase tracking-wider text-gray-300">Main Job</span>
+                            <span className="text-[9px] uppercase tracking-wider text-gray-500">Main Job</span>
                             <p className="text-[11px] text-gray-700 font-medium">{t._parentName}</p>
                           </div>
                         )}
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px]">
                           <div>
-                            <span className="text-gray-300">Status: </span>
+                            <span className="text-gray-500">Status: </span>
                             <span className={t.completed ? 'text-success' : 'text-danger'}>
                               {t.completed ? 'Complete' : 'Open'}
                             </span>
                           </div>
                           {t.assignee && (
                             <div>
-                              <span className="text-gray-300">Assigned: </span>
+                              <span className="text-gray-500">Assigned: </span>
                               <span className="text-gray-500">{t.assignee}</span>
                             </div>
                           )}
                           {t.due_on && (
                             <div>
-                              <span className="text-gray-300">Due: </span>
+                              <span className="text-gray-500">Due: </span>
                               <span className="text-gray-500">{t.due_on}</span>
                             </div>
                           )}
                           {t.completed_at && (
                             <div>
-                              <span className="text-gray-300">Done: </span>
+                              <span className="text-gray-500">Done: </span>
                               <span className="text-gray-500">{t.completed_at.slice(0, 10)}</span>
                             </div>
                           )}
@@ -523,7 +523,7 @@ function DeptStageSummary({ subTasksByDept }) {
                               rel="noopener noreferrer"
                               className="text-[10px] text-accent hover:underline"
                             >
-                              Open subtask in Asana \u2197
+                              Open subtask in Asana ↗
                             </a>
                           )}
                           {t._parentGid && (
@@ -531,9 +531,9 @@ function DeptStageSummary({ subTasksByDept }) {
                               href={`https://app.asana.com/0/0/${t._parentGid}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[10px] text-gray-400 hover:text-gray-600 hover:underline"
+                              className="text-[10px] text-gray-500 hover:text-gray-600 hover:underline"
                             >
-                              Open main job \u2197
+                              Open main job ↗
                             </a>
                           )}
                         </div>
@@ -550,7 +550,7 @@ function DeptStageSummary({ subTasksByDept }) {
   );
 }
 
-// ─── Day column ───────────────────────────────────────────────────────
+// ─── Day column ───────────────────────────────────────────────────────────────
 
 function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   const atRiskCount = jobs.filter(j => j._atRisk || j.status === 'late').length;
@@ -565,7 +565,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
     >
       <div className={`px-4 pt-4 pb-3 ${isToday ? 'border-b border-accent/20' : 'border-b border-gray-100'}`}>
         <div className="flex items-center justify-between mb-1">
-          <span className={`text-[11px] font-bold uppercase tracking-widest ${isToday ? 'text-accent' : 'text-gray-400'}`}>
+          <span className={`text-[11px] font-bold uppercase tracking-widest ${isToday ? 'text-accent' : 'text-gray-500'}`}>
             {day.label}
           </span>
           {isToday && (
@@ -578,15 +578,15 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
           <span className={`text-3xl font-bold leading-none ${isToday ? 'text-gray-900' : 'text-gray-600'}`}>
             {day.dayNum}
           </span>
-          <span className="text-sm text-gray-300">{day.month}</span>
+          <span className="text-sm text-gray-500">{day.month}</span>
         </div>
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-[11px] text-gray-400">
+          <span className="text-[11px] text-gray-500">
             {jobs.length} job{jobs.length !== 1 ? 's' : ''}
           </span>
           {atRiskCount > 0 && (
             <>
-              <span className="text-gray-300">\u00b7</span>
+              <span className="text-gray-500">·</span>
               <span className="text-[11px] text-danger font-semibold">
                 {atRiskCount} at risk
               </span>
@@ -597,7 +597,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
 
       <div className="flex-1 p-3 space-y-2">
         {jobs.length === 0 ? (
-          <p className="text-gray-300 text-xs text-center py-6">No jobs due</p>
+          <p className="text-gray-500 text-xs text-center py-6">No jobs due</p>
         ) : (
           jobs.map(job => (
             <JobCard
@@ -617,7 +617,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function WeeklyOverview({ data, onSwitchToList }) {
   const [selectedJob,  setSelectedJob]  = useState(null);
@@ -677,7 +677,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, weekDays, showCalendar]);
 
-  // Group sub-tasks by day \u2192 department
+  // Group sub-tasks by day → department
   const subTasksByDay = useMemo(() => {
     if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
@@ -711,7 +711,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) - completedLateTotal + projectedLateInPeriod.length;
 
-  // Rescheduled jobs due in this period \u2014 schedule health indicator
+  // Rescheduled jobs due in this period — schedule health indicator
   const rescheduledInPeriod = useMemo(() => {
     if (!schedule.jobs) return [];
     const rescheduledGids = new Set(data.jobs.filter(j => j.reschedules > 0).map(j => j.gid));
@@ -723,7 +723,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       });
   }, [schedule.jobs, data.jobs, jobMap]);
 
-  // Late open orders: active jobs past their due date \u2014 this number should be zero
+  // Late open orders: active jobs past their due date — this number should be zero
   const rolloverJobs = useMemo(() =>
     data.jobs
       .filter(j => j.due_on && j.due_on < today)
@@ -755,7 +755,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   // Fernando gets a single "crear subtareas" task to build the production
   // breakdown. If the only subtask is his, the job hasn't been processed yet.
   // Jobs with 0 subtasks OR 1 subtask assigned to someone else (e.g. Eduardo
-  // doing fabrication) are NOT counted \u2014 those are either empty or already
+  // doing fabrication) are NOT counted — those are either empty or already
   // in production with a real task.
   const notProcessedJobs = useMemo(() => {
     return data.jobs
@@ -837,12 +837,12 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   return (
     <div className="space-y-5">
 
-      {/* \u2500\u2500 Needs Attention alerts \u2500\u2500 */}
+      {/* ── Needs Attention alerts ── */}
       <div className="grid grid-cols-3 gap-4">
         <AlertCard
           label="Late Open Orders"
           value={rolloverJobs.length}
-          sub="past due date \u2014 should be zero"
+          sub="past due date — should be zero"
           active={activeAlert === 'rollover'}
           onClick={() => toggleAlert('rollover')}
         />
@@ -856,13 +856,13 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         <AlertCard
           label="Not Processed"
           value={notProcessedJobs.length}
-          sub="reviewed but no production breakdown yet (\u22641 subtask)"
+          sub="reviewed but no production breakdown yet (≤1 subtask)"
           active={activeAlert === 'notprocessed'}
           onClick={() => toggleAlert('notprocessed')}
         />
       </div>
 
-      {/* \u2500\u2500 Alert panel \u2500\u2500 */}
+      {/* ── Alert panel ── */}
       {activeAlert === 'rollover' && (
         <JobPanel
           jobs={alertPanelJobs}
@@ -885,7 +885,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           onSelectJob={setSelectedJob}
         />
       )}
-      {/* \u2500\u2500 Period selector \u2500\u2500 */}
+      {/* ── Period selector ── */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -902,7 +902,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         ))}
       </div>
 
-      {/* \u2500\u2500 KPI strip \u2500\u2500 */}
+      {/* ── KPI strip ── */}
       <div className="grid grid-cols-5 gap-4">
         <KpiCard
           label="Jobs Scheduled"
@@ -916,7 +916,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           value={onTimeTotal}
           sub="completed on schedule"
           color="success"
-          icon={onTimeTotal > 0 ? '\u2713' : undefined}
+          icon={onTimeTotal > 0 ? '✓' : undefined}
           active={activeCard === 'onTime'}
           onClick={() => toggleCard('onTime')}
         />
@@ -945,7 +945,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       </div>
 
-      {/* \u2500\u2500 Inline job panel \u2500\u2500 */}
+      {/* ── Inline job panel ── */}
       {activeCard && activeCard !== 'rescheduled' && (
         <JobPanel
           jobs={panelJobs}
@@ -961,7 +961,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       )}
 
-      {/* \u2500\u2500 Next Week Forecast strip \u2500\u2500 */}
+      {/* ── Next Week Forecast strip ── */}
       {activePeriod !== 'nextWeek' && (() => {
         const nw = data.schedule?.nextWeek ?? {};
         const nwScheduled = nw.scheduled ?? 0;
@@ -969,28 +969,28 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         const nwAtRisk    = nw.late      ?? 0;
         return (
           <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 flex items-center gap-6">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-300 shrink-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500 shrink-0">
               Next Week Forecast
             </p>
             <div className="flex items-center gap-6 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold tabular-nums text-gray-900">{nwScheduled}</span>
-                <span className="text-[11px] text-gray-400">scheduled</span>
+                <span className="text-[11px] text-gray-500">scheduled</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold tabular-nums text-success">{nwOnTime}</span>
-                <span className="text-[11px] text-gray-400">on time</span>
+                <span className="text-[11px] text-gray-500">on time</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-2xl font-bold tabular-nums ${nwAtRisk > 0 ? 'text-danger' : 'text-gray-400'}`}>{nwAtRisk}</span>
-                <span className="text-[11px] text-gray-400">at risk</span>
+                <span className={`text-2xl font-bold tabular-nums ${nwAtRisk > 0 ? 'text-danger' : 'text-gray-500'}`}>{nwAtRisk}</span>
+                <span className="text-[11px] text-gray-500">at risk</span>
               </div>
             </div>
           </div>
         );
       })()}
 
-      {/* \u2500\u2500 Legend + list-view toggle (week periods only) \u2500\u2500 */}
+      {/* ── Legend + list-view toggle (week periods only) ── */}
       {showCalendar && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -1002,20 +1002,20 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
             ].map(({ label, cls }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <span className={`w-2 h-2 rounded-full ${cls}`} />
-                <span className="text-[11px] text-gray-400">{label}</span>
+                <span className="text-[11px] text-gray-500">{label}</span>
               </div>
             ))}
           </div>
           <button
             onClick={onSwitchToList}
-            className="text-[11px] text-gray-400 hover:text-gray-500 transition-colors"
+            className="text-[11px] text-gray-500 hover:text-gray-500 transition-colors"
           >
-            List view \u2192
+            List view →
           </button>
         </div>
       )}
 
-      {/* \u2500\u2500 Mon\u2013Fri day columns (week periods only) \u2500\u2500 */}
+      {/* ── Mon–Fri day columns (week periods only) ── */}
       {showCalendar && (
         <div className="grid grid-cols-5 gap-3 items-start">
           {weekDays.map(day => (
@@ -1032,7 +1032,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         </div>
       )}
 
-      {/* \u2500\u2500 Job drawer \u2500\u2500 */}
+      {/* ── Job drawer ── */}
       {selectedJob && (
         <JobDrawer job={selectedJob} onClose={() => setSelectedJob(null)} />
       )}

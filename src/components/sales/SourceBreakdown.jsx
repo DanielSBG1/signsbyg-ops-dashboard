@@ -46,19 +46,19 @@ function LeadModal({ title, leads, onClose }) {
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-900 text-xl leading-none">&times;</button>
         </div>
         <div className="overflow-y-auto flex-1 flex flex-col gap-2">
           {leads.length === 0 ? (
-            <p className="text-gray-300 text-sm text-center py-8">No leads</p>
+            <p className="text-gray-500 text-sm text-center py-8">No leads</p>
           ) : leads.map((lead) => (
             <div key={lead.id} className="bg-black/[0.03] rounded-xl px-4 py-3 flex items-center justify-between gap-4">
               <div className="flex flex-col min-w-0">
                 <span className="font-medium text-sm truncate">{lead.name}</span>
-                {lead.email && <span className="text-gray-400 text-xs truncate">{lead.email}</span>}
+                {lead.email && <span className="text-gray-500 text-xs truncate">{lead.email}</span>}
               </div>
               {lead.createdAt && (
-                <span className="text-gray-300 text-xs shrink-0">{lead.createdAt}</span>
+                <span className="text-gray-500 text-xs shrink-0">{lead.createdAt}</span>
               )}
             </div>
           ))}
@@ -121,7 +121,7 @@ export default function SourceBreakdown() {
               onChange={(e) => setCustomRange((r) => ({ ...r, start: e.target.value }))}
               className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
-            <span className="text-gray-400">to</span>
+            <span className="text-gray-500">to</span>
             <input
               type="date"
               value={customRange.end}
@@ -182,13 +182,13 @@ export default function SourceBreakdown() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-gray-300 text-sm text-center py-12">No leads in this period</p>
+              <p className="text-gray-500 text-sm text-center py-12">No leads in this period</p>
             )}
           </div>
 
           {/* Daily Trend Line */}
           <div>
-            <h3 className="text-sm text-gray-400 font-medium mb-3">Leads Per Day</h3>
+            <h3 className="text-sm text-gray-500 font-medium mb-3">Leads Per Day</h3>
             {data.daily && data.daily.length > 0 ? (
               <ResponsiveContainer width="100%" height={Math.max(160, barData.length * 36)}>
                 <LineChart data={data.daily} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
@@ -222,7 +222,7 @@ export default function SourceBreakdown() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-gray-300 text-sm text-center py-12">No daily data available</p>
+              <p className="text-gray-500 text-sm text-center py-12">No daily data available</p>
             )}
           </div>
         </div>

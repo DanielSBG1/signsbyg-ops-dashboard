@@ -76,7 +76,7 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
             <p className="text-gray-500 text-sm">
               Contact-level deal attribution isn't available for periods longer than 2 weeks.
             </p>
-            <p className="text-gray-400 text-xs">
+            <p className="text-gray-500 text-xs">
               Switch to <span className="text-accent">By Rep — Activity</span> view to see individual deals for this period.
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-lg font-semibold">Deal Details</h2>
-          <span className="text-gray-400 text-sm">{filtered.length} showing</span>
+          <span className="text-gray-500 text-sm">{filtered.length} showing</span>
           {cohortFallback && (
             <span className="text-yellow-400/70 text-xs bg-yellow-400/10 border border-yellow-400/20 rounded-full px-2 py-0.5">
               ⚠ Contact attribution not available for this period — filtered by deal owner/source
@@ -170,12 +170,12 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
       </div>
 
       {sorted.length === 0 ? (
-        <p className="text-gray-400 text-sm text-center py-6">No deals match this filter.</p>
+        <p className="text-gray-500 text-sm text-center py-6">No deals match this filter.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-400 text-xs uppercase tracking-wider">
+              <tr className="text-gray-500 text-xs uppercase tracking-wider">
                 {[
                   { key: 'name', label: 'Deal' },
                   { key: 'stageLabel', label: 'Stage' },
@@ -221,7 +221,7 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
                         href={d.hubspotUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-300 hover:text-accent transition-colors text-sm"
+                        className="text-gray-500 hover:text-accent transition-colors text-sm"
                         onClick={(e) => e.stopPropagation()}
                         title="Open in HubSpot"
                       >

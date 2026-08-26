@@ -83,7 +83,7 @@ function formatDate(d) {
   catch { return d; }
 }
 
-// ─── Task list panel (shown when a section is clicked) ─────
+// ─── Task list panel (shown when a section is clicked) ─────────
 
 function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
   const SORT_COLS = [
@@ -123,11 +123,11 @@ function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Back bar */}
       <div className="flex items-center gap-3 px-6 py-3 border-b border-gray-200 flex-shrink-0 bg-black/[0.01]">
-        <button onClick={onBack} className="text-gray-400 hover:text-gray-900 text-sm flex items-center gap-1.5 transition-colors">
+        <button onClick={onBack} className="text-gray-500 hover:text-gray-900 text-sm flex items-center gap-1.5 transition-colors">
           ← Back
         </button>
         <span className="text-sm font-semibold text-gray-900">{sectionName}</span>
-        <span className="text-xs text-gray-400">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-gray-500">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Column headers */}
@@ -135,7 +135,7 @@ function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
         {SORT_COLS.map(col => (
           <button key={col.key} onClick={() => handleCol(col.key)}
             className={`text-left text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors ${
-              sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'
+              sortCol === col.key ? 'text-yellow-300' : 'text-gray-500 hover:text-gray-600'
             }`}
           >
             {col.label}
@@ -158,14 +158,14 @@ function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
               <span className="text-sm text-gray-800 truncate group-hover:text-gray-900" title={t.name}>
                 {t.name.replace(/^(DESIGN|PERMITTING|PRODUCTION|INSTALLATION|INVOICING)\s*[-–]\s*/i, '')}
               </span>
-              <span className={`text-sm tabular-nums ${isOverdue ? 'text-red-400 font-semibold' : isSoon ? 'text-yellow-400' : noDate ? 'text-gray-300' : 'text-gray-500'}`}>
+              <span className={`text-sm tabular-nums ${isOverdue ? 'text-red-400 font-semibold' : isSoon ? 'text-yellow-400' : noDate ? 'text-gray-500' : 'text-gray-500'}`}>
                 {noDate ? '—' : formatDate(t.due_on)}
               </span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {t.isRedo   && <span className="text-[10px] bg-orange-500/20 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded-full font-bold">REDO</span>}
                 {isOverdue  && <span className="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded-full">Late</span>}
                 {isSoon     && <span className="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded-full">Due soon</span>}
-                {noDate     && <span className="text-[10px] bg-black/[0.03] text-gray-300 border border-gray-200 px-1.5 py-0.5 rounded-full">No date</span>}
+                {noDate     && <span className="text-[10px] bg-black/[0.03] text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded-full">No date</span>}
                 {!isOverdue && !isSoon && !noDate && !t.isRedo && (
                   <span className="text-[10px] text-green-400/60">On time</span>
                 )}
@@ -178,7 +178,7 @@ function TaskListPanel({ sectionName, tasks, onJobClick, onBack }) {
   );
 }
 
-// ─── Department modal: sections overview + drill-down ──────
+// ─── Department modal: sections overview + drill-down ──────────
 
 const SECTION_COLS = [
   { key: 'name',    label: 'Section',   align: 'left' },
@@ -273,11 +273,11 @@ function TaskModal({ meta, health, tasks, sectionOrder, onJobClick, onClose }) {
               <span className="text-lg font-bold text-gray-900">{meta.label}</span>
               <div className="flex items-center gap-3 mt-0.5">
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${ss.badge}`}>{health.label}</span>
-                <span className="text-xs text-gray-400">{tasks.length} tasks · {sections.length} section{sections.length !== 1 ? 's' : ''}</span>
+                <span className="text-xs text-gray-500">{tasks.length} tasks · {sections.length} section{sections.length !== 1 ? 's' : ''}</span>
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
 
         {/* Body: sections list or task drill-down */}
@@ -291,7 +291,7 @@ function TaskModal({ meta, health, tasks, sectionOrder, onJobClick, onClose }) {
                   onClick={() => handleCol(col.key)}
                   className={`text-xs uppercase tracking-wider font-semibold flex items-center gap-1 transition-colors
                     ${col.align === 'center' ? 'justify-center' : ''}
-                    ${sortCol === col.key ? 'text-yellow-300' : 'text-gray-400 hover:text-gray-600'}`}
+                    ${sortCol === col.key ? 'text-yellow-300' : 'text-gray-500 hover:text-gray-600'}`}
                 >
                   {col.label}
                   {sortCol === col.key
@@ -314,13 +314,13 @@ function TaskModal({ meta, health, tasks, sectionOrder, onJobClick, onClose }) {
                       <span className="text-sm text-gray-800 group-hover:text-gray-900 truncate font-medium">{sec.name}</span>
                     </div>
                     <span className="text-sm tabular-nums text-center text-gray-500">{sec.total}</span>
-                    <span className={`text-sm tabular-nums text-center font-semibold ${sec.onTimeCount > 0 ? 'text-green-400' : 'text-gray-300'}`}>
+                    <span className={`text-sm tabular-nums text-center font-semibold ${sec.onTimeCount > 0 ? 'text-green-400' : 'text-gray-500'}`}>
                       {sec.onTimeCount}
                     </span>
-                    <span className={`text-sm tabular-nums text-center font-semibold ${hasLate ? 'text-red-400' : 'text-gray-300'}`}>
+                    <span className={`text-sm tabular-nums text-center font-semibold ${hasLate ? 'text-red-400' : 'text-gray-500'}`}>
                       {sec.lateCount}
                     </span>
-                    <span className={`text-sm tabular-nums text-center font-semibold ${sec.noDateCount > 0 ? 'text-gray-400' : 'text-gray-300'}`}>
+                    <span className={`text-sm tabular-nums text-center font-semibold ${sec.noDateCount > 0 ? 'text-gray-500' : 'text-gray-500'}`}>
                       {sec.noDateCount}
                     </span>
                   </button>
@@ -341,7 +341,7 @@ function TaskModal({ meta, health, tasks, sectionOrder, onJobClick, onClose }) {
   );
 }
 
-// ─── Department module card ────────────────────────────────
+// ─── Department module card ────────────────────────────────────
 
 function DeptModule({ deptKey, dept, onJobClick }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -352,7 +352,7 @@ function DeptModule({ deptKey, dept, onJobClick }) {
 
   const statItems = [
     health.overdueCount > 0  && { label: 'Overdue',      value: health.overdueCount,  color: 'text-red-400',    bg: 'bg-red-500/10' },
-    health.noDateCount > 0   && { label: 'Missing date',  value: health.noDateCount,   color: 'text-gray-400',   bg: 'bg-black/[0.03]' },
+    health.noDateCount > 0   && { label: 'Missing date',  value: health.noDateCount,   color: 'text-gray-500',   bg: 'bg-black/[0.03]' },
     health.redoCount > 0     && { label: 'REDO',          value: health.redoCount,     color: 'text-orange-400', bg: 'bg-orange-500/10' },
     health.dueSoonCount > 0  && { label: 'Due this week', value: health.dueSoonCount,  color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
   ].filter(Boolean);
@@ -373,7 +373,7 @@ function DeptModule({ deptKey, dept, onJobClick }) {
               <span className="text-3xl leading-none">{meta.icon}</span>
               <div>
                 <p className="text-xl font-bold text-gray-900">{meta.label}</p>
-                {dept.lead && <p className="text-xs text-gray-400 mt-0.5">{dept.lead}</p>}
+                {dept.lead && <p className="text-xs text-gray-500 mt-0.5">{dept.lead}</p>}
               </div>
             </div>
             <span className={`text-xs font-bold px-3 py-1 rounded-full border flex-shrink-0 ${ss.badge}`}>
@@ -386,13 +386,13 @@ function DeptModule({ deptKey, dept, onJobClick }) {
             <span className="text-5xl font-black tabular-nums leading-none" style={{ color: healthColor(health.score) }}>
               {dept.tasks.length}
             </span>
-            <span className="text-sm text-gray-400 mb-1">active tasks</span>
+            <span className="text-sm text-gray-500 mb-1">active tasks</span>
           </div>
 
           {/* Health bar */}
           <div>
             <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="text-gray-400">Department Health</span>
+              <span className="text-gray-500">Department Health</span>
               <span className="font-bold tabular-nums" style={{ color: healthColor(health.score) }}>{health.score}</span>
             </div>
             <div className="h-2.5 bg-black/[0.05] rounded-full overflow-hidden">
@@ -417,7 +417,7 @@ function DeptModule({ deptKey, dept, onJobClick }) {
             <div className="text-sm text-green-400/70">All tasks on track — no issues flagged</div>
           )}
 
-          <div className="text-[11px] text-gray-300 mt-auto pt-1">Click to view all tasks ↗</div>
+          <div className="text-[11px] text-gray-500 mt-auto pt-1">Click to view all tasks ↗</div>
         </div>
       </button>
 
@@ -435,7 +435,7 @@ function DeptModule({ deptKey, dept, onJobClick }) {
   );
 }
 
-// ─── Tab ───────────────────────────────────────────────────
+// ─── Tab ───────────────────────────────────────────────────────
 
 export default function DepartmentLoadTab({ data, onJobClick }) {
   const { departmentLoad } = data;
@@ -481,25 +481,25 @@ export default function DepartmentLoadTab({ data, onJobClick }) {
       {/* Page title + summary strip */}
       <div>
         <h2 className="text-lg font-semibold">Department Load</h2>
-        <p className="text-gray-400 text-xs mt-0.5">Capacity and health per department — click a module to view tasks</p>
+        <p className="text-gray-500 text-xs mt-0.5">Capacity and health per department — click a module to view tasks</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-gray-900">{allTasks.length}</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">Total Active</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Total Active</p>
         </div>
         <div className={`bg-white border rounded-xl p-4 text-center ${atCapacity > 0 ? 'border-red-500/20' : 'border-gray-200'}`}>
-          <p className={`text-2xl font-bold ${atCapacity > 0 ? 'text-red-400' : 'text-gray-300'}`}>{atCapacity}</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">At Capacity</p>
+          <p className={`text-2xl font-bold ${atCapacity > 0 ? 'text-red-400' : 'text-gray-500'}`}>{atCapacity}</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">At Capacity</p>
         </div>
         <div className={`bg-white border rounded-xl p-4 text-center ${totalOverdue > 0 ? 'border-red-500/20' : 'border-gray-200'}`}>
-          <p className={`text-2xl font-bold ${totalOverdue > 0 ? 'text-red-400' : 'text-gray-300'}`}>{totalOverdue}</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">Overdue Tasks</p>
+          <p className={`text-2xl font-bold ${totalOverdue > 0 ? 'text-red-400' : 'text-gray-500'}`}>{totalOverdue}</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Overdue Tasks</p>
         </div>
         <div className={`bg-white border rounded-xl p-4 text-center ${onTrack > 0 ? 'border-green-500/20' : 'border-gray-200'}`}>
-          <p className={`text-2xl font-bold ${onTrack > 0 ? 'text-green-400' : 'text-gray-300'}`}>{onTrack}</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">Open Capacity</p>
+          <p className={`text-2xl font-bold ${onTrack > 0 ? 'text-green-400' : 'text-gray-500'}`}>{onTrack}</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Open Capacity</p>
         </div>
       </div>
 
@@ -513,7 +513,7 @@ export default function DepartmentLoadTab({ data, onJobClick }) {
       {/* Invoicing — two split panels */}
       {invoicingDepts.length > 0 && (
         <div>
-          <p className="text-[10px] text-gray-300 uppercase tracking-widest mb-3">Invoicing</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Invoicing</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {invoicingDepts.map(({ key, dept }) => (
               <DeptModule key={key} deptKey={key} dept={dept} onJobClick={onJobClick} />

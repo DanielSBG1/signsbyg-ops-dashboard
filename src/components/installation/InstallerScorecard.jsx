@@ -5,7 +5,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// ─── Constants ──────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const COLORS = {
   success: '#22c55e',
@@ -36,7 +36,7 @@ const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
 
 const COMPLETED_STATUSES = new Set(['early', 'on_time', 'bled_over', 'rescheduled', 'failed']);
 
-// ─── Helpers ────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function rateColorClass(rate) {
   if (rate >= 80) return 'text-success';
@@ -67,7 +67,7 @@ function fmtWeekLabel(isoDate) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-// ─── Period math ────────────────────────────────────────────────────────
+// ─── Period math ──────────────────────────────────────────────────────────────
 
 function getMondayOf(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
@@ -121,24 +121,29 @@ function jobInRange(job, range) {
   return d >= range.start && d <= range.end;
 }
 
-// ─── Compute crew stats from jobs ─────────────────────────────────────────
+// ─── Compute crew stats from jobs ─────────────────────────────────────────────
 
 function computeCrewStats(crewName, jobs) {
   const crewJobs = jobs.filter(j => (j.crews ?? []).includes(crewName));
   const completedJobs = crewJobs.filter(j => COMPLETED_STATUSES.has(j.status));
   const openJobs = crewJobs.filter(j => !COMPLETED_STATUSES.has(j.status));
 
+  // First-time completion: completed AND 0 reschedules
+  // Statuses early, on_time, bled_over all count as first-try if reschedules === 0
   const firstTime = completedJobs.filter(j =>
     (j.reschedules ?? 0) === 0 &&
     (j.status === 'early' || j.status === 'on_time' || j.status === 'bled_over')
   ).length;
 
+  // Callbacks: jobs with 1+ reschedules
   const callbacks = completedJobs.filter(j => (j.reschedules ?? 0) >= 1).length;
 
+  // Service calls: jobs in the "Service" section assigned to this crew
   const serviceCalls = crewJobs.filter(j =>
     (j.section || '').toLowerCase().includes('service')
   ).length;
 
+  // On-time: early + on_time
   const onTimeCount = completedJobs.filter(j => j.status === 'early' || j.status === 'on_time').length;
 
   const firstTimeRate = completedJobs.length > 0
@@ -169,7 +174,7 @@ function computeCrewStats(crewName, jobs) {
   };
 }
 
-// ─── Chart tooltip ──────────────────────────────────────────────────────
+// ─── Chart tooltip ────────────────────────────────────────────────────────────
 
 function ChartTooltip({ active, payload, label, formatter }) {
   if (!active || !payload || payload.length === 0) return null;
@@ -185,18 +190,18 @@ function ChartTooltip({ active, payload, label, formatter }) {
   );
 }
 
-// ─── Stat card ──────────────────────────────────────────────────────────
+// ─── Stat card ────────────────────────────────────────────────────────────────
 
 function StatCard({ title, children }) {
   return (
     <div className="bg-black/[0.03] rounded-xl p-5">
-      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">{title}</p>
+      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">{title}</p>
       {children}
     </div>
   );
 }
 
-// ─── Sortable column header ─────────────────────────────────────────────
+// ─── Sortable column header ───────────────────────────────────────────────────
 
 function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className }) {
   const isActive = currentSort === sortKey;
@@ -211,20 +216,20 @@ function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className
   );
 }
 
-// ─── Status badge ───────────────────────────────────────────────────────
+// ─── Status badge ─────────────────────────────────────────────────────────────
 
 const STATUS_BADGE = {
   early:       { label: 'Early',       cls: 'bg-success/20 text-success' },
   on_time:     { label: 'On Time',     cls: 'bg-success/20 text-success' },
   bled_over:   { label: 'Bled Over',   cls: 'bg-warning/20 text-warning' },
   scheduled:   { label: 'Scheduled',   cls: 'bg-accent/20 text-accent' },
-  pending:     { label: 'No Date',     cls: 'bg-black/[0.05] text-gray-400' },
+  pending:     { label: 'No Date',     cls: 'bg-black/[0.05] text-gray-500' },
   late:        { label: 'Late',        cls: 'bg-danger/20 text-danger' },
   rescheduled: { label: 'Rescheduled', cls: 'bg-warning/20 text-warning' },
   failed:      { label: 'Failed',      cls: 'bg-danger/20 text-danger' },
 };
 
-// ─── Leaderboard ────────────────────────────────────────────────────────
+// ─── Leaderboard ──────────────────────────────────────────────────────────────
 
 function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onCrewClick }) {
   const sortOpt = LEADERBOARD_SORTS.find(o => o.key === sortKey);
@@ -258,7 +263,7 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold">Installer Leaderboard</h2>
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-300 text-xs mr-1">Sort:</span>
+          <span className="text-gray-500 text-xs mr-1">Sort:</span>
           {LEADERBOARD_SORTS.map(opt => (
             <button
               key={opt.key}
@@ -290,12 +295,12 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
                 {fmtValue(crew, sortKey)}
               </p>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[10px]">
-                <div><span className="text-gray-300">1st-Time</span> <span className="text-success/70">{crew.firstTime}</span></div>
-                <div><span className="text-gray-300">Callbacks</span> <span className={crew.callbacks > 0 ? 'text-warning' : 'text-gray-400'}>{crew.callbacks}</span></div>
-                <div><span className="text-gray-300">Done</span> <span className="text-gray-500">{crew.completed}</span></div>
-                <div><span className="text-gray-300">Open</span> <span className="text-gray-500">{crew.open}</span></div>
+                <div><span className="text-gray-500">1st-Time</span> <span className="text-success/70">{crew.firstTime}</span></div>
+                <div><span className="text-gray-500">Callbacks</span> <span className={crew.callbacks > 0 ? 'text-warning' : 'text-gray-500'}>{crew.callbacks}</span></div>
+                <div><span className="text-gray-500">Done</span> <span className="text-gray-500">{crew.completed}</span></div>
+                <div><span className="text-gray-500">Open</span> <span className="text-gray-500">{crew.open}</span></div>
                 {crew.serviceCalls > 0 && (
-                  <div className="col-span-2"><span className="text-gray-300">Service</span> <span className="text-danger">{crew.serviceCalls}</span></div>
+                  <div className="col-span-2"><span className="text-gray-500">Service</span> <span className="text-danger">{crew.serviceCalls}</span></div>
                 )}
               </div>
               <button
@@ -325,7 +330,7 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-6 shrink-0 text-center">
-                  <span className="text-gray-300 text-[10px] font-mono">#{rank + 1}</span>
+                  <span className="text-gray-500 text-[10px] font-mono">#{rank + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium text-gray-500 truncate leading-none mb-1.5">{crew.name}</div>
@@ -335,9 +340,9 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
                       style={{ width: `${Math.max(barPct, barPct > 0 ? 1.5 : 0)}%` }}
                     />
                   </div>
-                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-gray-300 leading-none">
-                    <span><span className="text-gray-400">{crew.completed}</span> done</span>
-                    <span><span className="text-gray-400">{crew.open}</span> open</span>
+                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-gray-500 leading-none">
+                    <span><span className="text-gray-500">{crew.completed}</span> done</span>
+                    <span><span className="text-gray-500">{crew.open}</span> open</span>
                     {crew.callbacks > 0 && <span className="text-warning">{crew.callbacks} callback{crew.callbacks !== 1 ? 's' : ''}</span>}
                   </div>
                 </div>
@@ -355,7 +360,7 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
   );
 }
 
-// ─── Crew section (expandable job list) ───────────────────────────────
+// ─── Crew section (expandable job list) ───────────────────────────────────────
 
 function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
   const [sortKey, setSortKey] = useState('installDate');
@@ -425,12 +430,12 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
         <span className={`text-xs font-semibold tabular-nums ${rateColorClass(crew.firstTimeRate)}`}>
           {crew.firstTimeRate}%
         </span>
-        <span className="shrink-0 text-gray-300 text-xs">{expanded ? '\u25B2' : '\u25BC'}</span>
+        <span className="shrink-0 text-gray-500 text-xs">{expanded ? '\u25B2' : '\u25BC'}</span>
       </button>
 
       {expanded && (
         <div className="border-t border-gray-200">
-          <div className="px-4 py-2 grid grid-cols-[1fr_90px_90px_70px] gap-2 text-[10px] uppercase tracking-wider text-gray-400">
+          <div className="px-4 py-2 grid grid-cols-[1fr_90px_90px_70px] gap-2 text-[10px] uppercase tracking-wider text-gray-500">
             <SortHeader label="Job" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
             <SortHeader label="Install Date" sortKey="installDate" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
             <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
@@ -453,7 +458,7 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
                 <span className="text-xs tabular-nums text-center">
                   {(job.reschedules ?? 0) > 0
                     ? <span className={`font-bold ${(job.reschedules ?? 0) >= 2 ? 'text-danger' : 'text-warning'}`}>{job.reschedules}</span>
-                    : <span className="text-gray-300">0</span>
+                    : <span className="text-gray-500">0</span>
                   }
                 </span>
               </a>
@@ -461,7 +466,7 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
           })}
 
           {sortedJobs.length === 0 && (
-            <div className="px-4 py-6 text-center text-xs text-gray-300">No jobs</div>
+            <div className="px-4 py-6 text-center text-xs text-gray-500">No jobs</div>
           )}
         </div>
       )}
@@ -469,21 +474,25 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
   );
 }
 
-// ─── Crew profile page ──────────────────────────────────────────────────
+// ─── Crew profile page ────────────────────────────────────────────────────────
 
 function CrewProfile({ crew, allJobs, onClose }) {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [activePeriod, setActivePeriod] = useState('all');
   const periodRange = useMemo(() => getPeriodRange(activePeriod, today), [activePeriod, today]);
 
+  // Filter jobs by period
   const filteredJobs = useMemo(() => {
     const crewJobs = allJobs.filter(j => (j.crews ?? []).includes(crew.name));
     if (!periodRange) return crewJobs;
     return crewJobs.filter(j => jobInRange(j, periodRange));
   }, [allJobs, crew.name, periodRange]);
 
+  // Recompute stats from filtered jobs
   const stats = useMemo(() => computeCrewStats(crew.name, filteredJobs.length > 0 ? filteredJobs : []), [crew.name, filteredJobs]);
 
+  // Use filteredJobs directly for stats since computeCrewStats would re-filter.
+  // Instead, compute directly from filteredJobs.
   const completedJobs = useMemo(() => filteredJobs.filter(j => COMPLETED_STATUSES.has(j.status)), [filteredJobs]);
   const openJobs = useMemo(() => filteredJobs.filter(j => !COMPLETED_STATUSES.has(j.status)), [filteredJobs]);
 
@@ -499,6 +508,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
   const firstTimeRate = completedJobs.length > 0 ? Math.round((firstTime / completedJobs.length) * 100) : 0;
   const onTimeRate = completedJobs.length > 0 ? Math.round((onTimeCount / completedJobs.length) * 100) : 0;
 
+  // Weekly trend data: first-time completion rate over weeks
   const weeklyData = useMemo(() => {
     const buckets = {};
     for (const j of completedJobs) {
@@ -527,6 +537,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
 
     const sorted = Object.values(buckets).sort((a, b) => a.week.localeCompare(b.week));
 
+    // Fill gaps for at least 8 weeks
     if (sorted.length > 0) {
       const lastWeek = new Date(sorted[sorted.length - 1].week + 'T00:00:00Z');
       const minStart = new Date(lastWeek);
@@ -557,6 +568,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
     }));
   }, [completedJobs]);
 
+  // Job table: sortable
   const [tableSortKey, setTableSortKey] = useState('installDate');
   const [tableSortDir, setTableSortDir] = useState('desc');
 
@@ -636,7 +648,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <p className={`text-3xl font-bold tabular-nums ${rateColorClass(firstTimeRate)}`}>
             {firstTimeRate}%
           </p>
-          <p className="text-xs text-gray-300 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             {firstTime} of {completedJobs.length} completed first try
           </p>
         </StatCard>
@@ -645,7 +657,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <p className={`text-3xl font-bold tabular-nums ${callbacks > 0 ? 'text-warning' : 'text-success'}`}>
             {callbacks}
           </p>
-          <p className="text-xs text-gray-300 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             {callbacks > 0 ? 'jobs needed a return visit' : 'no return visits needed'}
           </p>
         </StatCard>
@@ -654,7 +666,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <p className={`text-3xl font-bold tabular-nums ${rateColorClass(onTimeRate)}`}>
             {onTimeRate}%
           </p>
-          <p className="text-xs text-gray-300 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             {onTimeCount} of {completedJobs.length} on schedule
           </p>
         </StatCard>
@@ -663,13 +675,13 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <p className="text-3xl font-bold tabular-nums text-gray-900">
             {openJobs.length}
           </p>
-          <p className="text-xs text-gray-300 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             {filteredJobs.length} total in period
           </p>
         </StatCard>
       </div>
 
-      {/* Weekly trend chart */}
+      {/* Weekly trend chart: first-time completion rate */}
       <div className="bg-black/[0.03] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-600 mb-4">First-Time Completion Rate Over Time</h3>
         {weeklyData.length > 0 ? (
@@ -730,7 +742,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-sm text-gray-300 text-center py-12">No completion data yet</p>
+          <p className="text-sm text-gray-500 text-center py-12">No completion data yet</p>
         )}
       </div>
 
@@ -739,7 +751,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-600">
             Jobs
-            <span className="ml-2 text-xs font-normal text-gray-300">({filteredJobs.length})</span>
+            <span className="ml-2 text-xs font-normal text-gray-500">({filteredJobs.length})</span>
           </h3>
         </div>
 
@@ -747,7 +759,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-gray-300">
+                <tr className="text-[10px] uppercase tracking-wider text-gray-500">
                   <th className="px-6 py-3 font-medium cursor-pointer hover:text-gray-500" onClick={() => handleTableSort('name')}>
                     Job {tableSortKey === 'name' && (tableSortDir === 'asc' ? '\u2191' : '\u2193')}
                   </th>
@@ -764,7 +776,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {sortedTableJobs.map((job, i) => {
-                  const badge = STATUS_BADGE[job.status] ?? { label: job.status || 'Unknown', cls: 'bg-black/[0.05] text-gray-400' };
+                  const badge = STATUS_BADGE[job.status] ?? { label: job.status || 'Unknown', cls: 'bg-black/[0.05] text-gray-500' };
                   return (
                     <tr key={job.id ?? i} className="hover:bg-black/[0.02] transition-colors">
                       <td className="px-6 py-3">
@@ -781,7 +793,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
                       <td className="px-6 py-3 text-center tabular-nums text-xs">
                         {(job.reschedules ?? 0) > 0
                           ? <span className={`font-bold ${(job.reschedules ?? 0) >= 2 ? 'text-danger' : 'text-warning'}`}>{job.reschedules}</span>
-                          : <span className="text-gray-300">0</span>
+                          : <span className="text-gray-500">0</span>
                         }
                       </td>
                     </tr>
@@ -791,14 +803,14 @@ function CrewProfile({ crew, allJobs, onClose }) {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-gray-300 text-center py-8">No jobs in this period</p>
+          <p className="text-sm text-gray-500 text-center py-8">No jobs in this period</p>
         )}
       </div>
     </div>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function InstallerScorecard({ data }) {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -808,12 +820,14 @@ export default function InstallerScorecard({ data }) {
 
   const periodRange = useMemo(() => getPeriodRange(activePeriod, today), [activePeriod, today]);
 
+  // Filter all jobs by period
   const filteredJobs = useMemo(() => {
     if (!data?.jobs) return [];
     if (!periodRange) return data.jobs;
     return data.jobs.filter(j => jobInRange(j, periodRange));
   }, [data, periodRange]);
 
+  // Build crew list from data.byCrew or extract from jobs
   const crewNames = useMemo(() => {
     if (data?.byCrew && data.byCrew.length > 0) {
       return data.byCrew.map(c => c.name);
@@ -825,12 +839,14 @@ export default function InstallerScorecard({ data }) {
     return [...set].sort();
   }, [data]);
 
+  // Compute stats per crew
   const crewStats = useMemo(() => {
     return crewNames
       .map(name => computeCrewStats(name, filteredJobs))
       .filter(c => c.total > 0);
   }, [crewNames, filteredJobs]);
 
+  // Expandable sections
   const [expandedKeys, setExpandedKeys] = useState(() => new Set());
   const sectionRefs = useRef({});
   const [scrollTarget, setScrollTarget] = useState(null);
@@ -865,9 +881,10 @@ export default function InstallerScorecard({ data }) {
   }, []);
 
   if (!data) {
-    return <div className="text-center py-20 text-gray-300 text-sm">Loading installer data...</div>;
+    return <div className="text-center py-20 text-gray-500 text-sm">Loading installer data...</div>;
   }
 
+  // Show crew profile when selected
   if (profileCrew) {
     const crew = crewStats.find(c => c.name === profileCrew);
     if (crew) {
@@ -882,7 +899,7 @@ export default function InstallerScorecard({ data }) {
   }
 
   if (crewStats.length === 0) {
-    return <div className="text-center py-20 text-gray-300 text-sm">No installer data available.</div>;
+    return <div className="text-center py-20 text-gray-500 text-sm">No installer data available.</div>;
   }
 
   return (

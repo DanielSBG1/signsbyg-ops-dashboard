@@ -49,7 +49,7 @@ export default function DealDrawer({ deal, onClose }) {
             </span>
             <button
               onClick={onClose}
-              className="text-gray-300 hover:text-gray-600 text-sm px-1.5 py-0.5 leading-none"
+              className="text-gray-500 hover:text-gray-600 text-sm px-1.5 py-0.5 leading-none"
             >
               ✕
             </button>
@@ -89,7 +89,7 @@ export default function DealDrawer({ deal, onClose }) {
                 <div className="text-xs font-semibold text-gray-900 leading-snug">
                   → Move to: {deal.nextStageLabel}
                 </div>
-                <div className="text-[10px] text-gray-400 mt-1">
+                <div className="text-[10px] text-gray-500 mt-1">
                   Based on pipeline SOP stage order
                 </div>
               </>
@@ -98,7 +98,7 @@ export default function DealDrawer({ deal, onClose }) {
                 <div className="text-xs font-semibold text-gray-900 leading-snug">
                   ✅ Final stage — close the deal
                 </div>
-                <div className="text-[10px] text-gray-400 mt-1">
+                <div className="text-[10px] text-gray-500 mt-1">
                   Deal is ready to mark as Won or Lost
                 </div>
               </>
