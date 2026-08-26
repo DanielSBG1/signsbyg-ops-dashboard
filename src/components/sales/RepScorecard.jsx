@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import DealsTimeline from './DealsTimeline';
 
 /* ── Formatting helpers ─────────────────────────────────── */
 
@@ -425,27 +426,8 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
           )}
 
           {/* ── Time-grouped deal columns ──────────── */}
-          {timeGroups.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs uppercase tracking-wider text-gray-500 font-medium">
-                  {repDeals.length} Deals · Grouped by {
-                    period === 'week' || period === 'lastweek' ? 'Day' :
-                    period === 'month' || period === 'lastmonth' ? 'Week' :
-                    period === 'quarter' || period?.startsWith('q') ? 'Month' :
-                    period === 'twoweeks' ? 'Week' : 'Day'
-                  }
-                </span>
-                <span className="text-xs text-gray-500">
-                  {fmtCurrency(repDeals.reduce((s, d) => s + (d.amount || 0), 0))} total pipeline
-                </span>
-              </div>
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {timeGroups.map((group) => (
-                  <TimeColumn key={group.key} group={group} />
-                ))}
-              </div>
-            </div>
+          {repDeals.length > 0 && (
+            <DealsTimeline deals={repDeals} period={period} repName={rep.name} />
           )}
 
           {/* ── No deals message ───────────────────── */}

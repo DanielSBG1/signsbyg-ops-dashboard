@@ -17,6 +17,7 @@ import DealDetail from '../components/sales/DealDetail';
 import SpeedToLead from '../components/sales/SpeedToLead';
 import RepActivity from '../components/sales/RepActivity';
 import StageConversion from '../components/sales/StageConversion';
+import DealsTimeline from '../components/sales/DealsTimeline';
 
 const PipelineHealthPage = lazy(() => import('../components/sales/PipelineHealthPage'));
 const CallsPage          = lazy(() => import('../components/sales/CallsPage'));
@@ -146,6 +147,13 @@ export default function SalesSection() {
                   }}
                   onViewScorecard={handleViewScorecard}
                 />
+                {filterRep && metrics.data?.periodDeals?.length > 0 && (
+                  <DealsTimeline
+                    deals={metrics.data.periodDeals.filter((d) => d.ownerId === filterRep)}
+                    period={metrics.period}
+                    repName={metrics.data.reps?.find((r) => r.id === filterRep)?.name}
+                  />
+                )}
                 <RepActivity reps={metrics.data.reps} data={repActivity.data} />
                 <PipelineHealthSummary
                   pipelineHealth={metrics.data.pipelineHealth}
