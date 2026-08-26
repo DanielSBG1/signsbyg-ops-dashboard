@@ -60,13 +60,15 @@ async function fetchMetaAdsMetrics(preset) {
     sql`
       with perf as (
         select
-          coalesce(sum(spend), 0)       as spend,
-          coalesce(sum(results), 0)     as meta_leads,
-          coalesce(sum(link_clicks), 0) as link_clicks,
-          coalesce(sum(impressions), 0) as impressions
-        from ad_insights_daily
-        where spend_category = 'meta_ads'
-          and day between ${start}::date and ${end}::date
+          coalesce(sum(i.spend), 0)       as spend,
+          coalesce(sum(case when s.optimization_goal in ('LEAD_GENERATION','QUALITY_LEAD') then i.results else 0 end), 0) as meta_leads,
+          coalesce(sum(i.results), 0)     as meta_results_all,
+          coalesce(sum(i.link_clicks), 0) as link_clicks,
+          coalesce(sum(i.impressions), 0) as impressions
+        from ad_insights_daily i
+        join ad_sets s on s.id = i.ad_set_id
+        where i.spend_category = 'meta_ads'
+          and i.day between ${start}::date and ${end}::date
       ),
       hs_leads as (
         select coalesce(sum(leads), 0) as leads
@@ -654,7 +656,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v5:${preset}`;
+    const cacheKey = `meta-ads:v6:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
