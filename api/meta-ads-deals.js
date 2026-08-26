@@ -23,8 +23,8 @@ export default async function handler(req, res) {
 
     // Calendar date range — matches meta-ads-metrics.js exactly
     const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
+    const y = now.getUTCFullYear();
+    const m = now.getUTCMonth();
     let pnlStart, pnlEnd;
     if (preset === 'year') {
       pnlStart = `${y}-01-01`;

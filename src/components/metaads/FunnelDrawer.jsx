@@ -31,19 +31,21 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
     const params = new URLSearchParams({ preset: preset || 'year' });
     if (mode === 'repeats') params.set('mode', 'repeats');
 
-    fetch(`/api/meta-ads-deals?${params}`)
+    fetch(`/api/meta-ads-deals?${params}`, { signal: controller.signal })
       .then(r => r.json())
       .then(json => {
         if (!json.ok) throw new Error(json.error || 'API error');
         setData(json.data);
       })
-      .catch(e => setError(e.message))
+      .catch(e => { if (e.name !== 'AbortError') setError(e.message); })
       .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [preset, mode]);
 
   const repeatCustomers = data?.repeatCustomers ?? [];
@@ -117,8 +119,8 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-amber-100">
-                        {customer.deals.map((deal, j) => (
-                          <tr key={j} className="hover:bg-amber-50 transition-colors">
+                        {customer.deals.map((deal) => (
+                          <tr key={deal.dealId} className="hover:bg-amber-50 transition-colors">
                             <td className="px-5 py-2.5">
                               <p className="text-gray-900 text-xs font-medium truncate max-w-[250px]" title={deal.name}>{deal.name}</p>
                             </td>
