@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import DealsDrawer from './DealsDrawer';
 
 // ---- Formatting helpers ---------------------------------------------------
 
@@ -56,9 +57,13 @@ const TOPBAR_COLORS = [
   null,                                       // cpc
 ];
 
-function MetricTile({ label, value, sub, topbar, muted }) {
+function MetricTile({ label, value, sub, topbar, muted, onClick }) {
+  const Wrapper = onClick ? 'button' : 'div';
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+    <Wrapper
+      onClick={onClick}
+      className={`bg-white border border-gray-200 rounded-2xl overflow-hidden text-left w-full ${onClick ? 'cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all' : ''}`}
+    >
       {topbar && (
         <div className="h-1" style={{ background: topbar }} />
       )}
@@ -73,7 +78,7 @@ function MetricTile({ label, value, sub, topbar, muted }) {
           <p className="text-gray-500 text-xs mt-2">{sub}</p>
         )}
       </div>
-    </div>
+    </Wrapper>
   );
 }
 
@@ -175,8 +180,16 @@ export default function MetaAdsOverview({ data }) {
   const totalHubspotLeads = campaigns.reduce((s, c) => s + (c.hubspotLeads ?? 0), 0);
   const totalRevenue = campaigns.reduce((s, c) => s + (c.revenue ?? 0), 0);
 
+  const [showDeals, setShowDeals] = useState(false);
+  const preset = data?.period?.preset ?? 'year';
+
   return (
     <div className="space-y-8">
+      {/* Deals drawer */}
+      {showDeals && (
+        <DealsDrawer preset={preset} onClose={() => setShowDeals(false)} />
+      )}
+
       {/* ---- 8 headline metric tiles ---- */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 2xl:grid-cols-8">
         <MetricTile
@@ -207,7 +220,8 @@ export default function MetaAdsOverview({ data }) {
           label="Attributed Revenue"
           value={fmtMoney(totalRevenue)}
           topbar={TOPBAR_COLORS[4]}
-          sub="Closed-won deals"
+          sub="Click to see deals →"
+          onClick={() => setShowDeals(true)}
         />
         <MetricTile
           label="Meta Link Clicks"
