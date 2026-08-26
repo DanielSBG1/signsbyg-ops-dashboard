@@ -7,6 +7,7 @@ const SECTIONS = [
   { id: 'production',   label: 'Production',   sub: 'Overview · Throughput', icon: Factory },
   { id: 'installation', label: 'Installation', sub: 'Jobs · Crews',          icon: Wrench },
   { id: 'excellence',   label: 'Excellence',   sub: 'Scores · Culture',      icon: Trophy },
+  { id: 'metaads',      label: 'Meta Ads',      sub: 'Spend · Leads · Revenue', icon: Megaphone },
   { id: 'marketing',    label: 'Marketing',    sub: 'GMB · Facebook · Web',  icon: Megaphone },
 ];
 
