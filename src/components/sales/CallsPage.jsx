@@ -13,7 +13,7 @@ const CLASS_STYLES = {
   existing_lead: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   existing_deal: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
   existing_customer: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  unknown: 'bg-white/10 text-white/40 border-white/10',
+  unknown: 'bg-black/[0.05] text-gray-400 border-gray-200',
 };
 
 const STATUS_STYLES = {
@@ -60,7 +60,7 @@ export default function CallsPage({ data, loading, error }) {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-          <p className="text-white/40 text-sm">Loading calls...</p>
+          <p className="text-gray-400 text-sm">Loading calls...</p>
         </div>
       </div>
     );
@@ -72,8 +72,8 @@ export default function CallsPage({ data, loading, error }) {
     return (
       <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6">
         <h2 className="text-lg font-semibold text-yellow-400 mb-2">⚠️ OpenPhone not configured</h2>
-        <p className="text-white/60 text-sm">
-          Add <code className="bg-white/10 px-1.5 py-0.5 rounded">OPENPHONE_API_KEY</code> to your environment variables and redeploy.
+        <p className="text-gray-500 text-sm">
+          Add <code className="bg-black/[0.05] px-1.5 py-0.5 rounded">OPENPHONE_API_KEY</code> to your environment variables and redeploy.
         </p>
       </div>
     );
@@ -117,7 +117,7 @@ export default function CallsPage({ data, loading, error }) {
 
       {/* Classification breakdown — skipped for wide periods */}
       {summary.byClassification ? (
-        <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Call Classification</h2>
             {phoneEnrichmentPartial && (
@@ -141,16 +141,16 @@ export default function CallsPage({ data, loading, error }) {
 
       {/* Call Sources card */}
       {summary.bySource && summary.bySource.length > 0 && (
-        <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">📡 How Callers Found Us</h2>
-            <span className="text-white/30 text-xs">identified inbound callers only</span>
+            <span className="text-gray-300 text-xs">identified inbound callers only</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {summary.bySource.map((s) => (
-              <div key={s.source} className="bg-white/5 rounded-xl p-4">
-                <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1 truncate">{s.source}</p>
-                <p className="text-2xl font-bold tabular-nums text-white">{s.count}</p>
+              <div key={s.source} className="bg-black/[0.03] rounded-xl p-4">
+                <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1 truncate">{s.source}</p>
+                <p className="text-2xl font-bold tabular-nums text-gray-900">{s.count}</p>
               </div>
             ))}
           </div>
@@ -159,12 +159,12 @@ export default function CallsPage({ data, loading, error }) {
 
       {/* Daily Volume table */}
       {summary.byDay && summary.byDay.length > 1 && (
-        <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <h2 className="text-lg font-semibold mb-4">📅 Daily Volume</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white/40 text-xs uppercase tracking-wider">
+                <tr className="text-gray-400 text-xs uppercase tracking-wider">
                   <th className="pb-3 text-left">Date</th>
                   <th className="pb-3 text-right">Total</th>
                   <th className="pb-3 text-right">Inbound</th>
@@ -175,12 +175,12 @@ export default function CallsPage({ data, loading, error }) {
               </thead>
               <tbody>
                 {summary.byDay.map((d) => (
-                  <tr key={d.date} className="border-t border-white/5 hover:bg-white/5">
-                    <td className="py-2 text-white/70">{new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
-                    <td className="py-2 text-right tabular-nums text-white/80">{d.total}</td>
+                  <tr key={d.date} className="border-t border-gray-200 hover:bg-black/[0.03]">
+                    <td className="py-2 text-gray-600">{new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
+                    <td className="py-2 text-right tabular-nums text-gray-700">{d.total}</td>
                     <td className="py-2 text-right tabular-nums text-blue-300">{d.inbound}</td>
                     <td className="py-2 text-right tabular-nums text-purple-300">{d.outbound}</td>
-                    <td className="py-2 text-right tabular-nums text-white/60">{d.uniqueCallers}</td>
+                    <td className="py-2 text-right tabular-nums text-gray-500">{d.uniqueCallers}</td>
                     <td className="py-2 text-right tabular-nums text-success">{d.newInquiries || 0}</td>
                   </tr>
                 ))}
@@ -192,22 +192,22 @@ export default function CallsPage({ data, loading, error }) {
 
       {/* Calls table — hidden for wide periods */}
       {summaryOnly ? (
-        <div className="bg-slate-card border border-white/5 rounded-2xl p-6 text-center text-white/40 text-sm py-10">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center text-gray-400 text-sm py-10">
           Call log and classification breakdown are only available for periods up to 2 weeks.<br />
-          Switch to <span className="text-white/60">Today</span>, <span className="text-white/60">This Week</span>, or a custom range ≤14 days to see individual calls.
+          Switch to <span className="text-gray-500">Today</span>, <span className="text-gray-500">This Week</span>, or a custom range ≤14 days to see individual calls.
         </div>
       ) : (
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-6 space-y-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Call Log</h2>
-            <span className="text-white/40 text-sm">{filtered.length} of {calls.length} showing</span>
+            <span className="text-gray-400 text-sm">{filtered.length} of {calls.length} showing</span>
           </div>
           <div className="flex items-center gap-2">
             <select
               value={filterDirection}
               onChange={(e) => setFilterDirection(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm text-white/80"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1 text-sm text-gray-700"
             >
               <option value="all">All Directions</option>
               <option value="incoming">Inbound</option>
@@ -216,7 +216,7 @@ export default function CallsPage({ data, loading, error }) {
             {(filterClass !== 'all' || filterDirection !== 'all') && (
               <button
                 onClick={() => { setFilterClass('all'); setFilterDirection('all'); }}
-                className="px-3 py-1 text-xs rounded-full bg-white/10 hover:bg-white/15 text-white/60"
+                className="px-3 py-1 text-xs rounded-full bg-black/[0.05] hover:bg-white/15 text-gray-500"
               >
                 Clear filters &times;
               </button>
@@ -225,12 +225,12 @@ export default function CallsPage({ data, loading, error }) {
         </div>
 
         {filtered.length === 0 ? (
-          <p className="text-white/40 text-sm text-center py-8">No calls match these filters.</p>
+          <p className="text-gray-400 text-sm text-center py-8">No calls match these filters.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white/40 text-xs uppercase tracking-wider">
+                <tr className="text-gray-400 text-xs uppercase tracking-wider">
                   <th className="pb-3 px-3 text-left">Time</th>
                   <th className="pb-3 px-3 text-left">Direction</th>
                   <th className="pb-3 px-3 text-left">Caller</th>
@@ -243,8 +243,8 @@ export default function CallsPage({ data, loading, error }) {
               </thead>
               <tbody>
                 {filtered.map((c) => (
-                  <tr key={c.id} className="border-t border-white/5 hover:bg-white/5">
-                    <td className="py-3 px-3 text-white/60 text-xs">
+                  <tr key={c.id} className="border-t border-gray-200 hover:bg-black/[0.03]">
+                    <td className="py-3 px-3 text-gray-500 text-xs">
                       {c.createdAt ? new Date(c.createdAt).toLocaleString('en-US', {
                         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
                       }) : '—'}
@@ -256,16 +256,16 @@ export default function CallsPage({ data, loading, error }) {
                         <span className="text-purple-300">📤 Out</span>
                       ) : '—'}
                     </td>
-                    <td className="py-3 px-3 text-white font-medium">{c.contactName || <span className="text-white/40 italic">Unknown</span>}</td>
-                    <td className="py-3 px-3 text-white/60 tabular-nums">{formatPhone(c.customerPhone)}</td>
+                    <td className="py-3 px-3 text-gray-900 font-medium">{c.contactName || <span className="text-gray-400 italic">Unknown</span>}</td>
+                    <td className="py-3 px-3 text-gray-500 tabular-nums">{formatPhone(c.customerPhone)}</td>
                     <td className="py-3 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${CLASS_STYLES[c.classification] || ''}`}>
                         {CLASS_LABELS[c.classification] || c.classification}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-white/80 text-xs">{c.rep}</td>
-                    <td className="py-3 px-3 text-right tabular-nums text-white/70">{formatDuration(c.duration)}</td>
-                    <td className={`py-3 px-3 text-xs ${STATUS_STYLES[c.status] || 'text-white/50'}`}>
+                    <td className="py-3 px-3 text-gray-700 text-xs">{c.rep}</td>
+                    <td className="py-3 px-3 text-right tabular-nums text-gray-600">{formatDuration(c.duration)}</td>
+                    <td className={`py-3 px-3 text-xs ${STATUS_STYLES[c.status] || 'text-gray-500'}`}>
                       {c.voicemail ? 'voicemail' : c.status || '—'}
                     </td>
                   </tr>
@@ -280,12 +280,12 @@ export default function CallsPage({ data, loading, error }) {
   );
 }
 
-function Kpi({ label, value, colorClass = 'text-white', subtext }) {
+function Kpi({ label, value, colorClass = 'text-gray-900', subtext }) {
   return (
-    <div className="bg-slate-card border border-white/5 rounded-xl p-4">
-      <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold tabular-nums ${colorClass}`}>{value}</p>
-      {subtext && <p className="text-white/40 text-[10px] mt-0.5">{subtext}</p>}
+      {subtext && <p className="text-gray-400 text-[10px] mt-0.5">{subtext}</p>}
     </div>
   );
 }
@@ -295,12 +295,12 @@ function ClassCard({ label, value, keyId, filterClass, setFilterClass }) {
   return (
     <button
       onClick={() => setFilterClass(isActive ? 'all' : keyId)}
-      className={`bg-white/5 hover:bg-white/10 rounded-xl p-4 text-left transition-all ${
+      className={`bg-black/[0.03] hover:bg-black/[0.05] rounded-xl p-4 text-left transition-all ${
         isActive ? 'ring-2 ring-accent' : ''
       }`}
     >
-      <p className="text-white/60 text-xs mb-1">{label}</p>
-      <p className="text-2xl font-bold tabular-nums text-white">{value}</p>
+      <p className="text-gray-500 text-xs mb-1">{label}</p>
+      <p className="text-2xl font-bold tabular-nums text-gray-900">{value}</p>
     </button>
   );
 }

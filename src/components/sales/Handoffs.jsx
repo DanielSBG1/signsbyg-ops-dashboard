@@ -37,8 +37,8 @@ function SummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {cards.map((c) => (
-        <div key={c.label} className="bg-slate-card border border-white/5 rounded-2xl p-5 flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-wider text-white/40 font-medium">{c.label}</span>
+        <div key={c.label} className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-2">
+          <span className="text-xs uppercase tracking-wider text-gray-400 font-medium">{c.label}</span>
           <span className={`text-3xl font-bold tracking-tight ${c.className || ''}`}>{c.value}</span>
         </div>
       ))}
@@ -50,11 +50,11 @@ function RepScorecard({ reps }) {
   if (!reps || reps.length === 0) return null;
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6 overflow-x-auto">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 overflow-x-auto">
       <h2 className="text-lg font-semibold mb-4">Rep Scorecard</h2>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-white/40 text-xs uppercase tracking-wider">
+          <tr className="text-gray-400 text-xs uppercase tracking-wider">
             <th className="pb-3 px-3 text-left">Rep</th>
             <th className="pb-3 px-3 text-right"># Deals</th>
             <th className="pb-3 px-3 text-right">Avg Completeness</th>
@@ -65,7 +65,7 @@ function RepScorecard({ reps }) {
           {reps.map((rep) => (
             <tr
               key={rep.id}
-              className={`hover:bg-white/5 transition-colors ${
+              className={`hover:bg-black/[0.03] transition-colors ${
                 rep.avgCompleteness < 70 ? 'border-l-4 border-l-danger' :
                 rep.avgCompleteness < 90 ? 'border-l-4 border-l-warning' :
                 'border-l-4 border-l-success'
@@ -125,7 +125,7 @@ function DealTable({ deals }) {
   const SortHeader = ({ label, sortKeyName, align = 'right' }) => (
     <th
       onClick={() => handleSort(sortKeyName)}
-      className={`pb-3 px-3 cursor-pointer hover:text-white/70 transition-colors ${
+      className={`pb-3 px-3 cursor-pointer hover:text-gray-600 transition-colors ${
         align === 'left' ? 'text-left' : 'text-center'
       }`}
     >
@@ -137,11 +137,11 @@ function DealTable({ deals }) {
   );
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6 overflow-x-auto">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 overflow-x-auto">
       <h2 className="text-lg font-semibold mb-4">Deal Details</h2>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-white/40 text-xs uppercase tracking-wider">
+          <tr className="text-gray-400 text-xs uppercase tracking-wider">
             <SortHeader label="Deal" sortKeyName="name" align="left" />
             <SortHeader label="Rep" sortKeyName="rep" align="left" />
             <SortHeader label="Close Date" sortKeyName="closeDate" align="left" />
@@ -155,7 +155,7 @@ function DealTable({ deals }) {
           {sorted.map((deal) => (
             <tr
               key={deal.id}
-              className={`hover:bg-white/5 transition-colors ${
+              className={`hover:bg-black/[0.03] transition-colors ${
                 deal.completeness < 7 ? 'bg-danger/5' : ''
               }`}
             >
@@ -194,7 +194,7 @@ export default function Handoffs({ data, loading, error }) {
         <div className="flex items-center justify-center h-64">
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-            <p className="text-white/40 text-sm">Loading handoff data...</p>
+            <p className="text-gray-400 text-sm">Loading handoff data...</p>
           </div>
         </div>
       ) : data ? (

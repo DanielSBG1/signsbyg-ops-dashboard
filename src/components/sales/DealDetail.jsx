@@ -56,7 +56,7 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
   // While it's loading show a skeleton; if it fails/isn't available show guidance.
   if (repCohortUnavailable) {
     return (
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
           <h2 className="text-lg font-semibold">Deal Details</h2>
           {funnelFilter && (
@@ -68,15 +68,15 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
         {cohortLoading ? (
           <div className="space-y-2 animate-pulse">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-10 bg-white/5 rounded-lg" />
+              <div key={i} className="h-10 bg-black/[0.03] rounded-lg" />
             ))}
           </div>
         ) : (
           <div className="text-center py-8 space-y-2">
-            <p className="text-white/60 text-sm">
+            <p className="text-gray-500 text-sm">
               Contact-level deal attribution isn't available for periods longer than 2 weeks.
             </p>
-            <p className="text-white/40 text-xs">
+            <p className="text-gray-400 text-xs">
               Switch to <span className="text-accent">By Rep — Activity</span> view to see individual deals for this period.
             </p>
           </div>
@@ -141,11 +141,11 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
   }
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6 space-y-4">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-lg font-semibold">Deal Details</h2>
-          <span className="text-white/40 text-sm">{filtered.length} showing</span>
+          <span className="text-gray-400 text-sm">{filtered.length} showing</span>
           {cohortFallback && (
             <span className="text-yellow-400/70 text-xs bg-yellow-400/10 border border-yellow-400/20 rounded-full px-2 py-0.5">
               ⚠ Contact attribution not available for this period — filtered by deal owner/source
@@ -170,12 +170,12 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
       </div>
 
       {sorted.length === 0 ? (
-        <p className="text-white/40 text-sm text-center py-6">No deals match this filter.</p>
+        <p className="text-gray-400 text-sm text-center py-6">No deals match this filter.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-white/40 text-xs uppercase tracking-wider">
+              <tr className="text-gray-400 text-xs uppercase tracking-wider">
                 {[
                   { key: 'name', label: 'Deal' },
                   { key: 'stageLabel', label: 'Stage' },
@@ -189,7 +189,7 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
                   <th
                     key={col.key}
                     onClick={() => handleSort(col.key)}
-                    className={`pb-3 px-3 cursor-pointer hover:text-white/70 transition-colors ${
+                    className={`pb-3 px-3 cursor-pointer hover:text-gray-600 transition-colors ${
                       col.align === 'right' ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -201,18 +201,18 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
             </thead>
             <tbody>
               {sorted.map((d) => (
-                <tr key={d.id} className="hover:bg-white/5 transition-colors border-t border-white/5">
+                <tr key={d.id} className="hover:bg-black/[0.03] transition-colors border-t border-gray-200">
                   <td className="py-3 px-3 text-left font-medium">{d.name}</td>
-                  <td className="py-3 px-3 text-left text-white/70">{d.stageLabel}</td>
-                  <td className="py-3 px-3 text-left text-white/60 text-xs">{d.pipelineLabel}</td>
+                  <td className="py-3 px-3 text-left text-gray-600">{d.stageLabel}</td>
+                  <td className="py-3 px-3 text-left text-gray-500 text-xs">{d.pipelineLabel}</td>
                   <td className="py-3 px-3 text-left">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[d.status] || ''}`}>
                       {d.status}
                     </span>
                   </td>
                   <td className="py-3 px-3 text-right tabular-nums">{formatMoney(d.amount)}</td>
-                  <td className="py-3 px-3 text-left text-white/80">{d.ownerName}</td>
-                  <td className="py-3 px-3 text-right tabular-nums text-white/60 text-xs">
+                  <td className="py-3 px-3 text-left text-gray-700">{d.ownerName}</td>
+                  <td className="py-3 px-3 text-right tabular-nums text-gray-500 text-xs">
                     {d.createdate ? new Date(d.createdate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
                   </td>
                   <td className="py-3 px-2 text-center">
@@ -221,7 +221,7 @@ export default function DealDetail({ cohortDeals, cohortLoading, periodDeals, de
                         href={d.hubspotUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-white/30 hover:text-accent transition-colors text-sm"
+                        className="text-gray-300 hover:text-accent transition-colors text-sm"
                         onClick={(e) => e.stopPropagation()}
                         title="Open in HubSpot"
                       >

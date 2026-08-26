@@ -117,26 +117,26 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
   );
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <div>
             <h2 className="text-lg font-semibold">Conversion Funnel</h2>
             {isCohortView ? (
-              <p className="text-white/30 text-[10px] mt-0.5">
+              <p className="text-gray-300 text-[10px] mt-0.5">
                 Cohort: same leads traced through stages. "Became Customer" counts contacts whose associated deal has reached a closed-won stage. Contacts without an associated deal — or with only open/lost deals — won't appear here.
               </p>
             ) : (
-              <p className="text-white/30 text-[10px] mt-0.5">
+              <p className="text-gray-300 text-[10px] mt-0.5">
                 Activity: rows are <span className="italic">independent period counts</span>, not a cohort. "Won" can exceed "Deals Created" because you're closing deals built up in prior periods.
               </p>
             )}
           </div>
-          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-black/[0.03] rounded-lg p-1">
             <button
               onClick={() => setView('source')}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                view === 'source' ? 'bg-accent text-white' : 'text-white/60 hover:text-white'
+                view === 'source' ? 'bg-accent text-white' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               By Source — Funnel
@@ -145,7 +145,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
               onClick={() => setView('source_activity')}
               disabled={!funnelActivity}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                view === 'source_activity' ? 'bg-accent text-white' : 'text-white/60 hover:text-white'
+                view === 'source_activity' ? 'bg-accent text-white' : 'text-gray-500 hover:text-gray-900'
               } disabled:opacity-30 disabled:cursor-not-allowed`}
             >
               By Source — Activity
@@ -154,7 +154,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
               onClick={() => setView('rep_funnel')}
               disabled={!repFunnelData}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                view === 'rep_funnel' ? 'bg-accent text-white' : 'text-white/60 hover:text-white'
+                view === 'rep_funnel' ? 'bg-accent text-white' : 'text-gray-500 hover:text-gray-900'
               } disabled:opacity-30 disabled:cursor-not-allowed`}
             >
               By Rep — Funnel
@@ -163,17 +163,17 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
               onClick={() => setView('rep_activity')}
               disabled={!repActivityData}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                view === 'rep_activity' ? 'bg-accent text-white' : 'text-white/60 hover:text-white'
+                view === 'rep_activity' ? 'bg-accent text-white' : 'text-gray-500 hover:text-gray-900'
               } disabled:opacity-30 disabled:cursor-not-allowed`}
             >
               By Rep — Activity
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs text-white/40">
-          <span>Leads: <span className="text-white font-medium">{totals.leads}</span></span>
-          <span>Deals: <span className="text-white font-medium">{totals.deals}</span></span>
-          <span>Won: <span className="text-white font-medium">{totals.won}</span></span>
+        <div className="flex items-center gap-4 text-xs text-gray-400">
+          <span>Leads: <span className="text-gray-900 font-medium">{totals.leads}</span></span>
+          <span>Deals: <span className="text-gray-900 font-medium">{totals.deals}</span></span>
+          <span>Won: <span className="text-gray-900 font-medium">{totals.won}</span></span>
         </div>
       </div>
 
@@ -181,7 +181,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
         <table className="w-full text-sm">
           <thead>
             <tr>
-              <th className="text-left text-white/40 text-xs uppercase tracking-wider pb-3 px-2 w-32"></th>
+              <th className="text-left text-gray-400 text-xs uppercase tracking-wider pb-3 px-2 w-32"></th>
               {sources.map((s) => (
                 <th key={s.key} className="text-center pb-3 px-2">
                   <div className="flex flex-col items-center gap-1">
@@ -189,10 +189,10 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                       className="w-3 h-3 rounded-sm"
                       style={{ backgroundColor: s.color }}
                     />
-                    <span className="text-xs text-white/60 font-medium">{s.label}</span>
+                    <span className="text-xs text-gray-500 font-medium">{s.label}</span>
                     {s.originalSources && (
                       <span
-                        className="text-[9px] text-white/30 leading-tight text-center max-w-[80px]"
+                        className="text-[9px] text-gray-300 leading-tight text-center max-w-[80px]"
                         title={Object.entries(s.originalSources).map(([k, v]) => `${SOURCE_LABELS[k] || k}: ${v}`).join(', ')}
                       >
                         {Object.entries(s.originalSources)
@@ -206,7 +206,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                 </th>
               ))}
               <th className="text-center pb-3 px-2">
-                <span className="text-xs text-white/40 font-medium uppercase">Total</span>
+                <span className="text-xs text-gray-400 font-medium uppercase">Total</span>
               </th>
             </tr>
           </thead>
@@ -218,11 +218,11 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
               const convRate = prevRowTotal > 0 ? Math.round((rowTotal / prevRowTotal) * 100) : null;
 
               return (
-                <tr key={rowKey} className="border-t border-white/5">
+                <tr key={rowKey} className="border-t border-gray-200">
                   <td className="py-4 px-2">
-                    <div className="text-white/80 font-medium text-sm">{label}</div>
+                    <div className="text-gray-700 font-medium text-sm">{label}</div>
                     {convRate !== null && (
-                      <div className="text-white/30 text-xs mt-0.5">
+                      <div className="text-gray-300 text-xs mt-0.5">
                         {convRate}% {i === 1 ? 'conversion' : 'close rate'}
                       </div>
                     )}
@@ -237,7 +237,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                       <td key={s.key} className="py-4 px-2 text-center">
                         <div className="flex flex-col items-center gap-1.5">
                           {isRepView && i === 0 && val > 0 && (
-                            <span className="text-[10px] text-white/50 tabular-nums">
+                            <span className="text-[10px] text-gray-500 tabular-nums">
                               <span style={{ color: '#1877F2' }}>f</span> {s.fbLeads} · 🌐 {s.organicLeads} · 👤 {s.referralLeads}
                             </span>
                           )}
@@ -251,13 +251,13 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                               row: rowKey,
                               view, // 'source' | 'rep_funnel' | 'rep_activity'
                             })}
-                            className={`text-white font-semibold text-lg tabular-nums hover:text-accent transition-colors disabled:cursor-default disabled:hover:text-white ${
+                            className={`text-gray-900 font-semibold text-lg tabular-nums hover:text-accent transition-colors disabled:cursor-default disabled:hover:text-gray-900 ${
                               activeCell && activeCell.key === s.key && activeCell.row === rowKey ? 'text-accent underline' : ''
                             }`}
                           >
                             {val}
                           </button>
-                          <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                          <div className="w-full h-2 rounded-full bg-black/[0.03] overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all"
                               style={{
@@ -268,7 +268,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                             />
                           </div>
                           {cellRate !== null && val > 0 && (
-                            <span className="text-white/25 text-xs">{cellRate}%</span>
+                            <span className="text-gray-300 text-xs">{cellRate}%</span>
                           )}
                         </div>
                       </td>
@@ -285,7 +285,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                         row: rowKey,
                         view,
                       })}
-                      className={`text-white font-bold text-xl tabular-nums hover:text-accent transition-colors disabled:cursor-default disabled:hover:text-white ${
+                      className={`text-gray-900 font-bold text-xl tabular-nums hover:text-accent transition-colors disabled:cursor-default disabled:hover:text-gray-900 ${
                         activeCell && activeCell.type === 'total' && activeCell.row === rowKey ? 'text-accent underline' : ''
                       }`}
                     >
@@ -296,27 +296,27 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
               );
             })}
             {isRepView && (
-              <tr className="border-t border-white/5">
+              <tr className="border-t border-gray-200">
                 <td className="py-3 px-2">
-                  <div className="text-white/80 font-medium text-sm">Avg Response</div>
-                  <div className="text-white/30 text-xs mt-0.5">created → first contacted</div>
+                  <div className="text-gray-700 font-medium text-sm">Avg Response</div>
+                  <div className="text-gray-300 text-xs mt-0.5">created → first contacted</div>
                 </td>
                 {sources.map((s) => (
                   <td key={s.key} className="py-3 px-2 text-center">
-                    <span className="text-white/80 text-sm tabular-nums">
+                    <span className="text-gray-700 text-sm tabular-nums">
                       {formatResponseTime(s.avgResponseMinutes)}
                     </span>
                   </td>
                 ))}
-                <td className="py-3 px-2 text-center text-white/30 text-sm">—</td>
+                <td className="py-3 px-2 text-center text-gray-300 text-sm">—</td>
               </tr>
             )}
             {sources.some((s) => s.winRate != null || s.revenue != null) && (
               <>
-                <tr className="border-t border-white/10">
+                <tr className="border-t border-gray-200">
                   <td className="py-3 px-2">
-                    <div className="text-white/80 font-medium text-sm">Win Rate</div>
-                    <div className="text-white/30 text-xs mt-0.5">won ÷ (won + lost)</div>
+                    <div className="text-gray-700 font-medium text-sm">Win Rate</div>
+                    <div className="text-gray-300 text-xs mt-0.5">won ÷ (won + lost)</div>
                   </td>
                   {sources.map((s) => (
                     <td key={s.key} className="py-3 px-2 text-center">
@@ -331,7 +331,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                           view,
                         })}
                         className={`text-sm font-semibold tabular-nums hover:underline disabled:cursor-default ${
-                          s.winRate == null ? 'text-white/30' :
+                          s.winRate == null ? 'text-gray-300' :
                           s.winRate >= 50 ? 'text-success' :
                           s.winRate >= 25 ? 'text-yellow-400' : 'text-danger'
                         }`}
@@ -345,16 +345,16 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                       type="button"
                       disabled={!onCellClick}
                       onClick={() => onCellClick && onCellClick({ type: 'total', key: null, label: 'All', row: 'decided', view })}
-                      className="text-white/40 text-sm hover:text-accent"
+                      className="text-gray-400 text-sm hover:text-accent"
                     >
                       —
                     </button>
                   </td>
                 </tr>
-                <tr className="border-t border-white/5">
+                <tr className="border-t border-gray-200">
                   <td className="py-3 px-2">
-                    <div className="text-white/80 font-medium text-sm">Avg Deal $</div>
-                    <div className="text-white/30 text-xs mt-0.5">mean of won deals</div>
+                    <div className="text-gray-700 font-medium text-sm">Avg Deal $</div>
+                    <div className="text-gray-300 text-xs mt-0.5">mean of won deals</div>
                   </td>
                   {sources.map((s) => (
                     <td key={s.key} className="py-3 px-2 text-center">
@@ -368,18 +368,18 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                           row: 'won',
                           view,
                         })}
-                        className="text-white/80 text-sm tabular-nums hover:text-accent hover:underline disabled:cursor-default disabled:hover:text-white/80"
+                        className="text-gray-700 text-sm tabular-nums hover:text-accent hover:underline disabled:cursor-default disabled:hover:text-gray-700"
                       >
                         {s.avgDealSize > 0 ? formatMoney(s.avgDealSize) : '—'}
                       </button>
                     </td>
                   ))}
-                  <td className="py-3 px-2 text-center text-white/30 text-sm">—</td>
+                  <td className="py-3 px-2 text-center text-gray-300 text-sm">—</td>
                 </tr>
-                <tr className="border-t border-white/5">
+                <tr className="border-t border-gray-200">
                   <td className="py-3 px-2">
-                    <div className="text-white/80 font-medium text-sm">Revenue</div>
-                    <div className="text-white/30 text-xs mt-0.5">sum of won deal amounts</div>
+                    <div className="text-gray-700 font-medium text-sm">Revenue</div>
+                    <div className="text-gray-300 text-xs mt-0.5">sum of won deal amounts</div>
                   </td>
                   {sources.map((s) => (
                     <td key={s.key} className="py-3 px-2 text-center">
@@ -393,7 +393,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                           row: 'won',
                           view,
                         })}
-                        className="text-white font-semibold text-sm tabular-nums hover:text-accent hover:underline disabled:cursor-default disabled:hover:text-white"
+                        className="text-gray-900 font-semibold text-sm tabular-nums hover:text-accent hover:underline disabled:cursor-default disabled:hover:text-gray-900"
                       >
                         {s.revenue > 0 ? formatMoney(s.revenue) : '—'}
                       </button>
@@ -404,7 +404,7 @@ export default function Funnel({ funnel, funnelActivity, reps, onCellClick, acti
                       type="button"
                       disabled={!onCellClick}
                       onClick={() => onCellClick && onCellClick({ type: 'total', key: null, label: 'All', row: 'won', view })}
-                      className="font-bold text-white tabular-nums hover:text-accent hover:underline"
+                      className="font-bold text-gray-900 tabular-nums hover:text-accent hover:underline"
                     >
                       {formatMoney(sources.reduce((sum, s) => sum + (s.revenue || 0), 0))}
                     </button>

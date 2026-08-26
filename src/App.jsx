@@ -1,5 +1,6 @@
 import React, { useState, lazy, Suspense } from 'react';
 import Sidebar from './components/Sidebar';
+import LoginScreen from './components/LoginScreen';
 
 const PmSection           = lazy(() => import('./sections/PmSection'));
 const ProductionSection   = lazy(() => import('./sections/ProductionSection'));
@@ -20,11 +21,27 @@ function SectionFallback() {
 }
 
 export default function App() {
+  const [authed, setAuthed] = useState(() => {
+    try {
+      const session = sessionStorage.getItem('sbg-session');
+      if (!session) return false;
+      const { timestamp } = JSON.parse(session);
+      return Date.now() - timestamp < 24 * 60 * 60 * 1000;
+    } catch { return false; }
+  });
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('sbg-session');
+    setAuthed(false);
+  };
+
   const [section, setSection] = useState('sales');
 
+  if (!authed) return <LoginScreen onSuccess={() => setAuthed(true)} />;
+
   return (
-    <div className="flex min-h-screen bg-slate text-white">
-      <Sidebar active={section} onSelect={setSection} />
+    <div className="flex min-h-screen bg-background text-gray-900">
+      <Sidebar active={section} onSelect={setSection} onLogout={handleLogout} />
 
       <main className="flex-1 overflow-auto">
         <Suspense fallback={<SectionFallback />}>

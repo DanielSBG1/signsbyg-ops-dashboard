@@ -4,15 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        navy: '#1a1a2e',
-        slate: { DEFAULT: '#0f0f1a', card: '#1e1e30' },
-        accent: '#4361ee',
+        sidebar: '#32373c',
+        surface: '#ffffff',
+        background: '#f6f7f9',
+        accent: { DEFAULT: '#FCB016', hover: '#E79B00' },
         success: '#06d6a0',
-        warning: '#ffd166',
+        warning: '#E79B00',
         danger: '#ef476f',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
       },
     },
   },

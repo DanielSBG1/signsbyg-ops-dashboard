@@ -25,9 +25,9 @@ function bucketBadge(deal) {
 
 function Field({ label, value }) {
   return (
-    <div className="flex justify-between items-center py-2 border-b border-white/5">
+    <div className="flex justify-between items-center py-2 border-b border-gray-200">
       <span className="text-[10px] text-white/35">{label}</span>
-      <span className="text-xs text-white/80 font-medium text-right max-w-[180px]">{value}</span>
+      <span className="text-xs text-gray-700 font-medium text-right max-w-[180px]">{value}</span>
     </div>
   );
 }
@@ -37,7 +37,7 @@ export default function DealDrawer({ deal, onClose }) {
 
   return (
     <div
-      className={`fixed top-0 right-0 h-full w-80 bg-[#1a1a2e] border-l border-white/8 z-50 flex flex-col
+      className={`fixed top-0 right-0 h-full w-80 bg-white border-l border-gray-200 z-50 flex flex-col
         transition-transform duration-200 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
     >
       {deal && (
@@ -49,7 +49,7 @@ export default function DealDrawer({ deal, onClose }) {
             </span>
             <button
               onClick={onClose}
-              className="text-white/30 hover:text-white/70 text-sm px-1.5 py-0.5 leading-none"
+              className="text-gray-300 hover:text-gray-600 text-sm px-1.5 py-0.5 leading-none"
             >
               ✕
             </button>
@@ -57,7 +57,7 @@ export default function DealDrawer({ deal, onClose }) {
 
           {/* Deal name + badge */}
           <div className="mb-4">
-            <div className="text-[15px] font-bold text-white leading-snug mb-1">{deal.name}</div>
+            <div className="text-[15px] font-bold text-gray-900 leading-snug mb-1">{deal.name}</div>
             {(() => {
               const { label, color } = bucketBadge(deal);
               return label ? (
@@ -69,7 +69,7 @@ export default function DealDrawer({ deal, onClose }) {
           </div>
 
           {/* Fields */}
-          <div className="border-t border-white/6 mb-4">
+          <div className="border-t border-gray-200 mb-4">
             <Field label="Current stage" value={deal.stageLabel} />
             <Field label="Owner" value={deal.ownerName} />
             <Field label="Amount" value={formatMoney(deal.amount)} />
@@ -86,19 +86,19 @@ export default function DealDrawer({ deal, onClose }) {
             </div>
             {deal.nextStageLabel ? (
               <>
-                <div className="text-xs font-semibold text-white leading-snug">
+                <div className="text-xs font-semibold text-gray-900 leading-snug">
                   → Move to: {deal.nextStageLabel}
                 </div>
-                <div className="text-[10px] text-white/40 mt-1">
+                <div className="text-[10px] text-gray-400 mt-1">
                   Based on pipeline SOP stage order
                 </div>
               </>
             ) : (
               <>
-                <div className="text-xs font-semibold text-white leading-snug">
+                <div className="text-xs font-semibold text-gray-900 leading-snug">
                   ✅ Final stage — close the deal
                 </div>
-                <div className="text-[10px] text-white/40 mt-1">
+                <div className="text-[10px] text-gray-400 mt-1">
                   Deal is ready to mark as Won or Lost
                 </div>
               </>

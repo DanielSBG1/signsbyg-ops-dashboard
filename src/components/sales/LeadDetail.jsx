@@ -21,7 +21,7 @@ const SOURCE_COLORS = {
   organic: 'bg-green-500/20 text-green-300',
   direct: 'bg-cyan-500/20 text-cyan-300',
   referrals: 'bg-orange-500/20 text-orange-300',
-  other: 'bg-white/10 text-white/60',
+  other: 'bg-black/[0.05] text-gray-500',
 };
 
 const STATUS_LABELS = {
@@ -36,7 +36,7 @@ const STATUS_COLORS = {
   qualified: 'bg-green-500/20 text-green-300 border-green-500/30',
   new_lead: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   manual_entry: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  unqualified: 'bg-white/10 text-white/40 border-white/10',
+  unqualified: 'bg-black/[0.05] text-gray-400 border-gray-200',
   internal: 'bg-red-500/20 text-red-300 border-red-500/30',
 };
 
@@ -113,16 +113,16 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
     : (leads || []).length;
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6 space-y-4">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
       {/* Status summary pills — only for narrow periods with full lead list */}
       {leadCounts && !isRepLeadsMode && (
         <div className="flex flex-wrap gap-3">
           {[
-            { key: 'all', label: 'All Contacts', count: totalCount, color: 'bg-white/10 text-white/70' },
+            { key: 'all', label: 'All Contacts', count: totalCount, color: 'bg-black/[0.05] text-gray-600' },
             { key: 'qualified', label: 'Qualified', count: leadCounts.qualified, color: 'bg-green-500/15 text-green-300' },
             { key: 'new_lead', label: 'New Leads', count: leadCounts.newLead, color: 'bg-blue-500/15 text-blue-300' },
             { key: 'manual_entry', label: 'Manual Entry', count: leadCounts.manualEntry, color: 'bg-amber-500/15 text-amber-300' },
-            { key: 'unqualified', label: 'Unqualified', count: leadCounts.unqualified, color: 'bg-white/5 text-white/40' },
+            { key: 'unqualified', label: 'Unqualified', count: leadCounts.unqualified, color: 'bg-black/[0.03] text-gray-400' },
             { key: 'internal', label: 'Internal', count: leadCounts.internal, color: 'bg-red-500/15 text-red-300' },
           ].map((s) => (
             <button
@@ -139,15 +139,15 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
       )}
 
       {!showTable ? (
-        <div className="text-center text-white/40 text-sm py-10">
+        <div className="text-center text-gray-400 text-sm py-10">
           Contact list is not shown for monthly or longer periods.<br />
-          Switch to <span className="text-white/60">Today</span> or <span className="text-white/60">This Week</span> to see individual contacts,<br />
+          Switch to <span className="text-gray-500">Today</span> or <span className="text-gray-500">This Week</span> to see individual contacts,<br />
           or click a rep in the leaderboard to see their contacts.
         </div>
       ) : repLeadsLoading && isRepLeadsMode ? (
         <div className="space-y-2 animate-pulse py-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-10 bg-white/5 rounded-lg" />
+            <div key={i} className="h-10 bg-black/[0.03] rounded-lg" />
           ))}
         </div>
       ) : (
@@ -155,7 +155,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">Lead Details</h2>
-              <span className="text-white/40 text-sm">{filtered.length} showing</span>
+              <span className="text-gray-400 text-sm">{filtered.length} showing</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {funnelFilter && (
@@ -177,7 +177,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
               <select
                 value={sourceFilter}
                 onChange={(e) => setSourceFilter(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm text-white/80 focus:outline-none focus:border-accent/50"
+                className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1 text-sm text-gray-700 focus:outline-none focus:border-accent/50"
               >
                 <option value="all">All Sources</option>
                 {sources.map((s) => (
@@ -190,7 +190,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white/40 text-xs uppercase tracking-wider">
+                <tr className="text-gray-400 text-xs uppercase tracking-wider">
                   {[
                     { key: 'name', label: 'Name', align: 'left' },
                     { key: 'email', label: 'Email', align: 'left' },
@@ -204,7 +204,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
                     <th
                       key={col.key}
                       onClick={() => handleSort(col.key)}
-                      className={`pb-3 px-3 cursor-pointer hover:text-white/70 transition-colors ${
+                      className={`pb-3 px-3 cursor-pointer hover:text-gray-600 transition-colors ${
                         col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                       }`}
                     >
@@ -218,13 +218,13 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
               </thead>
               <tbody>
                 {sorted.map((lead) => (
-                  <tr key={lead.id} className={`transition-colors border-t border-white/5 ${
-                    lead.status === 'internal' ? 'opacity-40 hover:bg-white/5' :
+                  <tr key={lead.id} className={`transition-colors border-t border-gray-200 ${
+                    lead.status === 'internal' ? 'opacity-40 hover:bg-black/[0.03]' :
                     (lead.source === 'facebook' && (!lead.repId || lead.rep === 'Unassigned'))
                       ? 'bg-red-500/20 hover:bg-red-500/30 border-red-500/40'
                       : lead.isReoptIn
                       ? 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-500/40'
-                      : 'hover:bg-white/5'
+                      : 'hover:bg-black/[0.03]'
                   }`}>
                     <td className="py-3 px-3 text-left font-medium">
                       {lead.name}
@@ -237,7 +237,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-left text-white/60 text-xs">{lead.email}</td>
+                    <td className="py-3 px-3 text-left text-gray-500 text-xs">{lead.email}</td>
                     <td className="py-3 px-3 text-left">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLORS[lead.status] || ''}`}>
                         {STATUS_LABELS[lead.status] || lead.status}
@@ -248,18 +248,18 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
                         {SOURCE_LABELS[lead.source] || lead.source}
                       </span>
                       {lead.sourceDetail && lead.sourceDetail !== lead.sourceRaw && (
-                        <span className="ml-2 text-white/30 text-xs">{lead.sourceDetail}</span>
+                        <span className="ml-2 text-gray-300 text-xs">{lead.sourceDetail}</span>
                       )}
                     </td>
                     <td className="py-3 px-3 text-center tabular-nums">
                       {lead.numDeals > 0 ? (
                         <span className="text-green-400 font-medium">{lead.numDeals}</span>
                       ) : (
-                        <span className="text-white/20">0</span>
+                        <span className="text-gray-300">0</span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-left text-white/80">{lead.rep}</td>
-                    <td className="py-3 px-3 text-right tabular-nums text-white/60 text-xs">
+                    <td className="py-3 px-3 text-left text-gray-700">{lead.rep}</td>
+                    <td className="py-3 px-3 text-right tabular-nums text-gray-500 text-xs">
                       {new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                     </td>
                     <td className="py-3 px-2 text-center">
@@ -268,7 +268,7 @@ export default function LeadDetail({ leads, leadCounts, leadsOmitted, repLeads, 
                           href={lead.hubspotUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-white/30 hover:text-accent transition-colors text-sm"
+                          className="text-gray-300 hover:text-accent transition-colors text-sm"
                           onClick={(e) => e.stopPropagation()}
                           title="Open in HubSpot"
                         >
