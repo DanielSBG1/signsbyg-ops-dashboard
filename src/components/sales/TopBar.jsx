@@ -30,15 +30,15 @@ const TABS = [
 
 export default function TopBar({ tab, setTab, period, setPeriod, customRange, setCustomRange, lastRefreshed, onRefresh, loading }) {
   return (
-    <header className="bg-slate-card border-b border-white/10 px-6 py-4">
+    <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold tracking-tight">
               <span className="text-accent">Signs By G</span>{' '}
-              <span className="text-white/70 font-medium">Sales Command Center</span>
+              <span className="text-gray-600 font-medium">Sales Command Center</span>
             </h1>
-            <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-black/[0.03] rounded-lg p-1">
               {TABS.map((t) => (
                 <button
                   key={t.value}
@@ -46,7 +46,7 @@ export default function TopBar({ tab, setTab, period, setPeriod, customRange, se
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     tab === t.value
                       ? 'bg-accent text-white'
-                      : 'text-white/60 hover:text-white'
+                      : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
                   {t.label}
@@ -64,7 +64,7 @@ export default function TopBar({ tab, setTab, period, setPeriod, customRange, se
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors relative ${
                   period === p.value
                     ? 'bg-accent text-white'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05] hover:text-gray-900'
                 } ${p.isQuarter && p.isCurrent && period !== p.value ? 'ring-1 ring-accent/40' : ''}`}
               >
                 {p.label}
@@ -82,19 +82,19 @@ export default function TopBar({ tab, setTab, period, setPeriod, customRange, se
               type="date"
               value={customRange.start}
               onChange={(e) => setCustomRange((r) => ({ ...r, start: e.target.value }))}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
-            <span className="text-white/40">to</span>
+            <span className="text-gray-400">to</span>
             <input
               type="date"
               value={customRange.end}
               onChange={(e) => setCustomRange((r) => ({ ...r, end: e.target.value }))}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
           </div>
         )}
 
-        <div className="flex items-center gap-3 mt-3 text-xs text-white/40">
+        <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
           <button
             onClick={onRefresh}
             disabled={loading}

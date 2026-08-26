@@ -29,9 +29,9 @@ export default function SpeedToLead({ sla }) {
 
   if (!sla || sla.total === 0) {
     return (
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h2 className="text-lg font-semibold mb-2">⚡ Speed to Lead</h2>
-        <p className="text-white/40 text-sm">No leads in this period yet.</p>
+        <p className="text-gray-400 text-sm">No leads in this period yet.</p>
       </div>
     );
   }
@@ -101,11 +101,11 @@ export default function SpeedToLead({ sla }) {
   const visibleLeads = showAll ? cfg.list : cfg.list.slice(0, 5);
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6 space-y-5">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h2 className="text-lg font-semibold">⚡ Speed to Lead</h2>
-          <p className="text-white/40 text-xs mt-0.5">
+          <p className="text-gray-400 text-xs mt-0.5">
             {sla.sourceAware
               ? 'source-aware SLA · 5min web/social, 60min referral, 4hr cold'
               : `${sla.thresholdMinutes}-minute SLA · industry shows 9× conversion lift when contacted within 5 min`}
@@ -122,10 +122,10 @@ export default function SpeedToLead({ sla }) {
 
       {/* Top stats: compliance % + supporting */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-        <div className="bg-white/5 rounded-xl p-4 col-span-2 md:col-span-1">
-          <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">Compliance</p>
+        <div className="bg-black/[0.03] rounded-xl p-4 col-span-2 md:col-span-1">
+          <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">Compliance</p>
           <p className={`text-4xl font-bold tabular-nums ${status.color}`}>{compliance}%</p>
-          <p className="text-white/40 text-xs mt-1">
+          <p className="text-gray-400 text-xs mt-1">
             {sla.within} of {sla.total} within SLA
           </p>
         </div>
@@ -147,31 +147,31 @@ export default function SpeedToLead({ sla }) {
       </div>
 
       {/* Selected bucket list */}
-      <div className="border-t border-white/5 pt-4">
+      <div className="border-t border-gray-200 pt-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className={`text-sm font-semibold ${cfg.headerColor}`}>{cfg.title}</h3>
           <div className="flex items-center gap-3">
             {cfg.deals != null && (
-              <span className="text-xs text-white/50">
+              <span className="text-xs text-gray-500">
                 <span className="text-green-400 font-semibold">{cfg.deals}</span>
-                <span className="text-white/30"> / {cfg.total} have deals</span>
+                <span className="text-gray-300"> / {cfg.total} have deals</span>
               </span>
             )}
             {cfg.won != null && cfg.won > 0 && (
-              <span className="text-xs text-white/50">
+              <span className="text-xs text-gray-500">
                 <span className="text-amber-400 font-semibold">{cfg.won}</span>
-                <span className="text-white/30"> won</span>
+                <span className="text-gray-300"> won</span>
               </span>
             )}
             {cfg.total > cfg.list.length && (
-              <span className="text-white/40 text-xs">
+              <span className="text-gray-400 text-xs">
                 Showing first {cfg.list.length} of {cfg.total}
               </span>
             )}
           </div>
         </div>
         {cfg.list.length === 0 ? (
-          <p className="text-white/40 text-sm py-4">
+          <p className="text-gray-400 text-sm py-4">
             {bucket === 'breaching' ? '✓ Zero leads currently breaching SLA. Keep it up.' : 'No leads in this bucket.'}
           </p>
         ) : (
@@ -206,21 +206,21 @@ export default function SpeedToLead({ sla }) {
                     const tooltip = flags.length > 0 ? flags.join('\n') : '';
                     return (
                       <tr key={lead.id} className={`border-t ${cfg.borderClass} ${cfg.hoverClass}`} title={tooltip}>
-                        <td className="px-3 py-2 text-white font-medium">{lead.name}</td>
-                        <td className="px-3 py-2 text-white/60">{lead.email}</td>
-                        <td className="px-3 py-2 text-white/60">{lead.source}</td>
-                        <td className={`px-3 py-2 ${lead.rep === 'Unassigned' ? 'text-danger font-semibold' : 'text-white/80'}`}>
+                        <td className="px-3 py-2 text-gray-900 font-medium">{lead.name}</td>
+                        <td className="px-3 py-2 text-gray-500">{lead.email}</td>
+                        <td className="px-3 py-2 text-gray-500">{lead.source}</td>
+                        <td className={`px-3 py-2 ${lead.rep === 'Unassigned' ? 'text-danger font-semibold' : 'text-gray-700'}`}>
                           {lead.rep}
                         </td>
                         <td className="px-3 py-2 text-center tabular-nums">
                           {lead.numDeals > 0
                             ? <span className="text-green-400 font-semibold">{lead.numDeals}</span>
-                            : <span className="text-white/20">—</span>}
+                            : <span className="text-gray-300">—</span>}
                         </td>
                         <td className="px-3 py-2 text-center">
                           {lead.hasWon
                             ? <span className="text-amber-400 font-bold">✓</span>
-                            : <span className="text-white/20">—</span>}
+                            : <span className="text-gray-300">—</span>}
                         </td>
                         <td className={`px-3 py-2 text-right font-semibold tabular-nums ${cfg.headerColor}`}>
                           {cfg.timeCol.accessor(lead)}
@@ -243,12 +243,12 @@ export default function SpeedToLead({ sla }) {
         )}
       {/* Per-source SLA breakdown */}
       {sla.sourceBreakdown && sla.sourceBreakdown.length > 0 && (
-        <div className="border-t border-white/5 pt-4">
-          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">By Source</h3>
+        <div className="border-t border-gray-200 pt-4">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">By Source</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-white/30 uppercase text-[10px] tracking-wider">
+                <tr className="text-gray-300 uppercase text-[10px] tracking-wider">
                   <th className="text-left pb-1.5 font-medium">Source</th>
                   <th className="text-right pb-1.5 font-medium">SLA</th>
                   <th className="text-right pb-1.5 font-medium">Total</th>
@@ -261,19 +261,19 @@ export default function SpeedToLead({ sla }) {
               <tbody>
                 {sla.sourceBreakdown.map((row) => {
                   const pct = row.compliancePct;
-                  const pctColor = pct == null ? 'text-white/30' : pct >= SLA_COMPLIANCE_THRESHOLDS.onTarget ? 'text-success' : pct >= SLA_COMPLIANCE_THRESHOLDS.attention ? 'text-yellow-400' : 'text-danger';
+                  const pctColor = pct == null ? 'text-gray-300' : pct >= SLA_COMPLIANCE_THRESHOLDS.onTarget ? 'text-success' : pct >= SLA_COMPLIANCE_THRESHOLDS.attention ? 'text-yellow-400' : 'text-danger';
                   const threshold = row.thresholdMinutes >= 60
                     ? `${row.thresholdMinutes / 60}h`
                     : `${row.thresholdMinutes}m`;
                   return (
-                    <tr key={row.source} className="border-t border-white/5 hover:bg-white/5">
-                      <td className="py-1.5 pr-3 text-white/70">
+                    <tr key={row.source} className="border-t border-gray-200 hover:bg-black/[0.03]">
+                      <td className="py-1.5 pr-3 text-gray-600">
                         {row.source === 'Source not set'
-                          ? <span className="text-white/30 italic">{row.source}</span>
+                          ? <span className="text-gray-300 italic">{row.source}</span>
                           : row.source}
                       </td>
-                      <td className="py-1.5 text-right text-white/40 tabular-nums">{threshold}</td>
-                      <td className="py-1.5 text-right text-white/50 tabular-nums">{row.total}</td>
+                      <td className="py-1.5 text-right text-gray-400 tabular-nums">{threshold}</td>
+                      <td className="py-1.5 text-right text-gray-500 tabular-nums">{row.total}</td>
                       <td className="py-1.5 text-right text-success/80 tabular-nums">{row.within}</td>
                       <td className="py-1.5 text-right text-yellow-400/80 tabular-nums">{row.over}</td>
                       <td className="py-1.5 text-right text-danger/80 tabular-nums">{row.breaching}</td>
@@ -287,7 +287,7 @@ export default function SpeedToLead({ sla }) {
             </table>
           </div>
           {sla.sourceBreakdown.some((r) => r.source === 'Source not set') && (
-            <p className="text-white/25 text-[10px] mt-2 italic">
+            <p className="text-gray-300 text-[10px] mt-2 italic">
               "Source not set" uses the default 5-min threshold. Populate the SBG Lead Source field in HubSpot to get per-source compliance.
             </p>
           )}
@@ -298,29 +298,29 @@ export default function SpeedToLead({ sla }) {
   );
 }
 
-function Stat({ label, value, colorClass = 'text-white', valueClass = 'text-2xl', subtext }) {
+function Stat({ label, value, colorClass = 'text-gray-900', valueClass = 'text-2xl', subtext }) {
   return (
-    <div className="bg-white/5 rounded-xl p-4">
-      <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+    <div className="bg-black/[0.03] rounded-xl p-4">
+      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`font-bold tabular-nums ${valueClass} ${colorClass}`}>{value}</p>
-      {subtext && <p className="text-white/40 text-xs mt-1">{subtext}</p>}
+      {subtext && <p className="text-gray-400 text-xs mt-1">{subtext}</p>}
     </div>
   );
 }
 
-function ClickStat({ label, value, colorClass = 'text-white', subtext, deals, won, active, onClick, partialSignal }) {
+function ClickStat({ label, value, colorClass = 'text-gray-900', subtext, deals, won, active, onClick, partialSignal }) {
   return (
     <button
       onClick={onClick}
-      className={`bg-white/5 hover:bg-white/10 rounded-xl p-4 text-left transition-all w-full ${
+      className={`bg-black/[0.03] hover:bg-black/[0.05] rounded-xl p-4 text-left transition-all w-full ${
         active ? 'ring-2 ring-accent' : ''
       }`}
     >
-      <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`font-bold tabular-nums text-2xl ${colorClass}`}>{value}</p>
-      {subtext && <p className="text-white/40 text-xs mt-1">{subtext}</p>}
+      {subtext && <p className="text-gray-400 text-xs mt-1">{subtext}</p>}
       {deals != null && (
-        <p className="text-white/30 text-[10px] mt-1.5 tabular-nums">
+        <p className="text-gray-300 text-[10px] mt-1.5 tabular-nums">
           {deals} deals{won > 0 ? ` · ${won} won` : ''}
         </p>
       )}

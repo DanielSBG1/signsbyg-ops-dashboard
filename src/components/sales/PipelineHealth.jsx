@@ -21,21 +21,21 @@ function DealModal({ title, deals, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative bg-slate-card border border-white/10 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
+        className="relative bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base">{title}</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 text-xl leading-none">&times;</button>
         </div>
         <div className="overflow-y-auto flex-1 flex flex-col gap-2">
           {deals.length === 0 ? (
-            <p className="text-white/20 text-sm text-center py-8">No deals</p>
+            <p className="text-gray-300 text-sm text-center py-8">No deals</p>
           ) : deals.map((deal) => (
-            <div key={deal.id} className="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
+            <div key={deal.id} className="bg-black/[0.03] rounded-xl px-4 py-3 flex items-center justify-between gap-4">
               <div className="flex flex-col min-w-0">
                 <span className="font-medium text-sm truncate">{deal.name}</span>
-                {deal.stage && <span className="text-white/40 text-xs">{deal.stage}</span>}
+                {deal.stage && <span className="text-gray-400 text-xs">{deal.stage}</span>}
               </div>
               <div className="flex items-center gap-3 shrink-0 text-xs">
                 {deal.amount > 0 && (
@@ -61,13 +61,13 @@ function PipelineCard({ name, data, onModal }) {
   const chartData = data.stages.filter((s) => s.count > 0);
 
   return (
-    <div className="bg-white/5 rounded-xl p-4">
+    <div className="bg-black/[0.03] rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-sm">{name}</h3>
         <div className="flex items-center gap-3 text-xs">
           <button
             onClick={() => onModal(`${name} — All Deals`, data.dealList)}
-            className="text-white/40 hover:text-white transition-colors cursor-pointer"
+            className="text-gray-400 hover:text-gray-900 transition-colors cursor-pointer"
           >
             {data.totalDeals} deals
           </button>
@@ -105,7 +105,7 @@ function PipelineCard({ name, data, onModal }) {
               tickLine={false}
             />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e1e30', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+              contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
               labelStyle={{ color: 'white' }}
               formatter={(val, name, props) => [`${props.payload.count} deals — $${val.toLocaleString()}`, '']}
             />
@@ -117,7 +117,7 @@ function PipelineCard({ name, data, onModal }) {
           </BarChart>
         </ResponsiveContainer>
       ) : (
-        <p className="text-white/20 text-sm text-center py-6">No deals in this period</p>
+        <p className="text-gray-300 text-sm text-center py-6">No deals in this period</p>
       )}
     </div>
   );
@@ -133,12 +133,12 @@ export default function PipelineHealth() {
   const selectedLabel = PERIODS.find((p) => p.value === period)?.label ?? 'All Time';
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6">
       <div className="flex flex-col gap-3 mb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Pipeline Health</h2>
           <div className="flex items-center gap-4 text-sm">
-            <span className="text-white/40">
+            <span className="text-gray-400">
               {period === 'all' ? 'Total Pipeline:' : `Pipeline Created ${selectedLabel}:`}
             </span>
             {loading ? (
@@ -166,7 +166,7 @@ export default function PipelineHealth() {
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                 period === p.value
                   ? 'bg-accent text-white'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                  : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05] hover:text-gray-900'
               }`}
             >
               {p.label}
@@ -180,14 +180,14 @@ export default function PipelineHealth() {
               type="date"
               value={customRange.start}
               onChange={(e) => setCustomRange((r) => ({ ...r, start: e.target.value }))}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
-            <span className="text-white/40">to</span>
+            <span className="text-gray-400">to</span>
             <input
               type="date"
               value={customRange.end}
               onChange={(e) => setCustomRange((r) => ({ ...r, end: e.target.value }))}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
           </div>
         )}
@@ -214,9 +214,9 @@ export default function PipelineHealth() {
                 onModal={(title, deals) => setModal({ title, deals })}
               />
             ) : (
-              <div key={key} className="bg-white/5 rounded-xl p-4">
+              <div key={key} className="bg-black/[0.03] rounded-xl p-4">
                 <h3 className="font-semibold text-sm mb-2">{pipelineData.label}</h3>
-                <p className="text-white/20 text-sm text-center py-6">No deals created in this period</p>
+                <p className="text-gray-300 text-sm text-center py-6">No deals created in this period</p>
               </div>
             )
           )}

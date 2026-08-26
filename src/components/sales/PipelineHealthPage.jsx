@@ -53,7 +53,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
 
   if (!pipelineHealth) {
     return (
-      <div className="text-center py-20 text-white/40">
+      <div className="text-center py-20 text-gray-400">
         Loading pipeline health...
       </div>
     );
@@ -61,10 +61,10 @@ export default function PipelineHealthPage({ pipelineHealth }) {
 
   if (!pipelineHealth.generatedAt) {
     return (
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h2 className="text-lg font-semibold mb-3">Pipeline Health</h2>
         <p className="text-yellow-400">
-          ⚠️ Run <code className="bg-white/10 px-1.5 py-0.5 rounded">scripts/compute-avg-cycle.js</code> and update constants to enable Pipeline Health.
+          ⚠️ Run <code className="bg-black/[0.05] px-1.5 py-0.5 rounded">scripts/compute-avg-cycle.js</code> and update constants to enable Pipeline Health.
         </p>
       </div>
     );
@@ -84,7 +84,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Pipeline Health</h1>
-          <p className="text-white/40 text-xs mt-1">
+          <p className="text-gray-400 text-xs mt-1">
             Live snapshot · Avg cycle constants generated {pipelineHealth.generatedAt}
           </p>
         </div>
@@ -102,7 +102,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-base font-semibold">Pipeline Coverage</h2>
-          <span className="text-white/40 text-xs">
+          <span className="text-gray-400 text-xs">
             Open value ÷ trailing-30-day revenue · Target ≥ {pipelineHealth.coverageTarget || 3}×
           </span>
         </div>
@@ -166,7 +166,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
           emptyMessage="No aging deals."
           onDealClick={setSelectedDeal}
         />
-        <p className="text-white/30 text-[10px] mt-2">
+        <p className="text-gray-300 text-[10px] mt-2">
           * "Days" = days in current stage for stuck/decayed reasons; total deal age for age-based.
         </p>
       </Section>
@@ -195,7 +195,7 @@ export default function PipelineHealthPage({ pipelineHealth }) {
           <select
             value={newDealsPeriod}
             onChange={(e) => setNewDealsPeriod(Number(e.target.value))}
-            className="bg-white/10 text-white/80 text-xs rounded px-2 py-1 border border-white/10"
+            className="bg-black/[0.05] text-gray-700 text-xs rounded px-2 py-1 border border-gray-200"
           >
             {NEW_DEALS_PERIODS.map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>
@@ -235,38 +235,38 @@ function BucketDealListModal({ title, deals, onClose, onDealClick }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative bg-slate-card border border-white/10 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
+        className="relative bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base">{title}</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 text-xl leading-none">&times;</button>
         </div>
         <div className="overflow-y-auto flex-1 flex flex-col gap-2">
           {deals.length === 0 ? (
-            <p className="text-white/20 text-sm text-center py-8">No deals</p>
+            <p className="text-gray-300 text-sm text-center py-8">No deals</p>
           ) : deals.map((deal) => (
             <div
               key={deal.id}
-              className="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4 cursor-pointer hover:bg-white/10 transition-colors"
+              className="bg-black/[0.03] rounded-xl px-4 py-3 flex items-center justify-between gap-4 cursor-pointer hover:bg-black/[0.05] transition-colors"
               onClick={() => onDealClick(deal)}
             >
               <div className="min-w-0">
                 <div className="font-medium text-sm truncate">{deal.name}</div>
-                <div className="text-white/40 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
+                <div className="text-gray-400 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
               </div>
               <div className="shrink-0 text-right">
                 {deal.amount > 0 && (
                   <div className="text-accent font-semibold text-xs">${deal.amount.toLocaleString()}</div>
                 )}
                 {deal.stageAgeDays != null && (
-                  <div className="text-white/30 text-[10px]">{deal.stageAgeDays}d in stage</div>
+                  <div className="text-gray-300 text-[10px]">{deal.stageAgeDays}d in stage</div>
                 )}
               </div>
             </div>
           ))}
         </div>
-        <p className="text-white/25 text-[10px] mt-3 text-center">Click a deal to see full details</p>
+        <p className="text-gray-300 text-[10px] mt-3 text-center">Click a deal to see full details</p>
       </div>
     </div>
   );
@@ -284,10 +284,10 @@ function makeGrouping(byPipeline, bucketName) {
 function CoverageCard({ label, coverage, target }) {
   if (!coverage || coverage.ratio == null) {
     return (
-      <div className="bg-slate-card border border-white/5 rounded-xl p-4">
-        <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
-        <p className="text-2xl font-bold text-white/30">—</p>
-        <p className="text-white/40 text-xs mt-1">No revenue last 30 days</p>
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+        <p className="text-2xl font-bold text-gray-300">—</p>
+        <p className="text-gray-400 text-xs mt-1">No revenue last 30 days</p>
       </div>
     );
   }
@@ -297,38 +297,38 @@ function CoverageCard({ label, coverage, target }) {
     ratio >= target * 0.66 ? { color: 'text-yellow-400', border: 'border-yellow-400/30' } :
     { color: 'text-danger', border: 'border-danger/30' };
   return (
-    <div className={`bg-slate-card border ${status.border} rounded-xl p-4`}>
-      <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+    <div className={`bg-white border ${status.border} rounded-xl p-4`}>
+      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-3xl font-bold tabular-nums ${status.color}`}>{ratio}×</p>
-      <p className="text-white/40 text-xs mt-1">
+      <p className="text-gray-400 text-xs mt-1">
         {formatMoney(openValue)} open ÷ {formatMoney(trailing30Revenue)}/mo
       </p>
     </div>
   );
 }
 
-function KpiCard({ label, big, sub, colorClass = 'text-white', onClick }) {
+function KpiCard({ label, big, sub, colorClass = 'text-gray-900', onClick }) {
   return (
     <div
-      className={`bg-slate-card border border-white/5 rounded-xl p-4 transition-colors ${onClick ? 'cursor-pointer hover:border-white/20 hover:bg-white/[0.06]' : ''}`}
+      className={`bg-white border border-gray-200 rounded-xl p-4 transition-colors ${onClick ? 'cursor-pointer hover:border-white/20 hover:bg-black/[0.03]' : ''}`}
       onClick={onClick}
       title={onClick ? `Jump to ${label} section` : undefined}
     >
-      <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold ${colorClass}`}>{big}</p>
-      <p className="text-white/50 text-xs mt-1">{sub}</p>
-      {onClick && <p className="text-white/20 text-[9px] mt-1.5">↓ click to jump</p>}
+      <p className="text-gray-500 text-xs mt-1">{sub}</p>
+      {onClick && <p className="text-gray-300 text-[9px] mt-1.5">↓ click to jump</p>}
     </div>
   );
 }
 
 function Section({ id, title, subtitle, rightSlot, children }) {
   return (
-    <div id={id} className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div id={id} className="bg-white border border-gray-200 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-lg font-semibold">{title}</h2>
-          <p className="text-white/40 text-xs mt-0.5">{subtitle}</p>
+          <p className="text-gray-400 text-xs mt-0.5">{subtitle}</p>
         </div>
         {rightSlot}
       </div>

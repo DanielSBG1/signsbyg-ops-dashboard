@@ -65,7 +65,7 @@ export default function PipelineHealthDealList({ pipelines, columns, emptyMessag
 
   if (nonEmpty.length === 0) {
     return (
-      <p className="text-white/30 text-sm text-center py-6">{emptyMessage || 'No deals.'}</p>
+      <p className="text-gray-300 text-sm text-center py-6">{emptyMessage || 'No deals.'}</p>
     );
   }
 
@@ -76,14 +76,14 @@ export default function PipelineHealthDealList({ pipelines, columns, emptyMessag
         return (
           <div key={key}>
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-semibold text-white/80">{p.label}</h4>
-              <span className="text-xs text-white/40">
+              <h4 className="text-sm font-semibold text-gray-700">{p.label}</h4>
+              <span className="text-xs text-gray-400">
                 {p.deals.length} {p.deals.length === 1 ? 'deal' : 'deals'} · {formatMoney(subtotal)}
               </span>
             </div>
-            <div className="bg-white/5 rounded-lg overflow-hidden">
+            <div className="bg-black/[0.03] rounded-lg overflow-hidden">
               <table className="w-full text-xs">
-                <thead className="bg-white/5 text-white/40 uppercase text-[10px] tracking-wider">
+                <thead className="bg-black/[0.03] text-gray-400 uppercase text-[10px] tracking-wider">
                   <tr>
                     {columns.map((col) => {
                       const isActive = sort && sort.key === col.key;
@@ -91,7 +91,7 @@ export default function PipelineHealthDealList({ pipelines, columns, emptyMessag
                         <th
                           key={col.key}
                           onClick={() => handleHeaderClick(col.key)}
-                          className="px-3 py-2 text-left font-medium cursor-pointer select-none hover:text-white/70"
+                          className="px-3 py-2 text-left font-medium cursor-pointer select-none hover:text-gray-600"
                         >
                           {col.label}
                           {isActive && (
@@ -111,14 +111,14 @@ export default function PipelineHealthDealList({ pipelines, columns, emptyMessag
                       <tr
                         key={deal.id}
                         onClick={() => onDealClick?.(deal)}
-                        className={`border-t border-white/5 ${onDealClick ? 'cursor-pointer' : ''} ${
+                        className={`border-t border-gray-200 ${onDealClick ? 'cursor-pointer' : ''} ${
                           isStaleHot
                             ? 'bg-red-500/20 hover:bg-red-500/30 border-red-500/40'
                             : 'hover:bg-white/[0.02]'
                         }`}
                       >
                         {columns.map((col) => (
-                          <td key={col.key} className="px-3 py-2 text-white/70">
+                          <td key={col.key} className="px-3 py-2 text-gray-600">
                             {col.render ? col.render(deal) : deal[col.key]}
                           </td>
                         ))}

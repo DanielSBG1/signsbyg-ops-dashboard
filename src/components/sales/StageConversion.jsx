@@ -63,20 +63,20 @@ function DealModal({ title, deals, onClose, onDealClick }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative bg-slate-card border border-white/10 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
+        className="relative bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base">{title}</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 text-xl leading-none">&times;</button>
         </div>
         <div className="overflow-y-auto flex-1 flex flex-col gap-2">
           {deals.length === 0 ? (
-            <p className="text-white/20 text-sm text-center py-8">No deals</p>
+            <p className="text-gray-300 text-sm text-center py-8">No deals</p>
           ) : deals.map((deal) => (
             <div
               key={deal.id}
-              className={`bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4 ${onDealClick ? 'cursor-pointer hover:bg-white/10 transition-colors' : ''}`}
+              className={`bg-black/[0.03] rounded-xl px-4 py-3 flex items-center justify-between gap-4 ${onDealClick ? 'cursor-pointer hover:bg-black/[0.05] transition-colors' : ''}`}
               onClick={onDealClick ? () => onDealClick(deal) : undefined}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -86,7 +86,7 @@ function DealModal({ title, deals, onClose, onDealClick }) {
                 <div className="min-w-0">
                   <div className="font-medium text-sm truncate">{deal.name}</div>
                   {onDealClick && (
-                    <div className="text-white/40 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
+                    <div className="text-gray-400 text-xs">{deal.stageLabel} · {deal.ownerName}</div>
                   )}
                 </div>
               </div>
@@ -95,14 +95,14 @@ function DealModal({ title, deals, onClose, onDealClick }) {
                   <div className="text-accent font-semibold text-xs">${deal.amount.toLocaleString()}</div>
                 )}
                 {onDealClick && deal.stageAgeDays != null && (
-                  <div className="text-white/30 text-[10px]">{deal.stageAgeDays}d in stage</div>
+                  <div className="text-gray-300 text-[10px]">{deal.stageAgeDays}d in stage</div>
                 )}
               </div>
             </div>
           ))}
         </div>
         {onDealClick && deals.length > 0 && (
-          <p className="text-white/25 text-[10px] mt-3 text-center">Click a deal to see full details</p>
+          <p className="text-gray-300 text-[10px] mt-3 text-center">Click a deal to see full details</p>
         )}
       </div>
     </div>
@@ -127,7 +127,7 @@ function PipelineFunnel({ pKey, stages, onStageClick, onSegmentHover }) {
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-white/80 mb-3">{label}</h3>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3">{label}</h3>
       <div className="space-y-1">
         {stages.map((s, i) => {
           const widthPct = Math.max(s.reached > 0 ? 5 : 0, (s.reached / maxReached) * 100);
@@ -140,7 +140,7 @@ function PipelineFunnel({ pKey, stages, onStageClick, onSegmentHover }) {
           return (
             <React.Fragment key={s.id}>
               <div className="flex items-center gap-2">
-                <div className="w-32 text-[11px] text-white/60 truncate text-right pr-1" title={s.label}>
+                <div className="w-32 text-[11px] text-gray-500 truncate text-right pr-1" title={s.label}>
                   {s.label}
                 </div>
                 <div
@@ -175,11 +175,11 @@ function PipelineFunnel({ pKey, stages, onStageClick, onSegmentHover }) {
                       />
                     ))}
                   </div>
-                  <span className="absolute inset-0 flex items-center justify-start pl-2 text-xs text-white font-medium pointer-events-none">
+                  <span className="absolute inset-0 flex items-center justify-start pl-2 text-xs text-gray-900 font-medium pointer-events-none">
                     {s.reached}
                   </span>
                   {stageValue > 0 && (
-                    <span className="absolute inset-0 flex items-center justify-end pr-2 text-[10px] text-white/50 pointer-events-none">
+                    <span className="absolute inset-0 flex items-center justify-end pr-2 text-[10px] text-gray-500 pointer-events-none">
                       ${stageValue.toLocaleString()}
                     </span>
                   )}
@@ -210,12 +210,12 @@ function PipelineFunnel({ pKey, stages, onStageClick, onSegmentHover }) {
 function SourceLegend({ entries }) {
   if (entries.length === 0) return null;
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-4 border-t border-white/5">
+    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-4 border-t border-gray-200">
       {entries.map(({ source, count }) => (
         <div key={source} className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: SOURCE_COLORS[source] || '#64748b', opacity: 0.8 }} />
-          <span className="text-[11px] text-white/50">{SOURCE_LABELS[source] || source}</span>
-          <span className="text-[11px] text-white/25">{count}</span>
+          <span className="text-[11px] text-gray-500">{SOURCE_LABELS[source] || source}</span>
+          <span className="text-[11px] text-gray-300">{count}</span>
         </div>
       ))}
     </div>
@@ -254,12 +254,12 @@ export default function StageConversion({ onDealClick }) {
   }
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6">
       <div className="flex flex-col gap-3 mb-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Stage-to-Stage Conversion</h2>
-            <p className="text-white/40 text-xs mt-0.5">{MODE_DESCRIPTIONS[mode]}</p>
+            <p className="text-gray-400 text-xs mt-0.5">{MODE_DESCRIPTIONS[mode]}</p>
           </div>
           {loading && (
             <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -275,7 +275,7 @@ export default function StageConversion({ onDealClick }) {
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                 mode === m.value
                   ? 'bg-accent text-white'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                  : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05] hover:text-gray-900'
               }`}
             >
               {m.label}
@@ -293,7 +293,7 @@ export default function StageConversion({ onDealClick }) {
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                   period === p.value
                     ? 'bg-accent text-white'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05] hover:text-gray-900'
                 }`}
               >
                 {p.label}
@@ -308,14 +308,14 @@ export default function StageConversion({ onDealClick }) {
               type="date"
               value={customRange.start}
               onChange={(e) => setCustomRange((r) => ({ ...r, start: e.target.value }))}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
-            <span className="text-white/40">to</span>
+            <span className="text-gray-400">to</span>
             <input
               type="date"
               value={customRange.end}
               onChange={(e) => setCustomRange((r) => ({ ...r, end: e.target.value }))}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
           </div>
         )}
@@ -347,13 +347,13 @@ export default function StageConversion({ onDealClick }) {
           <SourceLegend entries={legendEntries} />
         </>
       ) : data ? (
-        <p className="text-white/20 text-sm text-center py-12">No deals in this period</p>
+        <p className="text-gray-300 text-sm text-center py-12">No deals in this period</p>
       ) : null}
 
       {/* Hover tooltip for color segments */}
       {tooltip && (
         <div
-          className="fixed z-[60] pointer-events-none px-3 py-2 rounded-lg bg-[#1a1a2e] border border-white/20 shadow-xl"
+          className="fixed z-[60] pointer-events-none px-3 py-2 rounded-lg bg-white border border-gray-200 shadow-xl"
           style={{ left: tooltip.x, top: tooltip.y - 8, transform: 'translate(-50%, -100%)' }}
         >
           <div className="flex items-center gap-2">
@@ -361,11 +361,11 @@ export default function StageConversion({ onDealClick }) {
               className="w-2.5 h-2.5 rounded-sm shrink-0"
               style={{ backgroundColor: SOURCE_COLORS[tooltip.source] || '#64748b' }}
             />
-            <span className="text-xs font-semibold text-white whitespace-nowrap">
+            <span className="text-xs font-semibold text-gray-900 whitespace-nowrap">
               {SOURCE_LABELS[tooltip.source] || tooltip.source}
             </span>
           </div>
-          <div className="text-[11px] text-white/50 mt-0.5 pl-[18px]">
+          <div className="text-[11px] text-gray-500 mt-0.5 pl-[18px]">
             {tooltip.count} deal{tooltip.count !== 1 ? 's' : ''}
           </div>
         </div>

@@ -32,7 +32,7 @@ function fmtShortDate(dateStr) {
 }
 
 function responseTimeColor(minutes) {
-  if (minutes == null) return 'text-white/40';
+  if (minutes == null) return 'text-gray-400';
   if (minutes <= 5) return 'text-success';
   if (minutes <= 60) return 'text-warning';
   if (minutes <= 240) return 'text-orange-400';
@@ -48,18 +48,18 @@ function truncate(str, len = 28) {
 
 function StatModule({ label, value, valueClass, subline, subline2 }) {
   return (
-    <div className="bg-white/5 rounded-xl p-6 flex flex-col gap-1.5">
-      <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">
+    <div className="bg-black/[0.03] rounded-xl p-6 flex flex-col gap-1.5">
+      <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">
         {label}
       </span>
-      <span className={`text-4xl font-bold tabular-nums ${valueClass || 'text-white'}`}>
+      <span className={`text-4xl font-bold tabular-nums ${valueClass || 'text-gray-900'}`}>
         {value}
       </span>
       {subline && (
-        <span className="text-sm text-white/40">{subline}</span>
+        <span className="text-sm text-gray-400">{subline}</span>
       )}
       {subline2 && (
-        <span className="text-xs text-white/25">{subline2}</span>
+        <span className="text-xs text-gray-300">{subline2}</span>
       )}
     </div>
   );
@@ -223,18 +223,18 @@ function groupDealsByPeriod(deals, period) {
 function DealCard({ deal }) {
   const name = truncate(deal.name);
   return (
-    <div className="bg-white/3 hover:bg-white/5 rounded-lg px-3 py-2.5 transition-colors group">
+    <div className="bg-black/[0.02] hover:bg-black/[0.03] rounded-lg px-3 py-2.5 transition-colors group">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           {deal.hubspotUrl ? (
             <a href={deal.hubspotUrl} target="_blank" rel="noopener noreferrer"
-              className="text-sm text-white/80 hover:text-accent transition-colors block truncate" title={deal.name}>
+              className="text-sm text-gray-700 hover:text-accent transition-colors block truncate" title={deal.name}>
               {name}
             </a>
           ) : (
-            <span className="text-sm text-white/80 block truncate" title={deal.name}>{name}</span>
+            <span className="text-sm text-gray-700 block truncate" title={deal.name}>{name}</span>
           )}
-          <span className="text-[10px] text-white/30 block mt-0.5">
+          <span className="text-[10px] text-gray-300 block mt-0.5">
             {deal.stageLabel || deal.stage || '—'}
           </span>
         </div>
@@ -256,18 +256,18 @@ function TimeColumn({ group }) {
   const totalAmount = group.deals.reduce((s, d) => s + (d.amount || 0), 0);
 
   return (
-    <div className="bg-white/5 rounded-xl overflow-hidden flex-1 min-w-[280px]">
+    <div className="bg-black/[0.03] rounded-xl overflow-hidden flex-1 min-w-[280px]">
       {/* Column header */}
-      <div className="px-4 py-3 border-b border-white/5">
+      <div className="px-4 py-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-sm font-semibold text-white">{group.label}</span>
+            <span className="text-sm font-semibold text-gray-900">{group.label}</span>
             {group.sublabel && (
-              <span className="text-[10px] text-white/30 block mt-0.5">{group.sublabel}</span>
+              <span className="text-[10px] text-gray-300 block mt-0.5">{group.sublabel}</span>
             )}
           </div>
           <div className="text-right">
-            <span className="text-xs tabular-nums text-white/50">{group.deals.length} deals</span>
+            <span className="text-xs tabular-nums text-gray-500">{group.deals.length} deals</span>
             {wonCount > 0 && (
               <span className="text-[10px] text-success block">{wonCount} won</span>
             )}
@@ -327,8 +327,8 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
 
   if (!reps || reps.length === 0) {
     return (
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
-        <p className="text-white/40 text-sm text-center">No rep data available.</p>
+      <div className="bg-white border border-gray-200 rounded-2xl p-6">
+        <p className="text-gray-400 text-sm text-center">No rep data available.</p>
       </div>
     );
   }
@@ -346,7 +346,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-accent text-white'
-                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+                  : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05]'
               }`}
             >
               {r.name}
@@ -357,8 +357,8 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
 
       {/* ── Placeholder when nothing selected ──────── */}
       {!rep && (
-        <div className="bg-slate-card border border-white/5 rounded-2xl p-12 flex items-center justify-center">
-          <p className="text-white/30 text-sm">Select a rep to view their scorecard</p>
+        <div className="bg-white border border-gray-200 rounded-2xl p-12 flex items-center justify-center">
+          <p className="text-gray-300 text-sm">Select a rep to view their scorecard</p>
         </div>
       )}
 
@@ -383,7 +383,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
             <StatModule
               label="DEALS WON"
               value={rep.dealsWon ?? 0}
-              valueClass={(rep.dealsWon ?? 0) > 0 ? 'text-success' : 'text-white'}
+              valueClass={(rep.dealsWon ?? 0) > 0 ? 'text-success' : 'text-gray-900'}
               subline={`${rep.dealsCreated ?? 0} created in period`}
             />
             <StatModule
@@ -407,20 +407,20 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
           </div>
 
           {/* ── Bid pipeline bar ───────────────────── */}
-          <div className="bg-white/5 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
-            <span className="text-sm text-white/70 font-medium">
+          <div className="bg-black/[0.03] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm text-gray-600 font-medium">
               Bid Pipeline: <span className="text-accent font-bold">{fmtCurrency(rep.bidsRevenue)}</span>
             </span>
-            <span className="text-sm text-white/40">
-              Avg Lead → Bid: <span className="text-white/70 tabular-nums font-medium">{fmtTime(rep.avgTimeToBidMinutes)}</span>
+            <span className="text-sm text-gray-400">
+              Avg Lead → Bid: <span className="text-gray-600 tabular-nums font-medium">{fmtTime(rep.avgTimeToBidMinutes)}</span>
             </span>
           </div>
 
           {/* ── Deals loading state ────────────────── */}
           {dealsLoading && (
-            <div className="bg-white/5 rounded-xl p-8 flex items-center justify-center gap-3">
+            <div className="bg-black/[0.03] rounded-xl p-8 flex items-center justify-center gap-3">
               <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-              <span className="text-white/40 text-sm">Loading deal details...</span>
+              <span className="text-gray-400 text-sm">Loading deal details...</span>
             </div>
           )}
 
@@ -428,7 +428,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
           {timeGroups.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs uppercase tracking-wider text-white/30 font-medium">
+                <span className="text-xs uppercase tracking-wider text-gray-300 font-medium">
                   {repDeals.length} Deals · Grouped by {
                     period === 'week' || period === 'lastweek' ? 'Day' :
                     period === 'month' || period === 'lastmonth' ? 'Week' :
@@ -436,7 +436,7 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
                     period === 'twoweeks' ? 'Week' : 'Day'
                   }
                 </span>
-                <span className="text-xs text-white/20">
+                <span className="text-xs text-gray-300">
                   {fmtCurrency(repDeals.reduce((s, d) => s + (d.amount || 0), 0))} total pipeline
                 </span>
               </div>
@@ -450,8 +450,8 @@ export default function RepScorecard({ reps, selectedRepId, onSelectRep, periodD
 
           {/* ── No deals message ───────────────────── */}
           {!dealsLoading && repDeals.length === 0 && (
-            <div className="bg-white/5 rounded-xl p-8 text-center">
-              <p className="text-white/30 text-sm">No deals found for this period</p>
+            <div className="bg-black/[0.03] rounded-xl p-8 text-center">
+              <p className="text-gray-300 text-sm">No deals found for this period</p>
             </div>
           )}
         </>

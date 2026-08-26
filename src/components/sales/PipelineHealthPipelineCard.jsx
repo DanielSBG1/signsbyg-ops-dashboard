@@ -32,11 +32,11 @@ export default function PipelineHealthPipelineCard({ pipeline, generatedAt, onBu
   }
 
   return (
-    <div className="bg-white/5 rounded-xl p-4">
+    <div className="bg-black/[0.03] rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-sm">{pipeline.label}</h3>
         <span
-          className="text-xs text-white/50 cursor-help border-b border-dotted border-white/20"
+          className="text-xs text-gray-500 cursor-help border-b border-dotted border-white/20"
           title={cycleTooltip}
         >
           avg cycle: {pipeline.avgCycleDays}d
@@ -55,7 +55,7 @@ export default function PipelineHealthPipelineCard({ pipeline, generatedAt, onBu
           label="🌡️ Active"
           count={pipeline.counts.active}
           value={pipeline.values.active}
-          colorClass="text-white/70"
+          colorClass="text-gray-600"
           onClick={onBucketClick ? () => handleBucket('🌡️ Active', 'active') : undefined}
           clickable={pipeline.counts.active > 0}
         />
@@ -90,9 +90,9 @@ function BucketRow({ label, count, value, colorClass, onClick, clickable }) {
       onClick={interactive ? onClick : undefined}
     >
       <span className={colorClass}>
-        {label} <span className="text-white/40">{count}</span>
+        {label} <span className="text-gray-400">{count}</span>
       </span>
-      <span className="text-white/50 text-[11px]">{formatMoney(value)}</span>
+      <span className="text-gray-500 text-[11px]">{formatMoney(value)}</span>
     </div>
   );
 }

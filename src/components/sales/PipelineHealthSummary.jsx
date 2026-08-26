@@ -23,10 +23,10 @@ export default function PipelineHealthSummary({ pipelineHealth, onViewFullReport
   // Empty state: constants not yet computed
   if (!pipelineHealth.generatedAt) {
     return (
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h2 className="text-lg font-semibold mb-2">Pipeline Health</h2>
         <p className="text-yellow-400 text-sm">
-          ⚠️ Run <code className="bg-white/10 px-1.5 py-0.5 rounded">scripts/compute-avg-cycle.js</code> to enable Pipeline Health.
+          ⚠️ Run <code className="bg-black/[0.05] px-1.5 py-0.5 rounded">scripts/compute-avg-cycle.js</code> to enable Pipeline Health.
         </p>
       </div>
     );
@@ -36,9 +36,9 @@ export default function PipelineHealthSummary({ pipelineHealth, onViewFullReport
   const isHealthy = totals.hot === 0 && totals.aging === 0 && totals.cold === 0;
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-xl px-4 py-2.5 flex items-center justify-between flex-wrap gap-x-4 gap-y-2">
+    <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between flex-wrap gap-x-4 gap-y-2">
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs uppercase tracking-wider text-white/50 font-medium mr-1">Pipeline Health</span>
+        <span className="text-xs uppercase tracking-wider text-gray-500 font-medium mr-1">Pipeline Health</span>
         {isHealthy ? (
           <span className="text-success text-xs">🎉 Healthy — no action items</span>
         ) : (
@@ -60,7 +60,7 @@ export default function PipelineHealthSummary({ pipelineHealth, onViewFullReport
         )}
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-white/40 text-xs">
+        <span className="text-gray-400 text-xs">
           Total open: {formatMoney(totals.openValue)} · {totals.open} deals
         </span>
         <button onClick={onViewFullReport} className="text-accent text-xs hover:underline">
@@ -76,9 +76,9 @@ function Chip({ icon, count, value, colorClass, label, sub }) {
     <span className={`inline-flex items-center gap-1 text-xs ${colorClass}`} title={sub || undefined}>
       <span>{icon}</span>
       <span className="font-semibold tabular-nums">{count}</span>
-      <span className="text-white/40">{label}</span>
-      <span className="text-white/40">·</span>
-      <span className="text-white/50 tabular-nums">{value}</span>
+      <span className="text-gray-400">{label}</span>
+      <span className="text-gray-400">·</span>
+      <span className="text-gray-500 tabular-nums">{value}</span>
       {sub && <span className="text-yellow-400/70 ml-1">({sub})</span>}
     </span>
   );

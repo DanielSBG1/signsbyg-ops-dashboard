@@ -41,24 +41,24 @@ function LeadModal({ title, leads, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative bg-slate-card border border-white/10 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
+        className="relative bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base">{title}</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 text-xl leading-none">&times;</button>
         </div>
         <div className="overflow-y-auto flex-1 flex flex-col gap-2">
           {leads.length === 0 ? (
-            <p className="text-white/20 text-sm text-center py-8">No leads</p>
+            <p className="text-gray-300 text-sm text-center py-8">No leads</p>
           ) : leads.map((lead) => (
-            <div key={lead.id} className="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
+            <div key={lead.id} className="bg-black/[0.03] rounded-xl px-4 py-3 flex items-center justify-between gap-4">
               <div className="flex flex-col min-w-0">
                 <span className="font-medium text-sm truncate">{lead.name}</span>
-                {lead.email && <span className="text-white/40 text-xs truncate">{lead.email}</span>}
+                {lead.email && <span className="text-gray-400 text-xs truncate">{lead.email}</span>}
               </div>
               {lead.createdAt && (
-                <span className="text-white/30 text-xs shrink-0">{lead.createdAt}</span>
+                <span className="text-gray-300 text-xs shrink-0">{lead.createdAt}</span>
               )}
             </div>
           ))}
@@ -87,7 +87,7 @@ export default function SourceBreakdown() {
   const total = barData.reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6">
       <div className="flex flex-col gap-3 mb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Lead Sources</h2>
@@ -105,7 +105,7 @@ export default function SourceBreakdown() {
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                 period === p.value
                   ? 'bg-accent text-white'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                  : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05] hover:text-gray-900'
               }`}
             >
               {p.label}
@@ -119,14 +119,14 @@ export default function SourceBreakdown() {
               type="date"
               value={customRange.start}
               onChange={(e) => setCustomRange((r) => ({ ...r, start: e.target.value }))}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
-            <span className="text-white/40">to</span>
+            <span className="text-gray-400">to</span>
             <input
               type="date"
               value={customRange.end}
               onChange={(e) => setCustomRange((r) => ({ ...r, end: e.target.value }))}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900"
             />
           </div>
         )}
@@ -170,7 +170,7 @@ export default function SourceBreakdown() {
                     tickLine={false}
                   />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1e1e30', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                     labelStyle={{ color: 'white' }}
                     formatter={(val) => [`${val} leads (${total > 0 ? Math.round((val / total) * 100) : 0}%)`, '']}
                   />
@@ -182,13 +182,13 @@ export default function SourceBreakdown() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-white/20 text-sm text-center py-12">No leads in this period</p>
+              <p className="text-gray-300 text-sm text-center py-12">No leads in this period</p>
             )}
           </div>
 
           {/* Daily Trend Line */}
           <div>
-            <h3 className="text-sm text-white/40 font-medium mb-3">Leads Per Day</h3>
+            <h3 className="text-sm text-gray-400 font-medium mb-3">Leads Per Day</h3>
             {data.daily && data.daily.length > 0 ? (
               <ResponsiveContainer width="100%" height={Math.max(160, barData.length * 36)}>
                 <LineChart data={data.daily} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
@@ -207,7 +207,7 @@ export default function SourceBreakdown() {
                     allowDecimals={false}
                   />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1e1e30', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                     labelStyle={{ color: 'white' }}
                     formatter={(val) => [`${val} leads`, '']}
                   />
@@ -222,7 +222,7 @@ export default function SourceBreakdown() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-white/20 text-sm text-center py-12">No daily data available</p>
+              <p className="text-gray-300 text-sm text-center py-12">No daily data available</p>
             )}
           </div>
         </div>
