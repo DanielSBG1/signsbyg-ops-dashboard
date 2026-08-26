@@ -5,7 +5,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────────────────────
 
 const COLORS = {
   success: '#22c55e',
@@ -36,7 +36,7 @@ const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
 
 const COMPLETED_STATUSES = new Set(['early', 'on_time', 'bled_over', 'rescheduled', 'failed']);
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────
 
 function rateColorClass(rate) {
   if (rate >= 80) return 'text-success';
@@ -67,7 +67,7 @@ function fmtWeekLabel(isoDate) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-// ─── Period math ──────────────────────────────────────────────────────────────
+// ─── Period math ────────────────────────────────────────────────────────
 
 function getMondayOf(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
@@ -121,29 +121,24 @@ function jobInRange(job, range) {
   return d >= range.start && d <= range.end;
 }
 
-// ─── Compute crew stats from jobs ─────────────────────────────────────────────
+// ─── Compute crew stats from jobs ─────────────────────────────────────────
 
 function computeCrewStats(crewName, jobs) {
   const crewJobs = jobs.filter(j => (j.crews ?? []).includes(crewName));
   const completedJobs = crewJobs.filter(j => COMPLETED_STATUSES.has(j.status));
   const openJobs = crewJobs.filter(j => !COMPLETED_STATUSES.has(j.status));
 
-  // First-time completion: completed AND 0 reschedules
-  // Statuses early, on_time, bled_over all count as first-try if reschedules === 0
   const firstTime = completedJobs.filter(j =>
     (j.reschedules ?? 0) === 0 &&
     (j.status === 'early' || j.status === 'on_time' || j.status === 'bled_over')
   ).length;
 
-  // Callbacks: jobs with 1+ reschedules
   const callbacks = completedJobs.filter(j => (j.reschedules ?? 0) >= 1).length;
 
-  // Service calls: jobs in the "Service" section assigned to this crew
   const serviceCalls = crewJobs.filter(j =>
     (j.section || '').toLowerCase().includes('service')
   ).length;
 
-  // On-time: early + on_time
   const onTimeCount = completedJobs.filter(j => j.status === 'early' || j.status === 'on_time').length;
 
   const firstTimeRate = completedJobs.length > 0
@@ -174,15 +169,15 @@ function computeCrewStats(crewName, jobs) {
   };
 }
 
-// ─── Chart tooltip ────────────────────────────────────────────────────────────
+// ─── Chart tooltip ──────────────────────────────────────────────────────
 
 function ChartTooltip({ active, payload, label, formatter }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="bg-[#1a2035] border border-white/10 rounded-lg p-3 shadow-xl">
-      <p className="text-xs text-white/60 mb-1.5 font-medium">{label}</p>
+    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-xl">
+      <p className="text-xs text-gray-500 mb-1.5 font-medium">{label}</p>
       {payload.map((entry, i) => (
-        <p key={i} className="text-xs" style={{ color: entry.color || '#fff' }}>
+        <p key={i} className="text-xs" style={{ color: entry.color || '#111827' }}>
           {entry.name}: {formatter ? formatter(entry.value, entry.name) : entry.value}
         </p>
       ))}
@@ -190,18 +185,18 @@ function ChartTooltip({ active, payload, label, formatter }) {
   );
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// ─── Stat card ──────────────────────────────────────────────────────────
 
 function StatCard({ title, children }) {
   return (
-    <div className="bg-white/5 rounded-xl p-5">
-      <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-2">{title}</p>
+    <div className="bg-black/[0.03] rounded-xl p-5">
+      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">{title}</p>
       {children}
     </div>
   );
 }
 
-// ─── Sortable column header ───────────────────────────────────────────────────
+// ─── Sortable column header ─────────────────────────────────────────────
 
 function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className }) {
   const isActive = currentSort === sortKey;
@@ -216,20 +211,20 @@ function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className
   );
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// ─── Status badge ───────────────────────────────────────────────────────
 
 const STATUS_BADGE = {
   early:       { label: 'Early',       cls: 'bg-success/20 text-success' },
   on_time:     { label: 'On Time',     cls: 'bg-success/20 text-success' },
   bled_over:   { label: 'Bled Over',   cls: 'bg-warning/20 text-warning' },
   scheduled:   { label: 'Scheduled',   cls: 'bg-accent/20 text-accent' },
-  pending:     { label: 'No Date',     cls: 'bg-white/10 text-white/40' },
+  pending:     { label: 'No Date',     cls: 'bg-black/[0.05] text-gray-400' },
   late:        { label: 'Late',        cls: 'bg-danger/20 text-danger' },
   rescheduled: { label: 'Rescheduled', cls: 'bg-warning/20 text-warning' },
   failed:      { label: 'Failed',      cls: 'bg-danger/20 text-danger' },
 };
 
-// ─── Leaderboard ──────────────────────────────────────────────────────────────
+// ─── Leaderboard ────────────────────────────────────────────────────────
 
 function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onCrewClick }) {
   const sortOpt = LEADERBOARD_SORTS.find(o => o.key === sortKey);
@@ -258,12 +253,12 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
   }
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6">
       {/* Header + sort pills */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold">Installer Leaderboard</h2>
         <div className="flex items-center gap-1.5">
-          <span className="text-white/30 text-xs mr-1">Sort:</span>
+          <span className="text-gray-300 text-xs mr-1">Sort:</span>
           {LEADERBOARD_SORTS.map(opt => (
             <button
               key={opt.key}
@@ -271,7 +266,7 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                 sortKey === opt.key
                   ? 'bg-accent text-white'
-                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+                  : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05]'
               }`}
             >
               {opt.label}
@@ -286,21 +281,21 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
           {sorted.slice(0, 3).map((crew, idx) => (
             <div
               key={crew.name}
-              className="bg-white/[0.05] rounded-xl p-4 text-center cursor-pointer hover:bg-white/[0.08] transition-colors"
+              className="bg-black/[0.03] rounded-xl p-4 text-center cursor-pointer hover:bg-black/[0.05] transition-colors"
               onClick={() => onCrewClick(crew.name)}
             >
               <span className="text-2xl">{MEDALS[idx]}</span>
-              <p className="text-sm font-semibold text-white mt-1 truncate">{crew.name}</p>
+              <p className="text-sm font-semibold text-gray-900 mt-1 truncate">{crew.name}</p>
               <p className={`text-2xl font-bold tabular-nums mt-1 ${rateColorClass(crew.firstTimeRate)}`}>
                 {fmtValue(crew, sortKey)}
               </p>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[10px]">
-                <div><span className="text-white/30">1st-Time</span> <span className="text-success/70">{crew.firstTime}</span></div>
-                <div><span className="text-white/30">Callbacks</span> <span className={crew.callbacks > 0 ? 'text-warning' : 'text-white/40'}>{crew.callbacks}</span></div>
-                <div><span className="text-white/30">Done</span> <span className="text-white/60">{crew.completed}</span></div>
-                <div><span className="text-white/30">Open</span> <span className="text-white/60">{crew.open}</span></div>
+                <div><span className="text-gray-300">1st-Time</span> <span className="text-success/70">{crew.firstTime}</span></div>
+                <div><span className="text-gray-300">Callbacks</span> <span className={crew.callbacks > 0 ? 'text-warning' : 'text-gray-400'}>{crew.callbacks}</span></div>
+                <div><span className="text-gray-300">Done</span> <span className="text-gray-500">{crew.completed}</span></div>
+                <div><span className="text-gray-300">Open</span> <span className="text-gray-500">{crew.open}</span></div>
                 {crew.serviceCalls > 0 && (
-                  <div className="col-span-2"><span className="text-white/30">Service</span> <span className="text-danger">{crew.serviceCalls}</span></div>
+                  <div className="col-span-2"><span className="text-gray-300">Service</span> <span className="text-danger">{crew.serviceCalls}</span></div>
                 )}
               </div>
               <button
@@ -325,24 +320,24 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
           return (
             <div
               key={crew.name}
-              className="group relative rounded-lg px-3 py-2 cursor-pointer transition-all bg-white/[0.03] hover:bg-white/[0.07]"
+              className="group relative rounded-lg px-3 py-2 cursor-pointer transition-all bg-black/[0.02] hover:bg-black/[0.05]"
               onClick={() => onCrewClick(crew.name)}
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-6 shrink-0 text-center">
-                  <span className="text-white/20 text-[10px] font-mono">#{rank + 1}</span>
+                  <span className="text-gray-300 text-[10px] font-mono">#{rank + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-white/60 truncate leading-none mb-1.5">{crew.name}</div>
-                  <div className="h-1 bg-white/8 rounded-full overflow-hidden">
+                  <div className="text-xs font-medium text-gray-500 truncate leading-none mb-1.5">{crew.name}</div>
+                  <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${color}`}
                       style={{ width: `${Math.max(barPct, barPct > 0 ? 1.5 : 0)}%` }}
                     />
                   </div>
-                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-white/25 leading-none">
-                    <span><span className="text-white/45">{crew.completed}</span> done</span>
-                    <span><span className="text-white/45">{crew.open}</span> open</span>
+                  <div className="flex items-center gap-x-2 mt-1 text-[10px] text-gray-300 leading-none">
+                    <span><span className="text-gray-400">{crew.completed}</span> done</span>
+                    <span><span className="text-gray-400">{crew.open}</span> open</span>
                     {crew.callbacks > 0 && <span className="text-warning">{crew.callbacks} callback{crew.callbacks !== 1 ? 's' : ''}</span>}
                   </div>
                 </div>
@@ -360,7 +355,7 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
   );
 }
 
-// ─── Crew section (expandable job list) ───────────────────────────────────────
+// ─── Crew section (expandable job list) ───────────────────────────────
 
 function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
   const [sortKey, setSortKey] = useState('installDate');
@@ -404,12 +399,12 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
   }, [crew.jobs, sortKey, sortDir]);
 
   return (
-    <div ref={sectionRef} className="bg-white/[0.03] rounded-xl overflow-hidden">
+    <div ref={sectionRef} className="bg-black/[0.02] rounded-xl overflow-hidden">
       <button
-        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left"
+        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-black/[0.04] transition-colors text-left"
         onClick={onToggle}
       >
-        <span className="text-sm font-semibold text-white/90 shrink-0">{crew.name}</span>
+        <span className="text-sm font-semibold text-gray-800 shrink-0">{crew.name}</span>
         {crew.open > 0 && (
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/20 text-accent font-bold shrink-0">
             {crew.open} open
@@ -430,12 +425,12 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
         <span className={`text-xs font-semibold tabular-nums ${rateColorClass(crew.firstTimeRate)}`}>
           {crew.firstTimeRate}%
         </span>
-        <span className="shrink-0 text-white/30 text-xs">{expanded ? '\u25B2' : '\u25BC'}</span>
+        <span className="shrink-0 text-gray-300 text-xs">{expanded ? '\u25B2' : '\u25BC'}</span>
       </button>
 
       {expanded && (
-        <div className="border-t border-white/5">
-          <div className="px-4 py-2 grid grid-cols-[1fr_90px_90px_70px] gap-2 text-[10px] uppercase tracking-wider text-white/40">
+        <div className="border-t border-gray-200">
+          <div className="px-4 py-2 grid grid-cols-[1fr_90px_90px_70px] gap-2 text-[10px] uppercase tracking-wider text-gray-400">
             <SortHeader label="Job" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
             <SortHeader label="Install Date" sortKey="installDate" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
             <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
@@ -450,15 +445,15 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
                 href={job.url}
                 target="_blank"
                 rel="noreferrer"
-                className="block px-4 py-2 grid grid-cols-[1fr_90px_90px_70px] gap-2 items-center border-t border-white/[0.03] hover:bg-white/[0.03] transition-colors"
+                className="block px-4 py-2 grid grid-cols-[1fr_90px_90px_70px] gap-2 items-center border-t border-gray-100 hover:bg-black/[0.02] transition-colors"
               >
-                <span className="text-xs text-white/80 truncate">{job.name}</span>
-                <span className="text-xs tabular-nums text-white/50">{fmtDate(job.installDate)}</span>
+                <span className="text-xs text-gray-700 truncate">{job.name}</span>
+                <span className="text-xs tabular-nums text-gray-500">{fmtDate(job.installDate)}</span>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold w-fit ${badge.cls}`}>{badge.label}</span>
                 <span className="text-xs tabular-nums text-center">
                   {(job.reschedules ?? 0) > 0
                     ? <span className={`font-bold ${(job.reschedules ?? 0) >= 2 ? 'text-danger' : 'text-warning'}`}>{job.reschedules}</span>
-                    : <span className="text-white/20">0</span>
+                    : <span className="text-gray-300">0</span>
                   }
                 </span>
               </a>
@@ -466,7 +461,7 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
           })}
 
           {sortedJobs.length === 0 && (
-            <div className="px-4 py-6 text-center text-xs text-white/20">No jobs</div>
+            <div className="px-4 py-6 text-center text-xs text-gray-300">No jobs</div>
           )}
         </div>
       )}
@@ -474,25 +469,21 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
   );
 }
 
-// ─── Crew profile page ────────────────────────────────────────────────────────
+// ─── Crew profile page ──────────────────────────────────────────────────
 
 function CrewProfile({ crew, allJobs, onClose }) {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [activePeriod, setActivePeriod] = useState('all');
   const periodRange = useMemo(() => getPeriodRange(activePeriod, today), [activePeriod, today]);
 
-  // Filter jobs by period
   const filteredJobs = useMemo(() => {
     const crewJobs = allJobs.filter(j => (j.crews ?? []).includes(crew.name));
     if (!periodRange) return crewJobs;
     return crewJobs.filter(j => jobInRange(j, periodRange));
   }, [allJobs, crew.name, periodRange]);
 
-  // Recompute stats from filtered jobs
   const stats = useMemo(() => computeCrewStats(crew.name, filteredJobs.length > 0 ? filteredJobs : []), [crew.name, filteredJobs]);
 
-  // Use filteredJobs directly for stats since computeCrewStats would re-filter.
-  // Instead, compute directly from filteredJobs.
   const completedJobs = useMemo(() => filteredJobs.filter(j => COMPLETED_STATUSES.has(j.status)), [filteredJobs]);
   const openJobs = useMemo(() => filteredJobs.filter(j => !COMPLETED_STATUSES.has(j.status)), [filteredJobs]);
 
@@ -508,7 +499,6 @@ function CrewProfile({ crew, allJobs, onClose }) {
   const firstTimeRate = completedJobs.length > 0 ? Math.round((firstTime / completedJobs.length) * 100) : 0;
   const onTimeRate = completedJobs.length > 0 ? Math.round((onTimeCount / completedJobs.length) * 100) : 0;
 
-  // Weekly trend data: first-time completion rate over weeks
   const weeklyData = useMemo(() => {
     const buckets = {};
     for (const j of completedJobs) {
@@ -537,7 +527,6 @@ function CrewProfile({ crew, allJobs, onClose }) {
 
     const sorted = Object.values(buckets).sort((a, b) => a.week.localeCompare(b.week));
 
-    // Fill gaps for at least 8 weeks
     if (sorted.length > 0) {
       const lastWeek = new Date(sorted[sorted.length - 1].week + 'T00:00:00Z');
       const minStart = new Date(lastWeek);
@@ -568,7 +557,6 @@ function CrewProfile({ crew, allJobs, onClose }) {
     }));
   }, [completedJobs]);
 
-  // Job table: sortable
   const [tableSortKey, setTableSortKey] = useState('installDate');
   const [tableSortDir, setTableSortDir] = useState('desc');
 
@@ -615,11 +603,11 @@ function CrewProfile({ crew, allJobs, onClose }) {
       <div className="flex items-center gap-4">
         <button
           onClick={onClose}
-          className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
           <span className="text-lg">&larr;</span> Back
         </button>
-        <h2 className="text-2xl font-bold text-white flex-1">{crew.name}</h2>
+        <h2 className="text-2xl font-bold text-gray-900 flex-1">{crew.name}</h2>
         <span className={`text-sm font-bold px-3 py-1 rounded-full ${rateBgClass(firstTimeRate)}`}>
           {firstTimeRate}% First-Time
         </span>
@@ -634,7 +622,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activePeriod === p.id
                 ? 'bg-accent text-white'
-                : 'bg-white/5 text-white/50 hover:bg-white/10'
+                : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05]'
             }`}
           >
             {p.label}
@@ -648,7 +636,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <p className={`text-3xl font-bold tabular-nums ${rateColorClass(firstTimeRate)}`}>
             {firstTimeRate}%
           </p>
-          <p className="text-xs text-white/30 mt-1">
+          <p className="text-xs text-gray-300 mt-1">
             {firstTime} of {completedJobs.length} completed first try
           </p>
         </StatCard>
@@ -657,7 +645,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <p className={`text-3xl font-bold tabular-nums ${callbacks > 0 ? 'text-warning' : 'text-success'}`}>
             {callbacks}
           </p>
-          <p className="text-xs text-white/30 mt-1">
+          <p className="text-xs text-gray-300 mt-1">
             {callbacks > 0 ? 'jobs needed a return visit' : 'no return visits needed'}
           </p>
         </StatCard>
@@ -666,24 +654,24 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <p className={`text-3xl font-bold tabular-nums ${rateColorClass(onTimeRate)}`}>
             {onTimeRate}%
           </p>
-          <p className="text-xs text-white/30 mt-1">
+          <p className="text-xs text-gray-300 mt-1">
             {onTimeCount} of {completedJobs.length} on schedule
           </p>
         </StatCard>
 
         <StatCard title="Active Jobs">
-          <p className="text-3xl font-bold tabular-nums text-white">
+          <p className="text-3xl font-bold tabular-nums text-gray-900">
             {openJobs.length}
           </p>
-          <p className="text-xs text-white/30 mt-1">
+          <p className="text-xs text-gray-300 mt-1">
             {filteredJobs.length} total in period
           </p>
         </StatCard>
       </div>
 
-      {/* Weekly trend chart: first-time completion rate */}
-      <div className="bg-white/5 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white/70 mb-4">First-Time Completion Rate Over Time</h3>
+      {/* Weekly trend chart */}
+      <div className="bg-black/[0.03] rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-gray-600 mb-4">First-Time Completion Rate Over Time</h3>
         {weeklyData.length > 0 ? (
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={weeklyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
@@ -693,17 +681,17 @@ function CrewProfile({ crew, allJobs, onClose }) {
                   <stop offset="95%" stopColor={COLORS.success} stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
               <XAxis
                 dataKey="label"
-                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                tick={{ fill: 'rgba(0,0,0,0.4)', fontSize: 11 }}
+                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
                 tickLine={false}
               />
               <YAxis
                 domain={[0, 100]}
-                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                tick={{ fill: 'rgba(0,0,0,0.4)', fontSize: 11 }}
+                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
                 tickLine={false}
                 tickFormatter={v => `${v}%`}
               />
@@ -742,16 +730,16 @@ function CrewProfile({ crew, allJobs, onClose }) {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-sm text-white/20 text-center py-12">No completion data yet</p>
+          <p className="text-sm text-gray-300 text-center py-12">No completion data yet</p>
         )}
       </div>
 
       {/* Jobs table */}
-      <div className="bg-white/5 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5">
-          <h3 className="text-sm font-semibold text-white/70">
+      <div className="bg-black/[0.03] rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-600">
             Jobs
-            <span className="ml-2 text-xs font-normal text-white/30">({filteredJobs.length})</span>
+            <span className="ml-2 text-xs font-normal text-gray-300">({filteredJobs.length})</span>
           </h3>
         </div>
 
@@ -759,32 +747,32 @@ function CrewProfile({ crew, allJobs, onClose }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-white/30">
-                  <th className="px-6 py-3 font-medium cursor-pointer hover:text-white/60" onClick={() => handleTableSort('name')}>
+                <tr className="text-[10px] uppercase tracking-wider text-gray-300">
+                  <th className="px-6 py-3 font-medium cursor-pointer hover:text-gray-500" onClick={() => handleTableSort('name')}>
                     Job {tableSortKey === 'name' && (tableSortDir === 'asc' ? '\u2191' : '\u2193')}
                   </th>
-                  <th className="px-6 py-3 font-medium cursor-pointer hover:text-white/60" onClick={() => handleTableSort('installDate')}>
+                  <th className="px-6 py-3 font-medium cursor-pointer hover:text-gray-500" onClick={() => handleTableSort('installDate')}>
                     Install Date {tableSortKey === 'installDate' && (tableSortDir === 'asc' ? '\u2191' : '\u2193')}
                   </th>
-                  <th className="px-6 py-3 font-medium cursor-pointer hover:text-white/60" onClick={() => handleTableSort('status')}>
+                  <th className="px-6 py-3 font-medium cursor-pointer hover:text-gray-500" onClick={() => handleTableSort('status')}>
                     Status {tableSortKey === 'status' && (tableSortDir === 'asc' ? '\u2191' : '\u2193')}
                   </th>
-                  <th className="px-6 py-3 font-medium text-center cursor-pointer hover:text-white/60" onClick={() => handleTableSort('reschedules')}>
+                  <th className="px-6 py-3 font-medium text-center cursor-pointer hover:text-gray-500" onClick={() => handleTableSort('reschedules')}>
                     Resch. {tableSortKey === 'reschedules' && (tableSortDir === 'asc' ? '\u2191' : '\u2193')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-gray-100">
                 {sortedTableJobs.map((job, i) => {
-                  const badge = STATUS_BADGE[job.status] ?? { label: job.status || 'Unknown', cls: 'bg-white/10 text-white/40' };
+                  const badge = STATUS_BADGE[job.status] ?? { label: job.status || 'Unknown', cls: 'bg-black/[0.05] text-gray-400' };
                   return (
-                    <tr key={job.id ?? i} className="hover:bg-white/[0.03] transition-colors">
+                    <tr key={job.id ?? i} className="hover:bg-black/[0.02] transition-colors">
                       <td className="px-6 py-3">
-                        <a href={job.url} target="_blank" rel="noreferrer" className="text-sm text-white/80 hover:text-accent truncate block max-w-xs">
+                        <a href={job.url} target="_blank" rel="noreferrer" className="text-sm text-gray-700 hover:text-accent truncate block max-w-xs">
                           {job.name}
                         </a>
                       </td>
-                      <td className="px-6 py-3 text-xs text-white/50 tabular-nums whitespace-nowrap">
+                      <td className="px-6 py-3 text-xs text-gray-500 tabular-nums whitespace-nowrap">
                         {fmtDate(job.installDate)}
                       </td>
                       <td className="px-6 py-3">
@@ -793,7 +781,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
                       <td className="px-6 py-3 text-center tabular-nums text-xs">
                         {(job.reschedules ?? 0) > 0
                           ? <span className={`font-bold ${(job.reschedules ?? 0) >= 2 ? 'text-danger' : 'text-warning'}`}>{job.reschedules}</span>
-                          : <span className="text-white/20">0</span>
+                          : <span className="text-gray-300">0</span>
                         }
                       </td>
                     </tr>
@@ -803,14 +791,14 @@ function CrewProfile({ crew, allJobs, onClose }) {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-white/20 text-center py-8">No jobs in this period</p>
+          <p className="text-sm text-gray-300 text-center py-8">No jobs in this period</p>
         )}
       </div>
     </div>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────
 
 export default function InstallerScorecard({ data }) {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -820,14 +808,12 @@ export default function InstallerScorecard({ data }) {
 
   const periodRange = useMemo(() => getPeriodRange(activePeriod, today), [activePeriod, today]);
 
-  // Filter all jobs by period
   const filteredJobs = useMemo(() => {
     if (!data?.jobs) return [];
     if (!periodRange) return data.jobs;
     return data.jobs.filter(j => jobInRange(j, periodRange));
   }, [data, periodRange]);
 
-  // Build crew list from data.byCrew or extract from jobs
   const crewNames = useMemo(() => {
     if (data?.byCrew && data.byCrew.length > 0) {
       return data.byCrew.map(c => c.name);
@@ -839,14 +825,12 @@ export default function InstallerScorecard({ data }) {
     return [...set].sort();
   }, [data]);
 
-  // Compute stats per crew
   const crewStats = useMemo(() => {
     return crewNames
       .map(name => computeCrewStats(name, filteredJobs))
       .filter(c => c.total > 0);
   }, [crewNames, filteredJobs]);
 
-  // Expandable sections
   const [expandedKeys, setExpandedKeys] = useState(() => new Set());
   const sectionRefs = useRef({});
   const [scrollTarget, setScrollTarget] = useState(null);
@@ -881,10 +865,9 @@ export default function InstallerScorecard({ data }) {
   }, []);
 
   if (!data) {
-    return <div className="text-center py-20 text-white/30 text-sm">Loading installer data...</div>;
+    return <div className="text-center py-20 text-gray-300 text-sm">Loading installer data...</div>;
   }
 
-  // Show crew profile when selected
   if (profileCrew) {
     const crew = crewStats.find(c => c.name === profileCrew);
     if (crew) {
@@ -899,7 +882,7 @@ export default function InstallerScorecard({ data }) {
   }
 
   if (crewStats.length === 0) {
-    return <div className="text-center py-20 text-white/30 text-sm">No installer data available.</div>;
+    return <div className="text-center py-20 text-gray-300 text-sm">No installer data available.</div>;
   }
 
   return (
@@ -913,7 +896,7 @@ export default function InstallerScorecard({ data }) {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               activePeriod === p.id
                 ? 'bg-accent text-white'
-                : 'bg-white/5 text-white/50 hover:bg-white/10'
+                : 'bg-black/[0.03] text-gray-500 hover:bg-black/[0.05]'
             }`}
           >
             {p.label}
