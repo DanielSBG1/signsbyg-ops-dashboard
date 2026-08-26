@@ -693,9 +693,14 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
       const lastMs = t.lastActivity ? new Date(t.lastActivity).getTime() : 0;
       const isStale = !t.lastActivity || (now - lastMs > STALE_MS);
 
+      // Check scorecard for subtask health
+      const sc = scorecardMap[t.gid];
+      const hasProblems = sc?.hasOverdueSubtask || sc?.band === 'critical' || sc?.band === 'risk';
+
       if (t.dueOn && t.dueOn < TODAY_STR) {
         late.push(t);
-      } else if (t.dueOn && t.dueOn <= atRiskThreshold) {
+      } else if (t.dueOn && t.dueOn <= atRiskThreshold && hasProblems) {
+        // Only "at risk" if due soon AND subtasks are behind
         atRisk.push(t);
       } else if (isStale) {
         stale.push(t);
