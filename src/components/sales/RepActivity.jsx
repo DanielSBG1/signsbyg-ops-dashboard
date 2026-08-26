@@ -124,7 +124,7 @@ export default function RepActivity({ reps, data }) {
         </div>
       )}
 
-      <div className="space-y-0.5">
+      <div className="divide-y divide-gray-100">
         {activeReps.map((rep) => {
           const o = byOwner[rep.id];
           const { tasks = [], meetings = [], meetingsBooked = 0, meetingsAttended = 0 } = o;
@@ -170,7 +170,7 @@ export default function RepActivity({ reps, data }) {
 
           return (
             <React.Fragment key={rep.id}>
-              <div className={`grid ${grid} gap-x-2 items-center rounded-lg px-2 py-1.5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors`}>
+              <div className={`grid ${grid} gap-x-2 items-center rounded-lg px-2 py-2 hover:bg-gray-100 transition-colors`}>
                 <span className="text-sm text-gray-600 truncate">{rep.name}</span>
 
                 {mode === 'current' ? (
@@ -226,7 +226,7 @@ export default function RepActivity({ reps, data }) {
                     <span className="text-[10px] text-gray-500 uppercase tracking-widest">{taskLabel}</span>
                     <button onClick={() => setExpanded(null)} className="text-gray-500 hover:text-gray-500 text-xs">✕</button>
                   </div>
-                  <div className="max-h-48 overflow-y-auto divide-y divide-white/5">
+                  <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
                     {visibleTasks.slice(0, 50).map((t) => {
                       const highlight = mode === 'current' ? t.isOverdue : t.isLate;
                       return (
@@ -262,7 +262,7 @@ export default function RepActivity({ reps, data }) {
                     </span>
                     <button onClick={() => setExpanded(null)} className="text-gray-500 hover:text-gray-500 text-xs">✕</button>
                   </div>
-                  <div className="max-h-48 overflow-y-auto divide-y divide-white/5">
+                  <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
                     {meetings.map((m) => (
                       <div key={m.id} className="flex items-center justify-between px-3 py-2 gap-3">
                         <span className="text-xs truncate flex-1 text-gray-500">{m.title}</span>

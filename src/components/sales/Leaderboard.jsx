@@ -132,8 +132,8 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
                 }}
                 onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
                 onMouseLeave={() => setHoveredId(null)}
-                className={`bg-white/[0.05] rounded-xl p-4 text-center cursor-pointer transition-all duration-150 ${
-                  isSelected ? 'ring-1 ring-accent/40 bg-accent/15' : 'hover:bg-white/[0.08]'
+                className={`bg-gray-50 border border-gray-100 rounded-xl p-4 text-center cursor-pointer transition-all duration-150 ${
+                  isSelected ? 'ring-1 ring-accent/30 bg-accent/10' : 'hover:bg-gray-100'
                 }`}
               >
                 <span className="text-2xl leading-none">{MEDALS[idx]}</span>
@@ -179,7 +179,7 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
       )}
 
       {/* Remaining rep rows (idx >= 3) */}
-      <div className="space-y-0.5">
+      <div className="divide-y divide-gray-100">
         {remainingReps.map((rep, idx) => {
           const rawVal = rep[sortKey] ?? 0;
           // Ascending sorts (resp time): invert bar so lower value = fuller bar = better
@@ -202,10 +202,10 @@ export default function Leaderboard({ reps, onRepClick, selectedRep, onViewScore
               }}
               onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
               onMouseLeave={() => setHoveredId(null)}
-              className={`group relative rounded-lg px-3 py-2 cursor-pointer transition-all duration-150 ${
+              className={`group relative rounded-lg px-3 py-2.5 cursor-pointer transition-all duration-150 ${
                 isSelected
-                  ? 'bg-accent/15 ring-1 ring-accent/40'
-                  : 'bg-white/[0.03] hover:bg-white/[0.07]'
+                  ? 'bg-accent/10 ring-1 ring-accent/30'
+                  : 'hover:bg-gray-100'
               }`}
             >
               <div className="flex items-center gap-2.5">
