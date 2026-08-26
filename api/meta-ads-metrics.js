@@ -24,6 +24,17 @@ function getDateRange(preset) {
   return { start, end };
 }
 
+/** Expand a date range to full calendar month boundaries for P&L queries. */
+function expandToFullMonths(start, end) {
+  // Start of the month containing 'start'
+  const pnlStart = start.slice(0, 7) + '-01';
+  // End of the month containing 'end'
+  const endDate = new Date(end + 'T12:00:00Z');
+  const lastDay = new Date(endDate.getUTCFullYear(), endDate.getUTCMonth() + 1, 0);
+  const pnlEnd = lastDay.toISOString().slice(0, 10);
+  return { pnlStart, pnlEnd };
+}
+
 /**
  * Query the Meta Ads Neon database and return totals, monthlyPnl, campaigns,
  * adSets, ads, creatives, spendCategories, metaLeadCounts, adSetRevenue,
@@ -37,6 +48,7 @@ async function fetchMetaAdsMetrics(preset) {
 
   const sql = neon(url);
   const { start, end } = getDateRange(preset);
+  const { pnlStart, pnlEnd } = expandToFullMonths(start, end);
 
   // Run all ten queries in parallel
   const [
@@ -85,14 +97,16 @@ async function fetchMetaAdsMetrics(preset) {
       from perf p, hs_leads l, rev r
     `,
 
-    // 2. Monthly P&L (grouped by contact created_at month)
+    // 2. Monthly P&L — uses full calendar months so partial-month presets
+    //    still show complete rows (e.g. "month" preset starting Jul 27
+    //    shows all of July, not just Jul 27-31)
     sql`
       with spend as (
         select to_char(day, 'YYYY-MM') as month,
                sum(spend) filter (where spend_category = 'meta_ads')     as meta_spend,
                sum(spend) filter (where spend_category = 'boosted_post') as boosted_spend
         from ad_insights_daily
-        where day between ${start}::date and ${end}::date
+        where day between ${pnlStart}::date and ${pnlEnd}::date
         group by 1
       ),
       revenue as (
@@ -105,14 +119,14 @@ async function fetchMetaAdsMetrics(preset) {
         join hs_contacts c on c.id = dc.contact_id
         where d.is_closed_won = true
           and al.spend_category = 'meta_ads'
-          and c.created_at::date between ${start}::date and ${end}::date
+          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
         group by 1
       ),
       leads as (
         select month, sum(leads) as leads
         from hs_campaign_leads_monthly
-        where month between to_char(${start}::date, 'YYYY-MM')
-                        and to_char(${end}::date, 'YYYY-MM')
+        where month between to_char(${pnlStart}::date, 'YYYY-MM')
+                        and to_char(${pnlEnd}::date, 'YYYY-MM')
         group by 1
       ),
       all_months as (
@@ -460,7 +474,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v3:${preset}`;
+    const cacheKey = `meta-ads:v4:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
