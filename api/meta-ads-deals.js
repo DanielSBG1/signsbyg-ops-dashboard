@@ -120,53 +120,57 @@ export default async function handler(req, res) {
     // Repeat customers: contacts with 2+ closed-won deals
     let repeatCustomers = [];
     if (mode === 'repeats') {
-      const repeatRows = await sql`
+      // First find repeat contacts, then get their deals separately to avoid cartesian products
+      const repeatContacts = await sql`
         select c.id as contact_id, c.source_detail,
-               json_agg(json_build_object(
-                 'dealId', d.id,
-                 'name', d.name,
-                 'amount', d.amount::numeric,
-                 'pipeline', d.pipeline,
-                 'closeDate', d.close_date,
-                 'rep', o.name,
-                 'campaignId', al.campaign_id,
-                 'campaignName', camp.name,
-                 'adSetId', ml.ad_set_id,
-                 'adSetName', adset.name
-               ) order by d.close_date) as deals,
                count(distinct d.id) as deal_count,
-               sum(d.amount::numeric) as total_revenue
+               sum(distinct d.amount::numeric) as total_revenue
         from hs_contacts c
         join deal_contacts dc on dc.contact_id = c.id
         join hs_deals d on d.id = dc.deal_id
-        left join hs_owners o on o.id = d.owner_id
-        left join attribution_links al on al.deal_id = d.id
-        left join campaigns camp on camp.id = al.campaign_id
-        left join meta_leads ml on ml.matched_contact_id = c.id
-        left join ad_sets adset on adset.id = ml.ad_set_id
         where d.is_closed_won = true
           and c.analytics_source = 'PAID_SOCIAL'
         group by c.id, c.source_detail
         having count(distinct d.id) > 1
-        order by sum(d.amount::numeric) desc
+        order by sum(distinct d.amount::numeric) desc
       `;
 
-      repeatCustomers = repeatRows.map(r => ({
-        contactId: r.contact_id,
-        source: r.source_detail || 'Paid Social',
-        dealCount: Number(r.deal_count),
-        totalRevenue: Number(r.total_revenue || 0),
-        deals: (r.deals || []).map(d => ({
-          dealId: d.dealId,
-          name: d.name,
-          amount: Number(d.amount || 0),
-          pipeline: PIPELINE_NAMES[d.pipeline] || d.pipeline || 'Unknown',
-          closeDate: d.closeDate ? new Date(d.closeDate).toISOString().slice(0, 10) : null,
-          rep: d.rep || 'Unassigned',
-          campaignName: d.campaignName || null,
-          adSetName: d.adSetName || null,
-        })),
-      }));
+      // Now get deals for each repeat contact
+      for (const rc of repeatContacts) {
+        const dealRows = await sql`
+          select distinct on (d.id)
+                 d.id as deal_id, d.name, d.amount::numeric as amount,
+                 d.pipeline, d.close_date, o.name as rep,
+                 (select camp.name from attribution_links al
+                  join campaigns camp on camp.id = al.campaign_id
+                  where al.deal_id = d.id limit 1) as campaign_name,
+                 (select adset.name from meta_leads ml
+                  join ad_sets adset on adset.id = ml.ad_set_id
+                  where ml.matched_contact_id = ${rc.contact_id} limit 1) as ad_set_name
+          from hs_deals d
+          join deal_contacts dc on dc.deal_id = d.id and dc.contact_id = ${rc.contact_id}
+          left join hs_owners o on o.id = d.owner_id
+          where d.is_closed_won = true
+          order by d.id, d.close_date
+        `;
+
+        repeatCustomers.push({
+          contactId: rc.contact_id,
+          source: rc.source_detail || 'Paid Social',
+          dealCount: Number(rc.deal_count),
+          totalRevenue: Number(rc.total_revenue || 0),
+          deals: dealRows.map(d => ({
+            dealId: d.deal_id,
+            name: d.name,
+            amount: Number(d.amount || 0),
+            pipeline: PIPELINE_NAMES[d.pipeline] || d.pipeline || 'Unknown',
+            closeDate: d.close_date ? new Date(d.close_date).toISOString().slice(0, 10) : null,
+            rep: d.rep || 'Unassigned',
+            campaignName: d.campaign_name || null,
+            adSetName: d.ad_set_name || null,
+          })),
+        });
+      }
     }
 
     return res.status(200).json({
