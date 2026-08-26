@@ -177,7 +177,7 @@ function JobDrawer({ job, crewColor, onClose }) {
 
           {/* Dates */}
           <section>
-            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Schedule</p>
+            <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2">Schedule</p>
             <div className="space-y-1.5">
               {job.startDate && job.startDate !== job.installDate ? (
                 <Row label="Install window" value={`${fmt(job.startDate)} – ${fmt(job.installDate)}`} />
@@ -193,7 +193,7 @@ function JobDrawer({ job, crewColor, onClose }) {
 
           {/* Status */}
           <section>
-            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Status</p>
+            <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2">Status</p>
             <div className="space-y-1.5">
               <Row label="Job status" value={
                 <span className={`capitalize font-semibold ${
@@ -221,7 +221,7 @@ function JobDrawer({ job, crewColor, onClose }) {
 
           {/* Crew & Scope */}
           <section>
-            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Assignment</p>
+            <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2">Assignment</p>
             <div className="space-y-1.5">
               <Row label="Crews" value={job.crews?.length ? job.crews.join(', ') : 'Unassigned'} />
               {job.scope && <Row label="Scope" value={job.scope} />}
@@ -234,7 +234,7 @@ function JobDrawer({ job, crewColor, onClose }) {
           {/* Contact */}
           {(job.contactName || job.contactPhone || job.contactEmail || job.address) && (
             <section>
-              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Contact</p>
+              <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2">Contact</p>
               <div className="space-y-1.5">
                 {job.contactName && <Row label="Name" value={job.contactName} />}
                 {job.address && <Row label="Address" value={job.address} />}
@@ -284,7 +284,7 @@ function JobDrawer({ job, crewColor, onClose }) {
 function Row({ label, value }) {
   return (
     <div className="flex items-baseline gap-3">
-      <span className="text-[11px] text-gray-500 shrink-0 w-28">{label}</span>
+      <span className="text-[11px] text-gray-600 shrink-0 w-28">{label}</span>
       <span className="text-[12px] text-gray-700 flex-1 min-w-0">{value ?? '—'}</span>
     </div>
   );
@@ -492,7 +492,7 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, bar
       {/* Date number always on top */}
       <div className="px-1.5 pt-1 flex items-center" style={{ height: DATE_HEADER_H }}>
         <span className={`text-[11px] font-semibold leading-none
-          ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-gray-500' : 'text-gray-500'}`}>
+          ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-gray-900' : 'text-gray-500'}`}>
           {day.num}
         </span>
       </div>
@@ -580,10 +580,10 @@ function WeekView({ weekDays, multiDayJobs, singleDayJobs, crewColorMap, updatin
               className={`px-3 border-b flex items-center shrink-0 ${day.isToday ? 'border-blue-500/30' : 'border-gray-200'}`}
               style={{ height: WEEK_HEADER_H }}
             >
-              <span className={`text-[10px] font-semibold uppercase tracking-wider ${day.isToday ? 'text-blue-400' : 'text-gray-500'}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${day.isToday ? 'text-blue-400' : 'text-gray-600'}`}>
                 {day.dayLabel}
               </span>
-              <span className={`ml-2 text-xl font-bold ${day.isToday ? 'text-blue-400' : 'text-gray-700'}`}>
+              <span className={`ml-2 text-xl font-bold ${day.isToday ? 'text-blue-400' : 'text-gray-900'}`}>
                 {day.num}
               </span>
               <span className={`ml-1 text-[10px] ${day.isToday ? 'text-blue-400/70' : 'text-gray-500'}`}>
@@ -790,7 +790,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
             Installation Calendar
           </h2>
           {/* View toggle */}
@@ -817,7 +817,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
             onClick={() => viewMode === 'month' ? prevMonth() : setWeekAnchor(w => addDaysToISO(w, -7))}
             className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/[0.05] text-gray-500 hover:text-gray-900 transition-colors"
           >‹</button>
-          <span className="text-sm font-semibold text-gray-700 w-48 text-center">
+          <span className="text-sm font-semibold text-gray-900 w-48 text-center">
             {viewMode === 'month' ? `${MONTH_NAMES[month]} ${year}` : weekLabel}
           </span>
           <button
@@ -835,7 +835,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
           {viewMode === 'month' && (
             <div className="grid grid-cols-7 gap-1 mb-1">
               {DAY_LABELS.map(d => (
-                <div key={d} className="text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider py-1">{d}</div>
+                <div key={d} className="text-center text-[10px] font-semibold text-gray-600 uppercase tracking-wider py-1">{d}</div>
               ))}
             </div>
           )}
@@ -905,18 +905,18 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
 
         {/* Legend sidebar */}
         <div className="w-36 shrink-0 flex flex-col gap-3 pt-1">
-          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Crews</p>
+          <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Crews</p>
           <div className="flex flex-col gap-1.5">
             {(activeCrws.length > 0 ? activeCrws : (byCrew || [])).map(c => (
               <div key={c.name} className="flex items-center gap-2">
                 <span className="shrink-0 w-3 h-3 rounded-sm" style={{ backgroundColor: c.color }} />
-                <span className="text-[11px] text-gray-500 leading-tight">{c.name}</span>
+                <span className="text-[11px] text-gray-700 leading-tight">{c.name}</span>
               </div>
             ))}
           </div>
 
           <div className="mt-2 pt-2 border-t border-gray-200 flex flex-col gap-2">
-            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Status</p>
+            <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Status</p>
             {[
               { color: '#22c55e', label: 'Completed' },
               { color: '#ef4444', label: 'Overdue' },
@@ -928,7 +928,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
                   ? <span className="shrink-0 text-[11px]" style={{ color }}>{icon || '●'}</span>
                   : <span className="shrink-0 w-3 h-3 rounded-sm" style={{ backgroundColor: color + '30', border: `2px solid ${color}` }} />
                 }
-                <span className="text-[11px] text-gray-500">{label}</span>
+                <span className="text-[11px] text-gray-700">{label}</span>
               </div>
             ))}
           </div>
