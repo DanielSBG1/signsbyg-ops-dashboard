@@ -26,7 +26,8 @@ function getDateRange(preset) {
 
 /**
  * Query the Meta Ads Neon database and return totals, monthlyPnl, campaigns,
- * and adSets for the ops dashboard.
+ * adSets, ads, creatives, spendCategories, metaLeadCounts, adSetRevenue,
+ * and creativeRevenue — full parity with the standalone Meta Ads dashboard.
  *
  * Revenue attribution uses CONTACT CREATION DATE, not deal close date.
  */
@@ -37,8 +38,12 @@ async function fetchMetaAdsMetrics(preset) {
   const sql = neon(url);
   const { start, end } = getDateRange(preset);
 
-  // Run all four queries in parallel
-  const [totalsRows, monthlyRows, campaignRows, adSetRows] = await Promise.all([
+  // Run all ten queries in parallel
+  const [
+    totalsRows, monthlyRows, campaignRows, adSetRows,
+    adRows, creativeRows, spendCatRows, metaLeadCountRows,
+    adSetRevenueRows, creativeRevenueRows,
+  ] = await Promise.all([
     // 1. Totals
     sql`
       with perf as (
@@ -184,6 +189,8 @@ async function fetchMetaAdsMetrics(preset) {
     sql`
       select i.ad_set_id,
              s.name,
+             s.optimization_goal,
+             i.campaign_id,
              c.name                          as campaign_name,
              coalesce(sum(i.spend), 0)       as spend,
              coalesce(sum(i.results), 0)     as meta_leads,
@@ -194,8 +201,100 @@ async function fetchMetaAdsMetrics(preset) {
       join campaigns c on c.id = i.campaign_id
       where i.spend_category = 'meta_ads'
         and i.day between ${start}::date and ${end}::date
-      group by i.ad_set_id, s.name, c.name
+      group by i.ad_set_id, s.name, s.optimization_goal, i.campaign_id, c.name
       order by sum(i.results) desc
+    `,
+
+    // 5. Individual Ads
+    sql`
+      select i.ad_id, a.name, a.creative_slug, a.thumbnail_url,
+             i.ad_set_id, s.name as ad_set_name,
+             i.campaign_id, c.name as campaign_name,
+             s.optimization_goal,
+             coalesce(sum(i.spend), 0)       as spend,
+             coalesce(sum(i.results), 0)     as meta_leads,
+             coalesce(sum(i.link_clicks), 0) as link_clicks,
+             coalesce(sum(i.impressions), 0) as impressions
+      from ad_insights_daily i
+      join ads a      on a.id = i.ad_id
+      join ad_sets s  on s.id = i.ad_set_id
+      join campaigns c on c.id = i.campaign_id
+      where i.spend_category = 'meta_ads'
+        and i.day between ${start}::date and ${end}::date
+      group by i.ad_id, a.name, a.creative_slug, a.thumbnail_url,
+               i.ad_set_id, s.name, i.campaign_id, c.name, s.optimization_goal
+      order by sum(i.spend) desc
+    `,
+
+    // 6. Creatives (grouped by creative_slug)
+    sql`
+      select a.creative_slug, a.thumbnail_url,
+             s.optimization_goal,
+             coalesce(sum(i.spend), 0)       as spend,
+             coalesce(sum(i.results), 0)     as meta_leads,
+             coalesce(sum(i.link_clicks), 0) as link_clicks,
+             coalesce(sum(i.impressions), 0) as impressions,
+             count(distinct i.ad_id)         as ad_count
+      from ad_insights_daily i
+      join ads a     on a.id = i.ad_id
+      join ad_sets s on s.id = i.ad_set_id
+      where i.spend_category = 'meta_ads'
+        and a.creative_slug is not null
+        and i.day between ${start}::date and ${end}::date
+      group by a.creative_slug, a.thumbnail_url, s.optimization_goal
+      order by sum(i.spend) desc
+    `,
+
+    // 7. Spend categories (for showing excluded spend)
+    sql`
+      select spend_category, coalesce(sum(spend), 0) as spend, count(*) as rows
+      from ad_insights_daily
+      where day between ${start}::date and ${end}::date
+      group by spend_category
+    `,
+
+    // 8. Meta lead counts by ad set and ad (from meta_leads table)
+    sql`
+      select ml.ad_set_id, ml.ad_id, count(*) as lead_count
+      from meta_leads ml
+      where ml.created_time::date between ${start}::date and ${end}::date
+        and ml.matched_contact_id is not null
+      group by ml.ad_set_id, ml.ad_id
+    `,
+
+    // 9. Ad set revenue (from attribution through meta_leads)
+    sql`
+      select ml.ad_set_id,
+             coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
+             count(distinct d.id) as deals,
+             count(distinct ml.leadgen_id) as leads
+      from meta_leads ml
+      join hs_contacts c    on c.id = ml.matched_contact_id
+      join deal_contacts dc on dc.contact_id = c.id
+      join hs_deals d       on d.id = dc.deal_id
+      join attribution_links al on al.deal_id = d.id
+      where ml.ad_set_id is not null
+        and d.is_closed_won = true
+        and c.created_at::date between ${start}::date and ${end}::date
+      group by ml.ad_set_id
+    `,
+
+    // 10. Creative revenue (same but grouped by creative_slug)
+    sql`
+      select a.creative_slug,
+             coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
+             count(distinct d.id) as deals,
+             count(distinct ml.leadgen_id) as leads
+      from meta_leads ml
+      join ads a            on a.id = ml.ad_id
+      join hs_contacts c    on c.id = ml.matched_contact_id
+      join deal_contacts dc on dc.contact_id = c.id
+      join hs_deals d       on d.id = dc.deal_id
+      join attribution_links al on al.deal_id = d.id
+      where a.creative_slug is not null
+        and d.is_closed_won = true
+        and c.created_at::date between ${start}::date and ${end}::date
+      group by a.creative_slug
     `,
   ]);
 
@@ -253,11 +352,79 @@ async function fetchMetaAdsMetrics(preset) {
   const adSets = adSetRows.map((r) => ({
     adSetId: r.ad_set_id,
     name: r.name,
+    optimizationGoal: r.optimization_goal ?? null,
+    campaignId: r.campaign_id,
     campaignName: r.campaign_name,
     spend: Number(r.spend || 0),
     metaLeads: Number(r.meta_leads || 0),
     linkClicks: Number(r.link_clicks || 0),
     impressions: Number(r.impressions || 0),
+  }));
+
+  // Individual Ads
+  const ads = adRows.map((r) => ({
+    adId: r.ad_id,
+    name: r.name,
+    creativeSlug: r.creative_slug,
+    thumbnailUrl: r.thumbnail_url,
+    adSetId: r.ad_set_id,
+    adSetName: r.ad_set_name,
+    campaignId: r.campaign_id,
+    campaignName: r.campaign_name,
+    optimizationGoal: r.optimization_goal,
+    spend: Number(r.spend || 0),
+    metaLeads: Number(r.meta_leads || 0),
+    linkClicks: Number(r.link_clicks || 0),
+    impressions: Number(r.impressions || 0),
+  }));
+
+  // Creatives
+  const creatives = creativeRows.map((r) => ({
+    creativeSlug: r.creative_slug,
+    thumbnailUrl: r.thumbnail_url,
+    optimizationGoal: r.optimization_goal,
+    spend: Number(r.spend || 0),
+    metaLeads: Number(r.meta_leads || 0),
+    linkClicks: Number(r.link_clicks || 0),
+    impressions: Number(r.impressions || 0),
+    adCount: Number(r.ad_count || 0),
+  }));
+
+  // Spend Categories
+  const spendCategories = spendCatRows.map((r) => ({
+    category: r.spend_category,
+    spend: Number(r.spend || 0),
+    rows: Number(r.rows || 0),
+  }));
+
+  // Meta Lead Counts (keyed by ad set and ad)
+  const metaLeadCounts = { byAdSet: {}, byAd: {} };
+  for (const r of metaLeadCountRows) {
+    const count = Number(r.lead_count || 0);
+    if (r.ad_set_id) {
+      metaLeadCounts.byAdSet[r.ad_set_id] =
+        (metaLeadCounts.byAdSet[r.ad_set_id] || 0) + count;
+    }
+    if (r.ad_id) {
+      metaLeadCounts.byAd[r.ad_id] =
+        (metaLeadCounts.byAd[r.ad_id] || 0) + count;
+    }
+  }
+
+  // Ad Set Revenue
+  const adSetRevenue = adSetRevenueRows.map((r) => ({
+    adSetId: r.ad_set_id,
+    revenue: Number(r.revenue || 0),
+    deals: Number(r.deals || 0),
+    leads: Number(r.leads || 0),
+  }));
+
+  // Creative Revenue
+  const creativeRevenue = creativeRevenueRows.map((r) => ({
+    creativeSlug: r.creative_slug,
+    revenue: Number(r.revenue || 0),
+    deals: Number(r.deals || 0),
+    leads: Number(r.leads || 0),
   }));
 
   return {
@@ -266,6 +433,12 @@ async function fetchMetaAdsMetrics(preset) {
     monthlyPnl,
     campaigns,
     adSets,
+    ads,
+    creatives,
+    spendCategories,
+    metaLeadCounts,
+    adSetRevenue,
+    creativeRevenue,
   };
 }
 
@@ -287,7 +460,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v1:${preset}`;
+    const cacheKey = `meta-ads:v3:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);

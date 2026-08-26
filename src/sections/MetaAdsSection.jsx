@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useMetaAdsData } from '../hooks/useMetaAdsData';
 import MetaAdsOverview from '../components/metaads/MetaAdsOverview';
-import CampaignsTab from '../components/metaads/CampaignsTab';
 import AdSetsTab from '../components/metaads/AdSetsTab';
+import CampaignsTab from '../components/metaads/CampaignsTab';
+import CreativesSection from '../components/metaads/CreativesSection';
 
 const TABS = [
-  { id: 'overview',  label: 'Overview' },
-  { id: 'campaigns', label: 'Campaigns' },
-  { id: 'adsets',    label: 'Ad Sets' },
+  { id: 'overview',   label: 'Overview' },
+  { id: 'campaigns',  label: 'Campaigns' },
+  { id: 'adsets',     label: 'Ad Sets' },
+  { id: 'creatives',  label: 'Creatives' },
 ];
 
 const PRESETS = [
@@ -78,6 +80,13 @@ export default function MetaAdsSection() {
           </div>
         </div>
 
+        {/* Period label */}
+        {data?.period && (
+          <p className="text-[11px] text-gray-400">
+            {data.period.start} &rarr; {data.period.end}
+          </p>
+        )}
+
         {/* Loading */}
         {loading && !data && (
           <div className="flex items-center justify-center h-64">
@@ -96,9 +105,17 @@ export default function MetaAdsSection() {
         )}
 
         {/* Tab content */}
-        {data && activeTab === 'overview'  && <MetaAdsOverview data={data} />}
-        {data && activeTab === 'campaigns' && <CampaignsTab campaigns={data.campaigns ?? []} />}
-        {data && activeTab === 'adsets'    && <AdSetsTab adSets={data.adSets ?? []} />}
+        {data && activeTab === 'overview' && (
+          <div className="space-y-8">
+            <MetaAdsOverview data={data} />
+            <AdSetsTab data={data} />
+            <CreativesSection data={data} />
+            <CampaignsTab data={data} />
+          </div>
+        )}
+        {data && activeTab === 'campaigns' && <CampaignsTab data={data} />}
+        {data && activeTab === 'adsets'    && <AdSetsTab data={data} />}
+        {data && activeTab === 'creatives' && <CreativesSection data={data} />}
       </div>
     </div>
   );
