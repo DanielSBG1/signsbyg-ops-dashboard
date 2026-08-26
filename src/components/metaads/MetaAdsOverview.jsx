@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import DealsDrawer from './DealsDrawer';
+import FunnelDrawer from './FunnelDrawer';
 
 // ---- Formatting helpers ---------------------------------------------------
 
@@ -180,14 +180,14 @@ export default function MetaAdsOverview({ data }) {
   const totalHubspotLeads = campaigns.reduce((s, c) => s + (c.hubspotLeads ?? 0), 0);
   const totalRevenue = campaigns.reduce((s, c) => s + (c.revenue ?? 0), 0);
 
-  const [showDeals, setShowDeals] = useState(false);
+  const [drawerMode, setDrawerMode] = useState(null); // 'deals' | 'repeats' | null
   const preset = data?.period?.preset ?? 'year';
 
   return (
     <div className="space-y-8">
-      {/* Deals drawer */}
-      {showDeals && (
-        <DealsDrawer preset={preset} onClose={() => setShowDeals(false)} />
+      {/* Funnel drawer */}
+      {drawerMode && (
+        <FunnelDrawer mode={drawerMode} preset={preset} onClose={() => setDrawerMode(null)} />
       )}
 
       {/* ---- Funnel KPIs ---- */}
@@ -196,48 +196,52 @@ export default function MetaAdsOverview({ data }) {
           label="Leads"
           value={fmtNum(totals.metaLeads)}
           topbar="linear-gradient(90deg,#818cf8,#6366f1)"
-          sub={`${fmtMoney(totals.spend)} spent \u00b7 ${totalCpl != null ? fmtMoney(totalCpl, 2) + '/lead' : ''}`}
+          sub={`${fmtMoney(totals.spend)} spent · ${totalCpl != null ? fmtMoney(totalCpl, 2) + '/lead' : ''}`}
         />
         <MetricTile
           label="Ad Spend"
           value={fmtMoney(totals.spend)}
           topbar="linear-gradient(90deg,#a855f7,#7c3aed)"
-          sub={`${fmtNum(ads.length)} ads \u00b7 ${adSets.length} ad sets`}
+          sub={`${fmtNum(ads.length)} ads · ${adSets.length} ad sets`}
         />
         <MetricTile
-          label="Converted to Deals"
+          label="Leads → Deals"
           value={fmtNum(totals.leadsWithDeals ?? 0)}
           topbar="linear-gradient(90deg,#fbbf24,#f59e0b)"
           sub={totals.metaLeads > 0
-            ? `${((totals.leadsWithDeals / totals.metaLeads) * 100).toFixed(1)}% conversion rate`
+            ? `${((totals.leadsWithDeals / totals.metaLeads) * 100).toFixed(1)}% of leads · ${fmtNum(totals.dealsWon)} deals total`
             : undefined}
+          onClick={() => setDrawerMode('deals')}
         />
         <MetricTile
           label="Deals Won"
           value={fmtNum(totals.dealsWon ?? 0)}
           topbar="linear-gradient(90deg,#34d399,#059669)"
-          sub={`${fmtMoney(totalRevenue)} revenue`}
-          onClick={() => setShowDeals(true)}
+          sub="Click to see deals →"
+          onClick={() => setDrawerMode('deals')}
         />
         <MetricTile
           label="Revenue"
           value={fmtMoney(totalRevenue)}
           topbar="linear-gradient(90deg,#06b6d4,#0891b2)"
-          sub="Click to see deals \u2192"
-          onClick={() => setShowDeals(true)}
+          sub="Click to see deals →"
+          onClick={() => setDrawerMode('deals')}
         />
         <MetricTile
-          label="Avg Lead \u2192 Close"
+          label="Avg Lead → Close"
           value={totals.velocityAvg ? `${totals.velocityAvg}d` : '---'}
           topbar={`linear-gradient(90deg,${totals.velocityAvg <= 30 ? '#34d399,#059669' : totals.velocityAvg <= 60 ? '#fbbf24,#f59e0b' : '#f87171,#ef4444'})`}
           sub={totals.velocityMin && totals.velocityMax
-            ? `${totals.velocityMin}d fastest \u00b7 ${totals.velocityMax}d slowest`
+            ? `${totals.velocityMin}d fastest · ${totals.velocityMax}d slowest`
             : undefined}
         />
         {(totals.repeatCustomers ?? 0) > 0 ? (
-          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-2xl overflow-hidden relative">
+          <button
+            onClick={() => setDrawerMode('repeats')}
+            className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-2xl overflow-hidden relative text-left w-full cursor-pointer hover:border-amber-400 hover:shadow-md transition-all"
+          >
             <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-bl-lg">
-              \u2605 Highlight
+              ★ Highlight
             </div>
             <div className="p-5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700 mb-2">
@@ -247,10 +251,10 @@ export default function MetaAdsOverview({ data }) {
                 {totals.repeatCustomers}
               </p>
               <p className="text-amber-600/70 text-xs mt-2">
-                {fmtNum(totals.repeatDeals)} repeat orders \u00b7 {fmtMoney(totals.repeatRevenue)}
+                {fmtNum(totals.repeatDeals)} repeat orders · {fmtMoney(totals.repeatRevenue)} · Click to see →
               </p>
             </div>
-          </div>
+          </button>
         ) : (
           <MetricTile
             label="Repeat Customers"
