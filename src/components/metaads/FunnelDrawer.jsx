@@ -34,6 +34,7 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams({ preset: preset || 'year' });
+    if (mode === 'repeats') params.set('mode', 'repeats');
 
     fetch(`/api/meta-ads-deals?${params}`)
       .then(r => r.json())
@@ -45,29 +46,7 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
       .finally(() => setLoading(false));
   }, [preset, mode]);
 
-  // Filter deals for repeat customers view
-  const getRepeatCustomers = () => {
-    if (!data) return [];
-    const contactDeals = {};
-    for (const pipeline of data.pipelines) {
-      for (const deal of pipeline.deals) {
-        // Group deals by their contact/lead source to find repeats
-        const key = deal.name?.split(' - ')?.[0]?.trim() || deal.dealId;
-        if (!contactDeals[key]) contactDeals[key] = [];
-        contactDeals[key].push({ ...deal, pipeline: pipeline.pipeline });
-      }
-    }
-    // Return customers with 2+ deals
-    return Object.entries(contactDeals)
-      .filter(([, deals]) => deals.length > 1)
-      .map(([name, deals]) => ({
-        name,
-        deals,
-        totalRevenue: deals.reduce((s, d) => s + (d.amount || 0), 0),
-        dealCount: deals.length,
-      }))
-      .sort((a, b) => b.totalRevenue - a.totalRevenue);
-  };
+  const repeatCustomers = data?.repeatCustomers ?? [];
 
   const title = mode === 'repeats' ? 'Repeat Customers' : 'Attributed Deals';
   const subtitle = mode === 'repeats'
@@ -105,44 +84,58 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
           )}
 
           {/* Repeat Customers View */}
-          {data && mode === 'repeats' && (() => {
-            const repeats = getRepeatCustomers();
-            if (repeats.length === 0) return (
+          {data && mode === 'repeats' && (
+            repeatCustomers.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-sm">No repeat customers found.</div>
-            );
-            return repeats.map((customer, i) => (
-              <div key={i} className="border-2 border-amber-200 bg-amber-50/50 rounded-2xl overflow-hidden">
-                <div className="px-5 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-amber-500 text-lg">★</span>
-                    <div>
-                      <p className="font-bold text-gray-900">{customer.name}</p>
-                      <p className="text-xs text-amber-600">{customer.dealCount} orders · {fmtMoney(customer.totalRevenue)} total</p>
+            ) : (
+              repeatCustomers.map((customer, i) => (
+                <div key={i} className="border-2 border-amber-200 bg-amber-50/50 rounded-2xl overflow-hidden">
+                  <div className="px-5 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-amber-500 text-2xl">★</span>
+                      <div>
+                        <p className="font-bold text-gray-900">Repeat Customer #{i + 1}</p>
+                        <p className="text-xs text-amber-700">
+                          From: <span className="font-medium">{customer.source}</span>
+                        </p>
+                        <p className="text-xs text-amber-600 mt-0.5">
+                          {customer.dealCount} orders · {fmtMoney(customer.totalRevenue)} total revenue
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="border-t border-amber-200">
-                  <table className="w-full text-sm">
-                    <tbody className="divide-y divide-amber-100">
-                      {customer.deals.map((deal, j) => (
-                        <tr key={j} className="hover:bg-amber-50 transition-colors">
-                          <td className="px-5 py-2.5">
-                            <p className="text-gray-900 text-xs truncate max-w-[250px]">{deal.name}</p>
-                          </td>
-                          <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-gray-900 text-xs">
-                            {fmtMoney(deal.amount)}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-gray-500">{deal.rep}</td>
-                          <td className="px-3 py-2.5 text-xs text-gray-500">{deal.pipeline}</td>
-                          <td className="px-3 py-2.5 text-right text-xs text-gray-400">{fmtDate(deal.closeDate)}</td>
+                  <div className="border-t border-amber-200">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-amber-100">
+                          <th className="text-left px-5 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Deal</th>
+                          <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Amount</th>
+                          <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Rep</th>
+                          <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Pipeline</th>
+                          <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Closed</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-amber-100">
+                        {customer.deals.map((deal, j) => (
+                          <tr key={j} className="hover:bg-amber-50 transition-colors">
+                            <td className="px-5 py-2.5">
+                              <p className="text-gray-900 text-xs font-medium truncate max-w-[250px]" title={deal.name}>{deal.name}</p>
+                            </td>
+                            <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-gray-900 text-xs">
+                              {fmtMoney(deal.amount)}
+                            </td>
+                            <td className="px-3 py-2.5 text-xs text-gray-600">{deal.rep}</td>
+                            <td className="px-3 py-2.5 text-xs text-gray-500">{deal.pipeline}</td>
+                            <td className="px-3 py-2.5 text-right text-xs text-gray-400 tabular-nums">{fmtDate(deal.closeDate)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            ));
-          })()}
+              ))
+            )
+          )}
 
           {/* Deals View (grouped by pipeline) */}
           {data && mode === 'deals' && data.pipelines.map(pipeline => (

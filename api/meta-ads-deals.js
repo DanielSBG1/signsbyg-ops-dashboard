@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     if (!url) throw new Error('META_ADS_DATABASE_URL is not configured');
 
     const sql = neon(url);
-    const { preset = 'year', campaignId, adSetId } = req.query;
+    const { preset = 'year', campaignId, adSetId, mode } = req.query;
 
     // Date range
     const now = new Date();
@@ -112,6 +112,49 @@ export default async function handler(req, res) {
     // Sort pipelines by revenue desc
     const pipelines = Object.values(byPipeline).sort((a, b) => b.totalRevenue - a.totalRevenue);
 
+    // Repeat customers: contacts with 2+ closed-won deals
+    let repeatCustomers = [];
+    if (mode === 'repeats') {
+      const repeatRows = await sql`
+        select c.id as contact_id, c.source_detail,
+               json_agg(json_build_object(
+                 'dealId', d.id,
+                 'name', d.name,
+                 'amount', d.amount::numeric,
+                 'pipeline', d.pipeline,
+                 'closeDate', d.close_date,
+                 'ownerId', d.owner_id,
+                 'rep', o.name
+               ) order by d.close_date) as deals,
+               count(distinct d.id) as deal_count,
+               sum(d.amount::numeric) as total_revenue
+        from hs_contacts c
+        join deal_contacts dc on dc.contact_id = c.id
+        join hs_deals d on d.id = dc.deal_id
+        left join hs_owners o on o.id = d.owner_id
+        where d.is_closed_won = true
+          and c.analytics_source = 'PAID_SOCIAL'
+        group by c.id, c.source_detail
+        having count(distinct d.id) > 1
+        order by sum(d.amount::numeric) desc
+      `;
+
+      repeatCustomers = repeatRows.map(r => ({
+        contactId: r.contact_id,
+        source: r.source_detail || 'Paid Social',
+        dealCount: Number(r.deal_count),
+        totalRevenue: Number(r.total_revenue || 0),
+        deals: (r.deals || []).map(d => ({
+          dealId: d.dealId,
+          name: d.name,
+          amount: Number(d.amount || 0),
+          pipeline: PIPELINE_NAMES[d.pipeline] || d.pipeline || 'Unknown',
+          closeDate: d.closeDate ? new Date(d.closeDate).toISOString().slice(0, 10) : null,
+          rep: d.rep || 'Unassigned',
+        })),
+      }));
+    }
+
     return res.status(200).json({
       ok: true,
       data: {
@@ -119,6 +162,7 @@ export default async function handler(req, res) {
         totalDeals: seen.size,
         totalRevenue: pipelines.reduce((s, p) => s + p.totalRevenue, 0),
         pipelines,
+        repeatCustomers,
       },
     });
   } catch (err) {
