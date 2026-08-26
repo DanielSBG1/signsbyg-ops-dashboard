@@ -4,27 +4,42 @@ import { getCached, setCached } from './_lib/cache.js';
 const CACHE_TTL = 900; // 15 minutes
 
 /**
- * Compute the date range for a given preset.
- *   month   = last 30 days
- *   quarter = last 90 days
- *   year    = Jan 1 of current year to today
+ * Compute the date range for a given preset using calendar boundaries.
+ *   month   = 1st of current month to last day of current month
+ *   quarter = 1st of current quarter to last day of current quarter
+ *   year    = Jan 1 to Dec 31 of current year
  */
 function getDateRange(preset) {
   const now = new Date();
-  const end = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const y = now.getFullYear();
+  const m = now.getMonth(); // 0-based
 
   if (preset === 'year') {
-    const start = `${now.getFullYear()}-01-01`;
-    return { start, end };
+    return { start: `${y}-01-01`, end: `${y}-12-31` };
   }
 
-  const days = preset === 'quarter' ? 90 : 30;
-  const startDate = new Date(now.getTime() - days * 86400000);
-  const start = startDate.toISOString().split('T')[0];
-  return { start, end };
+  if (preset === 'quarter') {
+    const qStart = Math.floor(m / 3) * 3; // 0, 3, 6, or 9
+    const qEnd = qStart + 2; // last month of the quarter
+    const lastDay = new Date(y, qEnd + 1, 0).getDate(); // last day of qEnd month
+    const startStr = `${y}-${String(qStart + 1).padStart(2, '0')}-01`;
+    const endStr = `${y}-${String(qEnd + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    return { start: startStr, end: endStr };
+  }
+
+  // month (default) — 1st to last day of current month
+  const lastDay = new Date(y, m + 1, 0).getDate();
+  const startStr = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+  const endStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  return { start: startStr, end: endStr };
 }
 
-/** Expand a date range to full calendar month boundaries for P&L queries. */
+/**
+ * Expand a date range to full calendar month boundaries for P&L queries.
+ * NOTE: getDateRange already returns calendar boundaries for all presets,
+ * so this is effectively a no-op. Kept for safety in case callers pass
+ * arbitrary date ranges in the future.
+ */
 function expandToFullMonths(start, end) {
   // Start of the month containing 'start'
   const pnlStart = start.slice(0, 7) + '-01';
@@ -655,7 +670,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v7:${preset}`;
+    const cacheKey = `meta-ads:v8:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
