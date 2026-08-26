@@ -25,7 +25,7 @@ function velocityColor(days) {
  * Reusable slide-out drawer for funnel drill-downs.
  * Modes: 'deals' | 'repeats'
  */
-export default function FunnelDrawer({ mode, preset, onClose }) {
+export default function FunnelDrawer({ mode, preset, dateView = 'cohort', onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,6 +36,7 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
     setError(null);
     const params = new URLSearchParams({ preset: preset || 'year' });
     if (mode === 'repeats') params.set('mode', 'repeats');
+    if (dateView === 'closed') params.set('dateView', 'closed');
 
     fetch(`/api/meta-ads-deals?${params}`, { signal: controller.signal })
       .then(r => r.json())
@@ -67,11 +68,11 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
             <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
             {data && (
               <p className="text-xs text-gray-400 mt-0.5">
-                {data.period.start} → {data.period.end}
+                {data.period.start} \u2192 {data.period.end}
               </p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none px-2">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none px-2">\u2715</button>
         </div>
 
         <div className="p-6 space-y-6">
@@ -94,17 +95,17 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
                 <div key={customer.contactId || i} className="border-2 border-amber-200 bg-amber-50/50 rounded-2xl overflow-hidden">
                   <div className="px-5 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-amber-500 text-2xl">★</span>
+                      <span className="text-amber-500 text-2xl">\u2605</span>
                       <div>
                         <p className="font-bold text-gray-900">Repeat Customer #{i + 1}</p>
                         <p className="text-xs text-amber-700">
                           From: <span className="font-medium">{customer.source}</span>
                           {customer.leadCreatedAt && (
-                            <span className="text-amber-500"> · Lead came in {fmtDate(customer.leadCreatedAt)}</span>
+                            <span className="text-amber-500"> \u00b7 Lead came in {fmtDate(customer.leadCreatedAt)}</span>
                           )}
                         </p>
                         <p className="text-xs text-amber-600 mt-0.5">
-                          {customer.dealCount} orders · {fmtMoney(customer.totalRevenue)} total revenue
+                          {customer.dealCount} orders \u00b7 {fmtMoney(customer.totalRevenue)} total revenue
                         </p>
                       </div>
                     </div>

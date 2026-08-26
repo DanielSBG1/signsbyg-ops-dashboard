@@ -188,7 +188,7 @@ export default function MetaAdsOverview({ data, view = 'cohort' }) {
     <div className="space-y-8">
       {/* Funnel drawer */}
       {drawerMode && (
-        <FunnelDrawer mode={drawerMode} preset={preset} onClose={() => setDrawerMode(null)} />
+        <FunnelDrawer mode={drawerMode} preset={preset} dateView={view} onClose={() => setDrawerMode(null)} />
       )}
 
       {/* ---- Funnel KPIs ---- */}

@@ -19,7 +19,8 @@ export default async function handler(req, res) {
     if (!url) throw new Error('META_ADS_DATABASE_URL is not configured');
 
     const sql = neon(url);
-    const { preset = 'year', campaignId, adSetId, mode } = req.query;
+    const { preset = 'year', campaignId, adSetId, mode, dateView } = req.query;
+    const useClosed = dateView === 'closed';
 
     // Calendar date range — matches meta-ads-metrics.js exactly
     const now = new Date();
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
       left join ad_sets adset on adset.id = ml.ad_set_id
       where d.is_closed_won = true
         and al.spend_category = 'meta_ads'
-        and ct.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+        and ${useClosed ? sql`d.close_date::date` : sql`ct.created_at::date`} between ${pnlStart}::date and ${pnlEnd}::date
         ${campaignId ? sql`and al.campaign_id = ${campaignId}` : sql``}
         ${adSetId ? sql`and ml.ad_set_id = ${adSetId}` : sql``}
       order by d.amount::numeric desc
