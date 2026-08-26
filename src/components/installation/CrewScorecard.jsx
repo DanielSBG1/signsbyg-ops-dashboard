@@ -4,7 +4,7 @@ export default function CrewScorecard({ byCrew, unassignedCount, onUnassignedCli
   if (!byCrew || byCrew.length === 0) return null;
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6 overflow-x-auto">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 overflow-x-auto">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Crew Scorecard</h2>
         {unassignedCount > 0 && (
@@ -18,7 +18,7 @@ export default function CrewScorecard({ byCrew, unassignedCount, onUnassignedCli
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-white/40 text-xs uppercase tracking-wider">
+          <tr className="text-gray-400 text-xs uppercase tracking-wider">
             <th className="text-left pb-3 px-3">Crew</th>
             <th className="text-right pb-3 px-3">Open</th>
             <th className="text-right pb-3 px-3">Done</th>
@@ -30,25 +30,25 @@ export default function CrewScorecard({ byCrew, unassignedCount, onUnassignedCli
         </thead>
         <tbody>
           {byCrew.map((c) => (
-            <tr key={c.name} className="border-t border-white/5 hover:bg-white/5">
+            <tr key={c.name} className="border-t border-gray-200 hover:bg-black/[0.03]">
               <td className="py-3 px-3 flex items-center gap-2">
                 <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: c.color }} />
                 <span className="font-medium">{c.name}</span>
               </td>
               <td className="py-3 px-3 text-right tabular-nums">{c.open}</td>
-              <td className="py-3 px-3 text-right tabular-nums text-white/60">{c.completed}</td>
+              <td className="py-3 px-3 text-right tabular-nums text-gray-500">{c.completed}</td>
               <td className="py-3 px-3 text-right tabular-nums text-success">{c.onTime || 0}</td>
               <td className="py-3 px-3 text-right tabular-nums">
-                <span className={c.rescheduled > 0 ? 'text-warning' : 'text-white/30'}>{c.rescheduled || 0}</span>
+                <span className={c.rescheduled > 0 ? 'text-warning' : 'text-gray-300'}>{c.rescheduled || 0}</span>
               </td>
               <td className="py-3 px-3 text-right tabular-nums">
-                <span className={c.failed > 0 ? 'text-danger' : 'text-white/30'}>{c.failed || 0}</span>
+                <span className={c.failed > 0 ? 'text-danger' : 'text-gray-300'}>{c.failed || 0}</span>
               </td>
               <td className="py-3 px-3 text-right tabular-nums">
                 <span className={`font-semibold ${
                   c.onTimeRate >= 80 ? 'text-success' :
                   c.onTimeRate >= 60 ? 'text-warning' :
-                  c.completed > 0 ? 'text-danger' : 'text-white/30'
+                  c.completed > 0 ? 'text-danger' : 'text-gray-300'
                 }`}>
                   {c.completed > 0 ? `${c.onTimeRate}%` : '—'}
                 </span>

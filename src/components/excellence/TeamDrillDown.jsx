@@ -5,16 +5,16 @@ import { scoreColor } from '../../lib/excellenceUtils.js';
 function KpiRow({ kpi }) {
   const barWidth = `${kpi.score}%`;
   return (
-    <div className="py-2.5 border-b border-white/[0.04] last:border-0">
+    <div className="py-2.5 border-b border-gray-100 last:border-0">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-white/70">{kpi.label}</span>
+        <span className="text-xs text-gray-700">{kpi.label}</span>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-white/30">{kpi.rawLabel}</span>
+          <span className="text-[10px] text-gray-400">{kpi.rawLabel}</span>
           <span className={`text-sm font-bold tabular-nums w-8 text-right ${scoreColor(kpi.score)}`}>{kpi.score}</span>
-          <span className="text-[10px] text-white/20 w-8 text-right">{Math.round((kpi.weight ?? 0) * 100)}%</span>
+          <span className="text-[10px] text-gray-300 w-8 text-right">{Math.round((kpi.weight ?? 0) * 100)}%</span>
         </div>
       </div>
-      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1 bg-black/[0.03] rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${kpi.score >= 75 ? 'bg-success' : kpi.score >= 50 ? 'bg-warning' : 'bg-danger'}`}
           style={{ width: barWidth }}
@@ -28,9 +28,9 @@ function Section({ title, score, kpis }) {
   if (!kpis?.length) return null;
   const sorted = [...kpis].sort((a, b) => a.score - b.score); // worst first
   return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-semibold text-white/50 uppercase tracking-widest">{title}</h4>
+        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">{title}</h4>
         <span className={`text-sm font-bold tabular-nums ${scoreColor(score)}`}>{score}</span>
       </div>
       {sorted.map(k => <KpiRow key={k.key} kpi={k} />)}
@@ -53,7 +53,7 @@ export default function TeamDrillDown({ team }) {
           <p className="text-xs font-semibold text-danger/80 uppercase tracking-widest mb-2">Needs Attention</p>
           {flags.map(f => (
             <div key={f.key} className="flex items-center justify-between py-1">
-              <span className="text-sm text-white/70">{f.label}</span>
+              <span className="text-sm text-gray-700">{f.label}</span>
               <span className="text-sm font-bold text-danger tabular-nums">{f.score} — {f.rawLabel}</span>
             </div>
           ))}
@@ -67,7 +67,7 @@ export default function TeamDrillDown({ team }) {
       </div>
 
       {team.dataUnavailable && (
-        <p className="text-xs text-white/30 text-center py-2">
+        <p className="text-xs text-gray-400 text-center py-2">
           Installation data loads from cache — visit the Installation tab first to warm it up, then refresh.
         </p>
       )}

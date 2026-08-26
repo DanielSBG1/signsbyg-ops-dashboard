@@ -16,14 +16,14 @@ export default function PeriodSelector({ period, setPeriod, range }) {
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             period === p.key
               ? 'bg-accent text-white'
-              : 'bg-white/5 text-white/70 hover:bg-white/10'
+              : 'bg-black/[0.03] text-gray-600 hover:bg-black/[0.05]'
           }`}
         >
           {p.label}
         </button>
       ))}
       {range && range.start && (
-        <span className="text-white/40 text-xs ml-2">
+        <span className="text-gray-400 text-xs ml-2">
           {range.start} → {range.end}
         </span>
       )}

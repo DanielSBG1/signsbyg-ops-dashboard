@@ -135,7 +135,7 @@ function JobDrawer({ job, crewColor, onClose }) {
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-96 max-w-full bg-[#0f1117] border-l border-white/10 z-50 flex flex-col shadow-2xl overflow-hidden"
+      <div className="fixed right-0 top-0 h-full w-96 max-w-full bg-white border-l border-gray-200 z-50 flex flex-col shadow-2xl overflow-hidden"
         style={{ animation: 'slideIn 0.2s ease-out' }}>
 
         {/* Deposit status banner */}
@@ -150,7 +150,7 @@ function JobDrawer({ job, crewColor, onClose }) {
         )}
 
         {/* Header */}
-        <div className="flex items-start justify-between p-5 border-b border-white/10">
+        <div className="flex items-start justify-between p-5 border-b border-gray-200">
           <div className="flex-1 min-w-0 pr-3">
             <div className="flex items-center gap-2 mb-1">
               <span
@@ -162,11 +162,11 @@ function JobDrawer({ job, crewColor, onClose }) {
                 {job.section || 'Installation'}
               </span>
             </div>
-            <h2 className="text-base font-bold text-white leading-snug">{name}</h2>
+            <h2 className="text-base font-bold text-gray-900 leading-snug">{name}</h2>
           </div>
           <button
             onClick={onClose}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors text-xl leading-none"
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/[0.05] text-gray-400 hover:text-gray-900 transition-colors text-xl leading-none"
           >
             ×
           </button>
@@ -177,7 +177,7 @@ function JobDrawer({ job, crewColor, onClose }) {
 
           {/* Dates */}
           <section>
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Schedule</p>
+            <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider mb-2">Schedule</p>
             <div className="space-y-1.5">
               {job.startDate && job.startDate !== job.installDate ? (
                 <Row label="Install window" value={`${fmt(job.startDate)} – ${fmt(job.installDate)}`} />
@@ -193,7 +193,7 @@ function JobDrawer({ job, crewColor, onClose }) {
 
           {/* Status */}
           <section>
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Status</p>
+            <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider mb-2">Status</p>
             <div className="space-y-1.5">
               <Row label="Job status" value={
                 <span className={`capitalize font-semibold ${
@@ -201,7 +201,7 @@ function JobDrawer({ job, crewColor, onClose }) {
                   job.status === 'scheduled' ? 'text-cyan-400' :
                   job.status === 'at_risk' ? 'text-amber-400' :
                   job.status === 'completed' || job.status === 'on_time' || job.status === 'early' ? 'text-green-400' :
-                  'text-white/60'
+                  'text-gray-500'
                 }`}>{isOverdue ? 'Overdue' : (job.status || '—')}</span>
               } />
               {job.rescheduleCount > 0 && (
@@ -211,7 +211,7 @@ function JobDrawer({ job, crewColor, onClose }) {
               )}
               <Row label="Deposit" value={
                 job.depositPaid == null
-                  ? <span className="text-white/30 text-[11px] italic">Not tracked</span>
+                  ? <span className="text-gray-300 text-[11px] italic">Not tracked</span>
                   : <span className={unpaid ? 'text-amber-400 font-semibold' : 'text-green-400 font-semibold'}>
                       {unpaid ? '⚠ Not paid' : '✓ Paid'}
                     </span>
@@ -221,7 +221,7 @@ function JobDrawer({ job, crewColor, onClose }) {
 
           {/* Crew & Scope */}
           <section>
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Assignment</p>
+            <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider mb-2">Assignment</p>
             <div className="space-y-1.5">
               <Row label="Crews" value={job.crews?.length ? job.crews.join(', ') : 'Unassigned'} />
               {job.scope && <Row label="Scope" value={job.scope} />}
@@ -234,7 +234,7 @@ function JobDrawer({ job, crewColor, onClose }) {
           {/* Contact */}
           {(job.contactName || job.contactPhone || job.contactEmail || job.address) && (
             <section>
-              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Contact</p>
+              <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider mb-2">Contact</p>
               <div className="space-y-1.5">
                 {job.contactName && <Row label="Name" value={job.contactName} />}
                 {job.address && <Row label="Address" value={job.address} />}
@@ -259,12 +259,12 @@ function JobDrawer({ job, crewColor, onClose }) {
 
         {/* Footer — Asana link */}
         {job.url && (
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-gray-200">
             <a
               href={job.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-sm transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-black/[0.03] hover:bg-black/[0.05] text-gray-500 hover:text-gray-900 text-sm transition-colors"
             >
               <span>Open in Asana</span>
               <span className="text-xs">↗</span>
@@ -284,8 +284,8 @@ function JobDrawer({ job, crewColor, onClose }) {
 function Row({ label, value }) {
   return (
     <div className="flex items-baseline gap-3">
-      <span className="text-[11px] text-white/35 shrink-0 w-28">{label}</span>
-      <span className="text-[12px] text-white/80 flex-1 min-w-0">{value ?? '—'}</span>
+      <span className="text-[11px] text-gray-400 shrink-0 w-28">{label}</span>
+      <span className="text-[12px] text-gray-700 flex-1 min-w-0">{value ?? '—'}</span>
     </div>
   );
 }
@@ -393,7 +393,7 @@ function JobChip({ job, crewColor, updating, onDragStart, onJobClick }) {
         fontWeight: 600,
       }}
     >
-      {updating && <span className="shrink-0 w-2.5 h-2.5 border border-white/40 border-t-transparent rounded-full animate-spin" />}
+      {updating && <span className="shrink-0 w-2.5 h-2.5 border border-gray-400 border-t-transparent rounded-full animate-spin" />}
       {colors.unpaid && !updating && <span className="shrink-0 text-[9px]">⚠</span>}
       {isRescheduled && !updating && !colors.unpaid && (
         <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-yellow-400/80" />
@@ -447,7 +447,7 @@ function WeekJobCard({ job, crewColor, updating, onDragStart, onJobClick }) {
       {/* Badges */}
       <div className="flex flex-wrap gap-1 mt-1.5">
         {job.scope && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/50 font-medium">
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/[0.05] text-gray-500 font-medium">
             {job.scope}
           </span>
         )}
@@ -481,7 +481,7 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, bar
   return (
     <div
       className={`rounded-lg flex flex-col border transition-colors min-h-[88px]
-        ${day.isToday ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/[0.04]'}
+        ${day.isToday ? 'border-blue-500/50 bg-blue-500/5' : 'border-gray-200'}
         ${!day.inMonth ? 'opacity-40' : ''}
         ${dragOver ? 'border-blue-400/60 bg-blue-500/10' : ''}
       `}
@@ -492,7 +492,7 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, bar
       {/* Date number always on top */}
       <div className="px-1.5 pt-1 flex items-center" style={{ height: DATE_HEADER_H }}>
         <span className={`text-[11px] font-semibold leading-none
-          ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-white/60' : 'text-white/25'}`}>
+          ${day.isToday ? 'text-blue-400' : day.inMonth ? 'text-gray-500' : 'text-gray-300'}`}>
           {day.num}
         </span>
       </div>
@@ -513,7 +513,7 @@ function DayCell({ day, jobs, crewColorMap, updatingSet, dragOver, expanded, bar
         {overflow > 0 && (
           <button
             onClick={onToggleExpand}
-            className="text-[10px] text-white/40 hover:text-white/70 pt-0.5 text-left transition-colors"
+            className="text-[10px] text-gray-400 hover:text-gray-600 pt-0.5 text-left transition-colors"
           >
             {expanded ? '▲ less' : `+${overflow} more`}
           </button>
@@ -568,7 +568,7 @@ function WeekView({ weekDays, multiDayJobs, singleDayJobs, crewColorMap, updatin
           <div
             key={day.iso}
             className={`min-h-[340px] rounded-xl border flex flex-col overflow-hidden transition-colors
-              ${day.isToday ? 'border-blue-500/40 bg-blue-500/5' : 'border-white/[0.06] bg-white/[0.015]'}
+              ${day.isToday ? 'border-blue-500/40 bg-blue-500/5' : 'border-gray-200 bg-black/[0.02]'}
               ${dragOverDate === day.iso ? 'border-blue-400/60 bg-blue-500/10' : ''}
             `}
             onDragOver={(e) => onDragOver(e, day.iso)}
@@ -577,16 +577,16 @@ function WeekView({ weekDays, multiDayJobs, singleDayJobs, crewColorMap, updatin
           >
             {/* Column header — fixed height matches WEEK_HEADER_H so bars align correctly */}
             <div
-              className={`px-3 border-b flex items-center shrink-0 ${day.isToday ? 'border-blue-500/30' : 'border-white/[0.05]'}`}
+              className={`px-3 border-b flex items-center shrink-0 ${day.isToday ? 'border-blue-500/30' : 'border-gray-200'}`}
               style={{ height: WEEK_HEADER_H }}
             >
-              <span className={`text-[10px] font-semibold uppercase tracking-wider ${day.isToday ? 'text-blue-400' : 'text-white/35'}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${day.isToday ? 'text-blue-400' : 'text-gray-400'}`}>
                 {day.dayLabel}
               </span>
-              <span className={`ml-2 text-xl font-bold ${day.isToday ? 'text-blue-400' : 'text-white/80'}`}>
+              <span className={`ml-2 text-xl font-bold ${day.isToday ? 'text-blue-400' : 'text-gray-700'}`}>
                 {day.num}
               </span>
-              <span className={`ml-1 text-[10px] ${day.isToday ? 'text-blue-400/70' : 'text-white/25'}`}>
+              <span className={`ml-1 text-[10px] ${day.isToday ? 'text-blue-400/70' : 'text-gray-300'}`}>
                 {day.monthLabel}
               </span>
             </div>
@@ -786,21 +786,21 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
   })();
 
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-5 space-y-4 relative">
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 relative">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
             Installation Calendar
           </h2>
           {/* View toggle */}
-          <div className="flex bg-white/5 rounded-lg p-0.5">
+          <div className="flex bg-black/[0.03] rounded-lg p-0.5">
             {['month', 'week'].map(v => (
               <button
                 key={v}
                 onClick={() => setViewMode(v)}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors capitalize ${
-                  viewMode === v ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/70'
+                  viewMode === v ? 'bg-black/[0.05] text-gray-900' : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 {v}
@@ -810,19 +810,19 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
         </div>
 
         <div className="flex items-center gap-1">
-          <button onClick={goToday} className="text-xs text-white/40 hover:text-white/70 px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors mr-2">
+          <button onClick={goToday} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded border border-gray-200 hover:border-gray-300 transition-colors mr-2">
             Today
           </button>
           <button
             onClick={() => viewMode === 'month' ? prevMonth() : setWeekAnchor(w => addDaysToISO(w, -7))}
-            className="w-7 h-7 flex items-center justify-center rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/[0.05] text-gray-500 hover:text-gray-900 transition-colors"
           >‹</button>
-          <span className="text-sm font-semibold text-white/80 w-48 text-center">
+          <span className="text-sm font-semibold text-gray-700 w-48 text-center">
             {viewMode === 'month' ? `${MONTH_NAMES[month]} ${year}` : weekLabel}
           </span>
           <button
             onClick={() => viewMode === 'month' ? nextMonth() : setWeekAnchor(w => addDaysToISO(w, 7))}
-            className="w-7 h-7 flex items-center justify-center rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/[0.05] text-gray-500 hover:text-gray-900 transition-colors"
           >›</button>
         </div>
       </div>
@@ -835,7 +835,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
           {viewMode === 'month' && (
             <div className="grid grid-cols-7 gap-1 mb-1">
               {DAY_LABELS.map(d => (
-                <div key={d} className="text-center text-[10px] font-semibold text-white/30 uppercase tracking-wider py-1">{d}</div>
+                <div key={d} className="text-center text-[10px] font-semibold text-gray-300 uppercase tracking-wider py-1">{d}</div>
               ))}
             </div>
           )}
@@ -905,18 +905,18 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
 
         {/* Legend sidebar */}
         <div className="w-36 shrink-0 flex flex-col gap-3 pt-1">
-          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Crews</p>
+          <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider">Crews</p>
           <div className="flex flex-col gap-1.5">
             {(activeCrws.length > 0 ? activeCrws : (byCrew || [])).map(c => (
               <div key={c.name} className="flex items-center gap-2">
                 <span className="shrink-0 w-3 h-3 rounded-sm" style={{ backgroundColor: c.color }} />
-                <span className="text-[11px] text-white/60 leading-tight">{c.name}</span>
+                <span className="text-[11px] text-gray-500 leading-tight">{c.name}</span>
               </div>
             ))}
           </div>
 
-          <div className="mt-2 pt-2 border-t border-white/5 flex flex-col gap-2">
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Status</p>
+          <div className="mt-2 pt-2 border-t border-gray-200 flex flex-col gap-2">
+            <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider">Status</p>
             {[
               { color: '#22c55e', label: 'Completed' },
               { color: '#ef4444', label: 'Overdue' },
@@ -928,7 +928,7 @@ export default function CalendarView({ jobs, byCrew, onRefresh }) {
                   ? <span className="shrink-0 text-[11px]" style={{ color }}>{icon || '●'}</span>
                   : <span className="shrink-0 w-3 h-3 rounded-sm" style={{ backgroundColor: color + '30', border: `2px solid ${color}` }} />
                 }
-                <span className="text-[11px] text-white/50">{label}</span>
+                <span className="text-[11px] text-gray-500">{label}</span>
               </div>
             ))}
           </div>

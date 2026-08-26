@@ -19,38 +19,38 @@ function JobListModal({ label, color, jobs, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+        className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0"
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0"
           style={{ backgroundColor: `${color}20` }}>
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
-            <span className="text-lg font-bold text-white">{label}</span>
-            <span className="text-sm text-white/40">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</span>
+            <span className="text-lg font-bold text-gray-900">{label}</span>
+            <span className="text-sm text-gray-400">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</span>
           </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white/80 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-300 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
 
-        <div className="grid grid-cols-[1fr_130px_110px] gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
-          <span className="text-xs uppercase tracking-wider text-white/35">Job Name</span>
-          <span className="text-xs uppercase tracking-wider text-white/35">Crew</span>
-          <span className="text-xs uppercase tracking-wider text-white/35">Install Date</span>
+        <div className="grid grid-cols-[1fr_130px_110px] gap-4 px-6 py-3 border-b border-gray-200 bg-black/[0.02] flex-shrink-0">
+          <span className="text-xs uppercase tracking-wider text-gray-400">Job Name</span>
+          <span className="text-xs uppercase tracking-wider text-gray-400">Crew</span>
+          <span className="text-xs uppercase tracking-wider text-gray-400">Install Date</span>
         </div>
 
-        <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
+        <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
           {jobs.map(job => (
             <div key={job.id}
-              className="grid grid-cols-[1fr_130px_110px] gap-4 items-center px-6 py-3 hover:bg-white/[0.03]"
+              className="grid grid-cols-[1fr_130px_110px] gap-4 items-center px-6 py-3 hover:bg-black/[0.02]"
             >
               <a href={job.url} target="_blank" rel="noreferrer"
-                className="text-sm text-white/85 truncate hover:text-white" title={job.name}>
+                className="text-sm text-gray-800 truncate hover:text-gray-900" title={job.name}>
                 {job.name}
               </a>
-              <span className="text-sm text-white/50 truncate">
+              <span className="text-sm text-gray-500 truncate">
                 {job.crews?.length ? job.crews.join(', ') : '—'}
               </span>
-              <span className={`text-sm tabular-nums ${job.status === 'late' ? 'text-red-400 font-semibold' : 'text-white/50'}`}>
+              <span className={`text-sm tabular-nums ${job.status === 'late' ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
                 {job.installDate
                   ? new Date(job.installDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                   : '—'}
@@ -86,9 +86,9 @@ export default function PipelineBar({ summary, jobs }) {
 
   return (
     <>
-      <div className="bg-slate-card border border-white/5 rounded-2xl p-5 space-y-5">
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Installation Pipeline</h2>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Installation Pipeline</h2>
           <span className="text-sm font-bold" style={{ color: rateColor }}>
             {rate}% on-time
           </span>
@@ -97,7 +97,7 @@ export default function PipelineBar({ summary, jobs }) {
         {/* Status distribution */}
         {totalOpen > 0 && (
           <div>
-            <div className="flex items-center justify-between text-xs text-white/40 mb-2">
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
               <span>Open jobs by status — click to view</span>
               <span>{totalOpen} open</span>
             </div>
@@ -117,11 +117,11 @@ export default function PipelineBar({ summary, jobs }) {
                 <button
                   key={seg.key}
                   onClick={() => setActive(seg)}
-                  className="flex items-center gap-1.5 text-xs text-white/55 hover:text-white/90 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
                 >
                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.color }} />
                   {seg.label}
-                  <span className="text-white/30">{seg.count}</span>
+                  <span className="text-gray-300">{seg.count}</span>
                 </button>
               ))}
             </div>
@@ -130,11 +130,11 @@ export default function PipelineBar({ summary, jobs }) {
 
         {/* On-time rate bar */}
         <div>
-          <div className="flex items-center justify-between text-xs text-white/40 mb-2">
+          <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
             <span>On-time rate (completed jobs)</span>
             <span>{summary.early + summary.onTime} of {summary.early + summary.onTime + summary.failed} completed</span>
           </div>
-          <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{ width: `${rate}%`, backgroundColor: rateColor }}

@@ -9,12 +9,12 @@ const STATUSES = [
   { key: 'scheduled',   label: 'Scheduled',   desc: 'Install Date in future, 0 reschedules',                color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
   { key: 'at_risk',     label: 'At Risk',     desc: 'Install Date in future but already rescheduled 1+',    color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
   { key: 'late',        label: 'Late',        desc: 'Install Date has passed, task still open',              color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-  { key: 'pending',     label: 'Pending',     desc: 'No Install Date set',                                  color: 'bg-white/10 text-white/50 border-white/10' },
+  { key: 'pending',     label: 'Pending',     desc: 'No Install Date set',                                  color: 'bg-black/[0.05] text-gray-400 border-gray-200' },
 ];
 
 export default function StatusLegend({ summary }) {
   return (
-    <div className="bg-slate-card border border-white/5 rounded-2xl p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6">
       <h2 className="text-lg font-semibold mb-4">Status Guide</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {STATUSES.map((s) => {
@@ -30,14 +30,14 @@ export default function StatusLegend({ summary }) {
           else if (s.key === 'pending') val = summary?.pending;
 
           return (
-            <div key={s.key} className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
+            <div key={s.key} className="flex items-start gap-3 p-2 rounded-lg hover:bg-black/[0.03]">
               <div className="flex items-center gap-2 shrink-0 mt-0.5">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${s.color}`}>
                   {s.label}
                 </span>
-                <span className="text-white font-bold tabular-nums text-sm">{val ?? 0}</span>
+                <span className="text-gray-900 font-bold tabular-nums text-sm">{val ?? 0}</span>
               </div>
-              <p className="text-white/40 text-xs leading-relaxed">{s.desc}</p>
+              <p className="text-gray-400 text-xs leading-relaxed">{s.desc}</p>
             </div>
           );
         })}
