@@ -113,7 +113,9 @@ async function fetchMetaAdsMetrics(preset) {
         where c.analytics_source = 'PAID_SOCIAL'
           and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
       ),
-      -- Repeat customers: contacts with 2+ closed-won deals
+      -- Repeat customers: contacts with 2+ closed-won deals where at least
+      -- one deal closed in the selected period. All-time deal count/revenue
+      -- is shown, but only customers active in this period appear.
       repeats as (
         select
           count(*) as repeat_customers,
@@ -130,6 +132,8 @@ async function fetchMetaAdsMetrics(preset) {
             and c.analytics_source = 'PAID_SOCIAL'
           group by c.id
           having count(distinct d.id) > 1
+            -- At least one deal closed in this period
+            and bool_or(d.close_date::date between ${pnlStart}::date and ${pnlEnd}::date)
         ) multi
       ),
       -- Velocity uses full calendar months, same as revenue and P&L
@@ -669,7 +673,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v9:${preset}`;
+    const cacheKey = `meta-ads:v10:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
