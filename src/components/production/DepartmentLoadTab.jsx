@@ -11,11 +11,11 @@ const DEPT_LABELS = {
 };
 
 function HealthBar({ score, band }) {
-  if (score === null) return <span className="text-white/30 text-xs">—</span>;
+  if (score === null) return <span className="text-gray-300 text-xs">—</span>;
   const cfg = BAND_CONFIG[band];
   return (
     <div className="flex items-center gap-2 flex-1 max-w-[160px]">
-      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-black/[0.05] rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full ${cfg.fillClass}`}
           style={{ width: `${score}%` }}
@@ -35,7 +35,7 @@ function JobRow({ job, onOpen }) {
 
   return (
     <div
-      className="px-4 py-2.5 flex items-center gap-3 hover:bg-white/[0.04] cursor-pointer transition-colors border-b border-white/[0.03] last:border-0"
+      className="px-4 py-2.5 flex items-center gap-3 hover:bg-black/[0.02] cursor-pointer transition-colors border-b border-gray-100 last:border-0"
       onClick={() => onOpen(job)}
     >
       {/* Health score badge */}
@@ -53,7 +53,7 @@ function JobRow({ job, onOpen }) {
         )}
         {job.projectedLate && (
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/20 text-warning font-bold shrink-0">
-            ⚠ PROJ. LATE
+            \u26a0 PROJ. LATE
           </span>
         )}
         {isLate && (
@@ -65,7 +65,7 @@ function JobRow({ job, onOpen }) {
 
       {/* Due date */}
       {job.due_on && (
-        <span className={`shrink-0 text-xs tabular-nums ${isLate ? 'text-danger' : 'text-white/40'}`}>
+        <span className={`shrink-0 text-xs tabular-nums ${isLate ? 'text-danger' : 'text-gray-400'}`}>
           {job.due_on}
         </span>
       )}
@@ -76,8 +76,8 @@ function JobRow({ job, onOpen }) {
         target="_blank"
         rel="noopener noreferrer"
         onClick={e => e.stopPropagation()}
-        className="shrink-0 text-white/30 hover:text-white/70 text-xs transition-colors"
-      >↗</a>
+        className="shrink-0 text-gray-300 hover:text-gray-600 text-xs transition-colors"
+      >\u2197</a>
     </div>
   );
 }
@@ -92,17 +92,17 @@ function DepartmentModule({ deptKey, jobs, today, onOpenDrawer }) {
   const lateCount = jobs.filter(j => j.status === 'late').length;
 
   return (
-    <div className="bg-white/[0.03] rounded-xl overflow-hidden">
+    <div className="bg-black/[0.02] rounded-xl overflow-hidden">
       {/* Header */}
       <button
-        className="w-full px-4 py-3 flex items-center gap-4 hover:bg-white/[0.05] transition-colors text-left"
+        className="w-full px-4 py-3 flex items-center gap-4 hover:bg-black/[0.03] transition-colors text-left"
         onClick={() => setExpanded(e => !e)}
       >
         {/* Dept name + job count */}
-        <span className="font-semibold text-sm text-white/90 shrink-0 w-36">
+        <span className="font-semibold text-sm text-gray-900 shrink-0 w-36">
           {DEPT_LABELS[deptKey]}
         </span>
-        <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-white/50 tabular-nums shrink-0">
+        <span className="text-xs bg-black/[0.05] px-2 py-0.5 rounded-full text-gray-500 tabular-nums shrink-0">
           {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'}
         </span>
 
@@ -113,22 +113,22 @@ function DepartmentModule({ deptKey, jobs, today, onOpenDrawer }) {
 
         {/* Late count badge */}
         <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold tabular-nums ${
-          lateCount > 0 ? 'bg-danger/20 text-danger' : 'bg-white/10 text-white/30'
+          lateCount > 0 ? 'bg-danger/20 text-danger' : 'bg-black/[0.05] text-gray-300'
         }`}>
           {lateCount} late
         </span>
 
         {/* Chevron */}
-        <span className="shrink-0 text-white/30 text-xs">
-          {expanded ? '▲' : '▼'}
+        <span className="shrink-0 text-gray-300 text-xs">
+          {expanded ? '\u25b2' : '\u25bc'}
         </span>
       </button>
 
       {/* Expanded job rows */}
       {expanded && (
-        <div className="border-t border-white/5">
+        <div className="border-t border-gray-200">
           {sortedJobs.length === 0 && (
-            <p className="px-4 py-6 text-center text-white/20 text-sm">No jobs</p>
+            <p className="px-4 py-6 text-center text-gray-300 text-sm">No jobs</p>
           )}
           {sortedJobs.map(job => (
             <JobRow key={job.gid} job={job} onOpen={onOpenDrawer} />

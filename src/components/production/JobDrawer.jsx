@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 const STATUS_CONFIG = {
   late:     { label: 'Late',     className: 'text-danger' },
   on_track: { label: 'On Track', className: 'text-success' },
-  no_date:  { label: 'No Date',  className: 'text-white/40' },
+  no_date:  { label: 'No Date',  className: 'text-gray-400' },
 };
 
 const REDO_LABELS = {
@@ -14,22 +14,22 @@ const REDO_LABELS = {
 function SubtaskRow({ name, assignee, due_on, completed, today }) {
   const isOverdue = !completed && due_on && due_on < today;
   return (
-    <div className="flex items-center gap-3 text-xs py-2 border-b border-white/[0.04] last:border-0">
+    <div className="flex items-center gap-3 text-xs py-2 border-b border-gray-100 last:border-0">
       {completed ? (
-        <span className="text-success text-sm shrink-0">✓</span>
+        <span className="text-success text-sm shrink-0">\u2713</span>
       ) : (
-        <span className="w-2 h-2 rounded-full bg-white/20 inline-block shrink-0" />
+        <span className="w-2 h-2 rounded-full bg-black/[0.08] inline-block shrink-0" />
       )}
-      <span className={`flex-1 truncate ${completed ? 'text-white/30 line-through' : 'text-white/80'}`}>
+      <span className={`flex-1 truncate ${completed ? 'text-gray-300 line-through' : 'text-gray-700'}`}>
         {name}
       </span>
-      <span className="text-white/30 text-[10px] shrink-0">{assignee ?? '—'}</span>
+      <span className="text-gray-300 text-[10px] shrink-0">{assignee ?? '\u2014'}</span>
       {due_on ? (
-        <span className={`text-[10px] tabular-nums shrink-0 ${isOverdue ? 'text-danger font-semibold' : 'text-white/30'}`}>
+        <span className={`text-[10px] tabular-nums shrink-0 ${isOverdue ? 'text-danger font-semibold' : 'text-gray-300'}`}>
           {due_on}
         </span>
       ) : (
-        <span className="text-[10px] text-white/20 shrink-0">no date</span>
+        <span className="text-[10px] text-gray-300 shrink-0">no date</span>
       )}
     </div>
   );
@@ -54,7 +54,7 @@ export default function JobDrawer({ job, onClose }) {
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-slate-card border-l border-white/10 z-50 overflow-y-auto shadow-2xl">
+      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white border-l border-gray-200 z-50 overflow-y-auto shadow-2xl">
         <div className="p-6 space-y-6">
 
           {/* Header */}
@@ -65,13 +65,13 @@ export default function JobDrawer({ job, onClose }) {
                 href={`https://app.asana.com/0/0/${job.gid}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/30 hover:text-white/70 text-xs transition-colors"
-              >Open in Asana ↗</a>
+                className="text-gray-300 hover:text-gray-600 text-xs transition-colors"
+              >Open in Asana \u2197</a>
               <button
                 onClick={onClose}
-                className="text-white/40 hover:text-white text-xl"
+                className="text-gray-400 hover:text-gray-900 text-xl"
               >
-                ×
+                \u00d7
               </button>
             </div>
           </div>
@@ -79,24 +79,24 @@ export default function JobDrawer({ job, onClose }) {
           {/* Meta row */}
           <div className="flex flex-wrap gap-5">
             <div>
-              <p className="text-white/40 text-xs">Production Due</p>
-              <p className={`text-sm font-semibold ${job.status === 'late' ? 'text-danger' : 'text-white'}`}>
+              <p className="text-gray-400 text-xs">Production Due</p>
+              <p className={`text-sm font-semibold ${job.status === 'late' ? 'text-danger' : 'text-gray-900'}`}>
                 {job.due_on ?? 'No date set'}
               </p>
             </div>
             <div>
-              <p className="text-white/40 text-xs">Status</p>
+              <p className="text-gray-400 text-xs">Status</p>
               <p className={`text-sm font-semibold ${status.className}`}>{status.label}</p>
             </div>
             {job.projectedLate && (
               <div>
-                <p className="text-white/40 text-xs">Projection</p>
-                <p className="text-sm font-semibold text-warning">⚠ Projected Late</p>
+                <p className="text-gray-400 text-xs">Projection</p>
+                <p className="text-sm font-semibold text-warning">\u26a0 Projected Late</p>
               </div>
             )}
             {job.redoType && (
               <div>
-                <p className="text-white/40 text-xs">Redo Type</p>
+                <p className="text-gray-400 text-xs">Redo Type</p>
                 <p className="text-sm font-semibold text-orange-400">{REDO_LABELS[job.redoType]}</p>
               </div>
             )}
@@ -104,11 +104,11 @@ export default function JobDrawer({ job, onClose }) {
 
           {/* Sub-sub-task list */}
           <div>
-            <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-3">
+            <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-3">
               Production Stages
             </p>
             {job.subTasks.length === 0 ? (
-              <p className="text-white/20 text-sm">No stages found</p>
+              <p className="text-gray-300 text-sm">No stages found</p>
             ) : (
               job.subTasks.map(s => (
                 <SubtaskRow key={s.gid} {...s} today={today} />

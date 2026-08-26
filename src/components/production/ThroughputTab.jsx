@@ -7,20 +7,20 @@ function WeekBar({ label, onTime, late }) {
 
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-xs text-white/50">
+      <div className="flex items-center justify-between text-xs text-gray-500">
         <span>{label}</span>
         <span className="tabular-nums">{total} job{total !== 1 ? 's' : ''}</span>
       </div>
-      <div className="h-7 rounded-lg overflow-hidden flex bg-white/5">
+      <div className="h-7 rounded-lg overflow-hidden flex bg-black/[0.03]">
         {total === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-[10px] text-white/20">
+          <div className="flex-1 flex items-center justify-center text-[10px] text-gray-300">
             No data
           </div>
         ) : (
           <>
             {onTime > 0 && (
               <div
-                className="bg-success/60 flex items-center justify-center text-[10px] text-white font-medium transition-all"
+                className="bg-success/60 flex items-center justify-center text-[10px] text-gray-900 font-medium transition-all"
                 style={{ width: `${onTimePct}%` }}
               >
                 {onTime}
@@ -28,7 +28,7 @@ function WeekBar({ label, onTime, late }) {
             )}
             {late > 0 && (
               <div
-                className="bg-danger/60 flex items-center justify-center text-[10px] text-white font-medium transition-all"
+                className="bg-danger/60 flex items-center justify-center text-[10px] text-gray-900 font-medium transition-all"
                 style={{ width: `${latePct}%` }}
               >
                 {late}
@@ -44,7 +44,7 @@ function WeekBar({ label, onTime, late }) {
 export default function ThroughputTab({ data }) {
   if (!data) {
     return (
-      <div className="text-center py-20 text-white/30 text-sm">Loading throughput data...</div>
+      <div className="text-center py-20 text-gray-300 text-sm">Loading throughput data...</div>
     );
   }
 
@@ -53,21 +53,21 @@ export default function ThroughputTab({ data }) {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* On-time rate summary */}
-      <div className="bg-white/[0.03] rounded-xl p-5">
-        <p className="text-white/40 text-xs mb-1">4-Week On-Time Rate</p>
+      <div className="bg-black/[0.02] rounded-xl p-5">
+        <p className="text-gray-400 text-xs mb-1">4-Week On-Time Rate</p>
         <p className={`text-4xl font-bold tabular-nums ${
-          onTimeRate === null  ? 'text-white/30' :
+          onTimeRate === null  ? 'text-gray-300' :
           onTimeRate >= 80    ? 'text-success'  :
           onTimeRate >= 60    ? 'text-warning'  : 'text-danger'
         }`}>
-          {onTimeRate !== null ? `${onTimeRate}%` : '—'}
+          {onTimeRate !== null ? `${onTimeRate}%` : '\u2014'}
         </p>
       </div>
 
       {/* Weekly breakdown */}
-      <div className="bg-white/[0.03] rounded-xl p-5 space-y-5">
+      <div className="bg-black/[0.02] rounded-xl p-5 space-y-5">
         {/* Legend */}
-        <div className="flex items-center gap-4 text-[10px] text-white/40">
+        <div className="flex items-center gap-4 text-[10px] text-gray-400">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-2 rounded bg-success/60 inline-block" /> On Time
           </span>
