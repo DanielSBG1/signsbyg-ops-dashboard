@@ -37,7 +37,7 @@ export default function LoginScreen({ onSuccess }) {
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-10 w-full max-w-sm flex flex-col items-center gap-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-accent tracking-tight">Signs By G</h1>
-          <p className="text-gray-400 text-sm mt-1">Operations Dashboard</p>
+          <p className="text-gray-500 text-sm mt-1">Operations Dashboard</p>
         </div>
         <input
           type="password"

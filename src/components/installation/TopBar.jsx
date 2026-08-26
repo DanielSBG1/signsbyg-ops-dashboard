@@ -1,26 +1,22 @@
 import React from 'react';
 
-export default function TopBar({ lastRefreshed, onRefresh, loading }) {
+export default function TopBar({ lastRefreshed, onRefresh }) {
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-xl font-bold">Signs By G</h1>
-        <p className="text-gray-400 text-sm">Installation Command Center</p>
-      </div>
-      <div className="flex items-center gap-4">
+        <h1 className="text-2xl font-bold">Installation</h1>
         {lastRefreshed && (
-          <span className="text-gray-400 text-xs">
-            Updated {lastRefreshed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-          </span>
+          <p className="text-gray-500 text-xs mt-1">
+            Live snapshot · Updated {lastRefreshed.toLocaleTimeString()}
+          </p>
         )}
-        <button
-          onClick={onRefresh}
-          disabled={loading}
-          className="bg-accent/20 hover:bg-accent/30 text-accent px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
       </div>
+      <button
+        onClick={onRefresh}
+        className="text-gray-500 hover:text-gray-600 text-xs px-3 py-1.5 border border-gray-200 rounded-lg transition-colors"
+      >
+        Refresh
+      </button>
     </div>
   );
 }

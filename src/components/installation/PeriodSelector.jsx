@@ -23,7 +23,7 @@ export default function PeriodSelector({ period, setPeriod, range }) {
         </button>
       ))}
       {range && range.start && (
-        <span className="text-gray-400 text-xs ml-2">
+        <span className="text-gray-500 text-xs ml-2">
           {range.start} → {range.end}
         </span>
       )}
