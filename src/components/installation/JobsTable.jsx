@@ -5,7 +5,7 @@ const STATUS_STYLES = {
   on_time:     'bg-success/20 text-success',
   scheduled:   'bg-accent/20 text-accent',
   at_risk:     'bg-warning/20 text-warning',
-  pending:     'bg-white/10 text-white/40',
+  pending:     'bg-black/[0.05] text-gray-400',
   late:        'bg-danger/20 text-danger',
   rescheduled: 'bg-warning/20 text-warning',
   bled_over:   'bg-danger/20 text-danger',
@@ -87,13 +87,13 @@ export default function JobsTable({ jobs }) {
   }, [jobs, statusFilter, crewFilter, search, sortKey, sortDir]);
 
   return (
-    <div className="bg-slate-card border border-white/10 rounded-2xl overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
 
       {/* Header */}
-      <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between flex-wrap gap-3">
+      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30">All Jobs</p>
-          <span className="text-xs text-white/30">{filtered.length} showing</span>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-300">All Jobs</p>
+          <span className="text-xs text-gray-300">{filtered.length} showing</span>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <input
@@ -101,12 +101,12 @@ export default function JobsTable({ jobs }) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search..."
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/25 focus:outline-none focus:border-accent/50"
+            className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:border-accent/50"
           />
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-accent/50"
+            className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:border-accent/50"
           >
             <option value="all">All statuses</option>
             {statuses.map(s => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
@@ -114,7 +114,7 @@ export default function JobsTable({ jobs }) {
           <select
             value={crewFilter}
             onChange={e => setCrewFilter(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-accent/50"
+            className="bg-black/[0.03] border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:border-accent/50"
           >
             <option value="all">All crews</option>
             {crews.map(c => <option key={c} value={c}>{c}</option>)}
@@ -126,12 +126,12 @@ export default function JobsTable({ jobs }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-white/40 text-xs uppercase tracking-wider border-b border-white/[0.04]">
+            <tr className="text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200">
               {COLUMNS.map(col => (
                 <th
                   key={col.key}
                   onClick={() => handleSort(col.key)}
-                  className={`py-2 px-3 cursor-pointer hover:text-white/70 transition-colors select-none font-semibold ${
+                  className={`py-2 px-3 cursor-pointer hover:text-gray-600 transition-colors select-none font-semibold ${
                     col.align === 'center' ? 'text-center' : 'text-left'
                   }`}
                 >
@@ -143,38 +143,38 @@ export default function JobsTable({ jobs }) {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.04]">
+          <tbody className="divide-y divide-gray-100">
             {filtered.slice(0, 200).map(j => (
-              <tr key={j.id} className="hover:bg-white/[0.03] transition-colors">
+              <tr key={j.id} className="hover:bg-black/[0.02] transition-colors">
                 <td className="py-3 px-3 min-w-0">
                   <a href={j.url} target="_blank" rel="noreferrer"
-                    className="text-sm font-medium text-white hover:text-accent transition-colors truncate block">
+                    className="text-sm font-medium text-gray-900 hover:text-accent transition-colors truncate block">
                     {j.name}
                   </a>
-                  {j.address && <p className="text-[11px] text-white/35 truncate mt-0.5">{j.address}</p>}
+                  {j.address && <p className="text-[11px] text-gray-400 truncate mt-0.5">{j.address}</p>}
                 </td>
                 <td className="py-3 px-3">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-white/10 text-white/40'}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-black/[0.05] text-gray-400'}`}>
                     {STATUS_LABELS[j.status] || j.status}
                   </span>
                 </td>
-                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.section || '\u2014'}</td>
-                <td className="py-3 px-3 text-white/60 tabular-nums text-xs">
+                <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.section || '\u2014'}</td>
+                <td className="py-3 px-3 text-gray-500 tabular-nums text-xs">
                   {j.createdAt
                     ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
                     : '\u2014'}
                 </td>
-                <td className="py-3 px-3 text-xs text-white/70 tabular-nums">{j.installDate || '\u2014'}</td>
+                <td className="py-3 px-3 text-xs text-gray-600 tabular-nums">{j.installDate || '\u2014'}</td>
                 <td className="py-3 px-3 text-center tabular-nums text-xs">
                   {j.reschedules > 0 ? (
                     <span className={`font-bold ${j.reschedules >= 2 ? 'text-danger' : 'text-warning'}`}>{j.reschedules}</span>
                   ) : (
-                    <span className="text-white/20">0</span>
+                    <span className="text-gray-300">0</span>
                   )}
                 </td>
-                <td className="py-3 px-3 text-xs text-white/60 truncate">{(j.crews || []).join(', ') || '\u2014'}</td>
-                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.metro || '\u2014'}</td>
-                <td className="py-3 px-3 text-xs text-white/50 truncate">{j.pm || '\u2014'}</td>
+                <td className="py-3 px-3 text-xs text-gray-500 truncate">{(j.crews || []).join(', ') || '\u2014'}</td>
+                <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.metro || '\u2014'}</td>
+                <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.pm || '\u2014'}</td>
               </tr>
             ))}
           </tbody>
@@ -182,10 +182,10 @@ export default function JobsTable({ jobs }) {
       </div>
 
       {filtered.length === 0 && (
-        <div className="px-6 py-12 text-center text-white/30 text-sm">No jobs match your filters.</div>
+        <div className="px-6 py-12 text-center text-gray-300 text-sm">No jobs match your filters.</div>
       )}
       {filtered.length > 200 && (
-        <div className="px-6 py-3 border-t border-white/[0.04] text-center text-white/30 text-xs">
+        <div className="px-6 py-3 border-t border-gray-100 text-center text-gray-300 text-xs">
           Showing first 200 of {filtered.length} jobs
         </div>
       )}
