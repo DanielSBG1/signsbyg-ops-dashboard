@@ -276,39 +276,123 @@ async function fetchMetaAdsMetrics(preset) {
       group by ml.ad_set_id, ml.ad_id
     `,
 
-    // 9. Ad set revenue (from attribution through meta_leads)
+    // 9. Ad set revenue — combines direct meta_leads attribution with
+    //    proportional campaign-level revenue split by lead share.
+    //    For ad sets without meta_leads data (>90 days old), revenue is
+    //    estimated from the campaign total proportional to the ad set's
+    //    share of that campaign's leads.
     sql`
-      select ml.ad_set_id,
-             coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
-             count(distinct d.id) as deals,
-             count(distinct ml.leadgen_id) as leads
-      from meta_leads ml
-      join hs_contacts c    on c.id = ml.matched_contact_id
-      join deal_contacts dc on dc.contact_id = c.id
-      join hs_deals d       on d.id = dc.deal_id
-      join attribution_links al on al.deal_id = d.id
-      where ml.ad_set_id is not null
-        and d.is_closed_won = true
-        and c.created_at::date between ${start}::date and ${end}::date
-      group by ml.ad_set_id
+      with direct_rev as (
+        select ml.ad_set_id,
+               coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
+               count(distinct d.id) as deals
+        from meta_leads ml
+        join hs_contacts c    on c.id = ml.matched_contact_id
+        join deal_contacts dc on dc.contact_id = c.id
+        join hs_deals d       on d.id = dc.deal_id
+        join attribution_links al on al.deal_id = d.id
+        where ml.ad_set_id is not null
+          and d.is_closed_won = true
+          and c.created_at::date between ${start}::date and ${end}::date
+        group by ml.ad_set_id
+      ),
+      campaign_rev as (
+        select al.campaign_id,
+               sum(d.amount::numeric * al.weight::numeric) as revenue,
+               count(distinct d.id) as deals
+        from attribution_links al
+        join hs_deals d on d.id = al.deal_id
+        join deal_contacts dc on dc.deal_id = d.id
+        join hs_contacts c on c.id = dc.contact_id
+        where d.is_closed_won = true
+          and al.campaign_id is not null
+          and al.spend_category = 'meta_ads'
+          and c.created_at::date between ${start}::date and ${end}::date
+        group by al.campaign_id
+      ),
+      adset_leads as (
+        select ad_set_id, campaign_id, sum(results) as leads
+        from ad_insights_daily
+        where spend_category = 'meta_ads'
+          and day between ${start}::date and ${end}::date
+        group by ad_set_id, campaign_id
+      ),
+      campaign_total_leads as (
+        select campaign_id, sum(leads) as total_leads
+        from adset_leads
+        group by campaign_id
+      ),
+      proportional_rev as (
+        select al.ad_set_id,
+               sum(cr.revenue * (al.leads::numeric / nullif(ctl.total_leads, 0)::numeric)) as revenue,
+               sum(cr.deals * (al.leads::numeric / nullif(ctl.total_leads, 0)::numeric)) as deals
+        from adset_leads al
+        join campaign_rev cr on cr.campaign_id = al.campaign_id
+        join campaign_total_leads ctl on ctl.campaign_id = al.campaign_id
+        where al.ad_set_id not in (select ad_set_id from direct_rev where revenue > 0)
+        group by al.ad_set_id
+      )
+      select ad_set_id, revenue, deals::int, 'direct' as method from direct_rev where revenue > 0
+      union all
+      select ad_set_id, revenue, deals::int, 'proportional' as method from proportional_rev where revenue > 0
     `,
 
-    // 10. Creative revenue (same but grouped by creative_slug)
+    // 10. Creative revenue — same proportional approach
     sql`
-      select a.creative_slug,
-             coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
-             count(distinct d.id) as deals,
-             count(distinct ml.leadgen_id) as leads
-      from meta_leads ml
-      join ads a            on a.id = ml.ad_id
-      join hs_contacts c    on c.id = ml.matched_contact_id
-      join deal_contacts dc on dc.contact_id = c.id
-      join hs_deals d       on d.id = dc.deal_id
-      join attribution_links al on al.deal_id = d.id
-      where a.creative_slug is not null
-        and d.is_closed_won = true
-        and c.created_at::date between ${start}::date and ${end}::date
-      group by a.creative_slug
+      with direct_rev as (
+        select a.creative_slug,
+               coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
+               count(distinct d.id) as deals
+        from meta_leads ml
+        join ads a            on a.id = ml.ad_id
+        join hs_contacts c    on c.id = ml.matched_contact_id
+        join deal_contacts dc on dc.contact_id = c.id
+        join hs_deals d       on d.id = dc.deal_id
+        join attribution_links al on al.deal_id = d.id
+        where a.creative_slug is not null
+          and d.is_closed_won = true
+          and c.created_at::date between ${start}::date and ${end}::date
+        group by a.creative_slug
+      ),
+      campaign_rev as (
+        select al.campaign_id,
+               sum(d.amount::numeric * al.weight::numeric) as revenue
+        from attribution_links al
+        join hs_deals d on d.id = al.deal_id
+        join deal_contacts dc on dc.deal_id = d.id
+        join hs_contacts c on c.id = dc.contact_id
+        where d.is_closed_won = true
+          and al.campaign_id is not null
+          and al.spend_category = 'meta_ads'
+          and c.created_at::date between ${start}::date and ${end}::date
+        group by al.campaign_id
+      ),
+      ad_leads as (
+        select i.ad_id, i.campaign_id, a.creative_slug, sum(i.results) as leads
+        from ad_insights_daily i
+        join ads a on a.id = i.ad_id
+        where i.spend_category = 'meta_ads'
+          and a.creative_slug is not null
+          and i.day between ${start}::date and ${end}::date
+        group by i.ad_id, i.campaign_id, a.creative_slug
+      ),
+      campaign_total_leads as (
+        select campaign_id, sum(leads) as total_leads
+        from ad_leads
+        group by campaign_id
+      ),
+      proportional_rev as (
+        select al.creative_slug,
+               sum(cr.revenue * (al.leads::numeric / nullif(ctl.total_leads, 0)::numeric)) as revenue
+        from ad_leads al
+        join campaign_rev cr on cr.campaign_id = al.campaign_id
+        join campaign_total_leads ctl on ctl.campaign_id = al.campaign_id
+        where al.creative_slug not in (select creative_slug from direct_rev where revenue > 0)
+        group by al.creative_slug
+      )
+      select creative_slug, revenue, deals, 'direct' as method from direct_rev where revenue > 0
+      union all
+      select creative_slug, revenue, 0 as deals, 'proportional' as method from proportional_rev where revenue > 0
     `,
 
     // 11. Velocity: avg days from lead to closed deal, per ad set and campaign
@@ -450,7 +534,7 @@ async function fetchMetaAdsMetrics(preset) {
     adSetId: r.ad_set_id,
     revenue: Number(r.revenue || 0),
     deals: Number(r.deals || 0),
-    leads: Number(r.leads || 0),
+    method: r.method || 'direct',
   }));
 
   // Creative Revenue
@@ -458,7 +542,7 @@ async function fetchMetaAdsMetrics(preset) {
     creativeSlug: r.creative_slug,
     revenue: Number(r.revenue || 0),
     deals: Number(r.deals || 0),
-    leads: Number(r.leads || 0),
+    method: r.method || 'direct',
   }));
 
   // Velocity: avg days lead-to-close per ad set
@@ -506,7 +590,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v4:${preset}`;
+    const cacheKey = `meta-ads:v5:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
