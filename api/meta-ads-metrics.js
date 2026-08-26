@@ -56,7 +56,7 @@ async function fetchMetaAdsMetrics(preset) {
     adRows, creativeRows, spendCatRows, metaLeadCountRows,
     adSetRevenueRows, creativeRevenueRows, velocityRows,
   ] = await Promise.all([
-    // 1. Totals
+    // 1. Totals + funnel metrics
     sql`
       with perf as (
         select
@@ -85,6 +85,36 @@ async function fetchMetaAdsMetrics(preset) {
         where d.is_closed_won = true
           and al.spend_category = 'meta_ads'
           and c.created_at::date between ${start}::date and ${end}::date
+      ),
+      -- Funnel: leads that converted into deals (any stage)
+      funnel as (
+        select
+          count(distinct c.id) as leads_with_deals,
+          count(distinct dc.deal_id) as total_deals_created
+        from hs_contacts c
+        join deal_contacts dc on dc.contact_id = c.id
+        where c.analytics_source = 'PAID_SOCIAL'
+          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+      ),
+      -- Repeat customers: contacts with 2+ closed-won deals
+      repeats as (
+        select
+          count(*) as repeat_customers,
+          coalesce(sum(deal_count), 0) as repeat_deals,
+          coalesce(sum(total_rev), 0) as repeat_revenue
+        from (
+          select c.id,
+                 count(distinct d.id) as deal_count,
+                 sum(d.amount::numeric) as total_rev
+          from hs_contacts c
+          join deal_contacts dc on dc.contact_id = c.id
+          join hs_deals d on d.id = dc.deal_id
+          where d.is_closed_won = true
+            and c.analytics_source = 'PAID_SOCIAL'
+            and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+          group by c.id
+          having count(distinct d.id) > 1
+        ) multi
       )
       select
         p.spend,
@@ -93,8 +123,13 @@ async function fetchMetaAdsMetrics(preset) {
         p.impressions,
         l.leads   as hubspot_leads,
         r.revenue as attributed_revenue,
-        r.deals
-      from perf p, hs_leads l, rev r
+        r.deals   as deals_won,
+        f.leads_with_deals,
+        f.total_deals_created,
+        rp.repeat_customers,
+        rp.repeat_deals,
+        rp.repeat_revenue
+      from perf p, hs_leads l, rev r, funnel f, repeats rp
     `,
 
     // 2. Monthly P&L — uses full calendar months so partial-month presets
@@ -424,7 +459,7 @@ async function fetchMetaAdsMetrics(preset) {
   const metaLeads = Number(t.meta_leads || 0);
   const hubspotLeads = Number(t.hubspot_leads || 0);
   const attributedRevenue = Number(t.attributed_revenue || 0);
-  const deals = Number(t.deals || 0);
+  const dealsWon = Number(t.deals_won || 0);
   const linkClicks = Number(t.link_clicks || 0);
   const impressions = Number(t.impressions || 0);
   const linkCtr = impressions > 0
@@ -437,7 +472,13 @@ async function fetchMetaAdsMetrics(preset) {
     costPerLead: metaLeads > 0 ? Math.round((spend / metaLeads) * 100) / 100 : 0,
     hubspotLeads,
     attributedRevenue,
-    deals,
+    deals: dealsWon,
+    dealsWon,
+    leadsWithDeals: Number(t.leads_with_deals || 0),
+    totalDealsCreated: Number(t.total_deals_created || 0),
+    repeatCustomers: Number(t.repeat_customers || 0),
+    repeatDeals: Number(t.repeat_deals || 0),
+    repeatRevenue: Number(t.repeat_revenue || 0),
     linkClicks,
     impressions,
     linkCtr,

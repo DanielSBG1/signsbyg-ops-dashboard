@@ -190,55 +190,78 @@ export default function MetaAdsOverview({ data }) {
         <DealsDrawer preset={preset} onClose={() => setShowDeals(false)} />
       )}
 
-      {/* ---- 8 headline metric tiles ---- */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 2xl:grid-cols-8">
+      {/* ---- Funnel KPIs ---- */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
         <MetricTile
-          label="Meta Spend"
-          value={fmtMoney(totals.spend)}
-          topbar={TOPBAR_COLORS[0]}
-          sub={`${fmtNum(ads.length)} ads \u00b7 ${adSets.length} ad sets`}
-        />
-        <MetricTile
-          label="Meta Leads"
+          label="Leads"
           value={fmtNum(totals.metaLeads)}
-          topbar={TOPBAR_COLORS[1]}
-          sub="Reported by Meta"
+          topbar="linear-gradient(90deg,#818cf8,#6366f1)"
+          sub={`${fmtMoney(totals.spend)} spent · ${totalCpl != null ? fmtMoney(totalCpl, 2) + '/lead' : ''}`}
         />
         <MetricTile
-          label="Cost / Meta Lead"
-          value={totalCpl != null ? fmtMoney(totalCpl, 2) : '---'}
-          topbar={TOPBAR_COLORS[2]}
-          muted={totalCpl == null}
+          label="Ad Spend"
+          value={fmtMoney(totals.spend)}
+          topbar="linear-gradient(90deg,#a855f7,#7c3aed)"
+          sub={`${fmtNum(ads.length)} ads · ${adSets.length} ad sets`}
         />
         <MetricTile
-          label="HubSpot Leads"
-          value={fmtNum(totalHubspotLeads)}
-          topbar={TOPBAR_COLORS[3]}
-          sub="Campaign-identified"
+          label="Converted to Deals"
+          value={fmtNum(totals.leadsWithDeals ?? 0)}
+          topbar="linear-gradient(90deg,#fbbf24,#f59e0b)"
+          sub={totals.metaLeads > 0
+            ? `${((totals.leadsWithDeals / totals.metaLeads) * 100).toFixed(1)}% conversion rate`
+            : undefined}
         />
         <MetricTile
-          label="Attributed Revenue"
-          value={fmtMoney(totalRevenue)}
-          topbar={TOPBAR_COLORS[4]}
-          sub="Click to see deals →"
+          label="Deals Won"
+          value={fmtNum(totals.dealsWon ?? 0)}
+          topbar="linear-gradient(90deg,#34d399,#059669)"
+          sub={`${fmtMoney(totalRevenue)} revenue`}
           onClick={() => setShowDeals(true)}
         />
         <MetricTile
-          label="Meta Link Clicks"
-          value={fmtNum(totals.linkClicks)}
-          sub={totals.impressions > 0 ? `${fmtNum(totals.impressions)} impressions` : undefined}
+          label="Revenue"
+          value={fmtMoney(totalRevenue)}
+          topbar="linear-gradient(90deg,#06b6d4,#0891b2)"
+          sub="Click to see deals →"
+          onClick={() => setShowDeals(true)}
         />
-        <MetricTile
-          label="Link CTR"
-          value={linkCtr != null ? fmtPct(linkCtr) : '---'}
-          muted={linkCtr == null}
-        />
-        <MetricTile
-          label="Cost / Link Click"
-          value={cpc != null ? fmtMoney(cpc, 2) : '---'}
-          muted={cpc == null}
-          sub={cpm != null ? `${fmtMoney(cpm, 2)} CPM` : undefined}
-        />
+        {(totals.repeatCustomers ?? 0) > 0 ? (
+          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-2xl overflow-hidden relative">
+            <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-bl-lg">
+              ★ Highlight
+            </div>
+            <div className="p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700 mb-2">
+                Repeat Customers
+              </p>
+              <p className="text-3xl font-black tabular-nums leading-none text-amber-600">
+                {totals.repeatCustomers}
+              </p>
+              <p className="text-amber-600/70 text-xs mt-2">
+                {fmtNum(totals.repeatDeals)} repeat orders · {fmtMoney(totals.repeatRevenue)}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <MetricTile
+            label="Repeat Customers"
+            value="0"
+            topbar="linear-gradient(90deg,#fbbf24,#d97706)"
+            sub="No repeat orders yet"
+            muted
+          />
+        )}
+      </div>
+
+      {/* ---- Secondary metrics row ---- */}
+      <div className="grid grid-cols-3 gap-3 lg:grid-cols-6">
+        <MetricTile label="HubSpot Leads" value={fmtNum(totalHubspotLeads)} sub="Campaign-identified" />
+        <MetricTile label="Cost / Lead" value={totalCpl != null ? fmtMoney(totalCpl, 2) : '---'} muted={totalCpl == null} />
+        <MetricTile label="Link Clicks" value={fmtNum(totals.linkClicks)} sub={`${fmtNum(totals.impressions)} impressions`} />
+        <MetricTile label="Link CTR" value={linkCtr != null ? fmtPct(linkCtr) : '---'} muted={linkCtr == null} />
+        <MetricTile label="Cost / Click" value={cpc != null ? fmtMoney(cpc, 2) : '---'} muted={cpc == null} />
+        <MetricTile label="CPM" value={cpm != null ? fmtMoney(cpm, 2) : '---'} muted={cpm == null} />
       </div>
 
       {/* ---- Monthly P&L table ---- */}
