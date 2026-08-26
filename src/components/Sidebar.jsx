@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, ClipboardList, Factory, Wrench, Trophy, Megaphone, Lock } from 'lucide-react';
+import { BarChart3, ClipboardList, Factory, Wrench, Trophy, Megaphone, Lock, Sun, Moon, Monitor } from 'lucide-react';
 
 const SECTIONS = [
   { id: 'sales',        label: 'Sales',        sub: 'CRM · Calls',          icon: BarChart3 },
@@ -10,7 +10,13 @@ const SECTIONS = [
   { id: 'marketing',    label: 'Marketing',    sub: 'GMB · Facebook · Web',  icon: Megaphone },
 ];
 
-export default function Sidebar({ active, onSelect, onLogout }) {
+const THEMES = [
+  { id: 'light',  icon: Sun,     label: 'Light' },
+  { id: 'medium', icon: Monitor, label: 'Medium' },
+  { id: 'dark',   icon: Moon,    label: 'Dark' },
+];
+
+export default function Sidebar({ active, onSelect, onLogout, theme, onThemeChange }) {
   return (
     <div className="w-[220px] flex-shrink-0 bg-sidebar flex flex-col h-screen sticky top-0">
       <div className="px-5 py-5 border-b border-white/10">
@@ -45,6 +51,33 @@ export default function Sidebar({ active, onSelect, onLogout }) {
           );
         })}
       </nav>
+
+      {/* Theme toggle */}
+      <div className="px-3 py-2 border-t border-white/10">
+        <div className="flex items-center justify-center gap-1 bg-white/5 rounded-lg p-1">
+          {THEMES.map(t => {
+            const Icon = t.icon;
+            const isActive = theme === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => onThemeChange(t.id)}
+                title={t.label}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[10px] font-medium transition-all ${
+                  isActive
+                    ? 'bg-white/15 text-white'
+                    : 'text-white/30 hover:text-white/60'
+                }`}
+              >
+                <Icon size={12} />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Footer */}
       <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between">
         <div className="text-[10px] text-white/20">signsbyg-ops</div>
         {onLogout && (

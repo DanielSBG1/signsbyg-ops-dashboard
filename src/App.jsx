@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Sidebar from './components/Sidebar';
 import LoginScreen from './components/LoginScreen';
 
@@ -37,11 +37,17 @@ export default function App() {
 
   const [section, setSection] = useState('sales');
 
+  const [theme, setTheme] = useState(() => localStorage.getItem('sbg-theme') || 'light');
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('sbg-theme', theme);
+  }, [theme]);
+
   if (!authed) return <LoginScreen onSuccess={() => setAuthed(true)} />;
 
   return (
     <div className="flex min-h-screen bg-background text-gray-900">
-      <Sidebar active={section} onSelect={setSection} onLogout={handleLogout} />
+      <Sidebar active={section} onSelect={setSection} onLogout={handleLogout} theme={theme} onThemeChange={setTheme} />
 
       <main className="flex-1 overflow-auto">
         <Suspense fallback={<SectionFallback />}>
