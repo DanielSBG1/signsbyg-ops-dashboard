@@ -99,6 +99,9 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
                         <p className="font-bold text-gray-900">Repeat Customer #{i + 1}</p>
                         <p className="text-xs text-amber-700">
                           From: <span className="font-medium">{customer.source}</span>
+                          {customer.leadCreatedAt && (
+                            <span className="text-amber-500"> · Lead came in {fmtDate(customer.leadCreatedAt)}</span>
+                          )}
                         </p>
                         <p className="text-xs text-amber-600 mt-0.5">
                           {customer.dealCount} orders · {fmtMoney(customer.totalRevenue)} total revenue

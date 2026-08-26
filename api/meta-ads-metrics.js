@@ -113,9 +113,7 @@ async function fetchMetaAdsMetrics(preset) {
         where c.analytics_source = 'PAID_SOCIAL'
           and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
       ),
-      -- Repeat customers: contacts with 2+ closed-won deals, attributed to
-      -- the month the lead was CREATED (cohort model). A March lead that sold
-      -- in June and re-ordered in August shows on March's view.
+      -- Repeat customers: all-time — a repeat customer is always valuable
       repeats as (
         select
           count(*) as repeat_customers,
@@ -130,7 +128,6 @@ async function fetchMetaAdsMetrics(preset) {
           join hs_deals d on d.id = dc.deal_id
           where d.is_closed_won = true
             and c.analytics_source = 'PAID_SOCIAL'
-            and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
           group by c.id
           having count(distinct d.id) > 1
         ) multi

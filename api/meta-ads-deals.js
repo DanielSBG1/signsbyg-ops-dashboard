@@ -129,19 +129,20 @@ export default async function handler(req, res) {
     if (mode === 'repeats') {
       const repeatRows = await sql`
         with repeat_contacts as (
-          select c.id as contact_id, c.source_detail
+          select c.id as contact_id, c.source_detail, c.created_at as lead_created_at
           from hs_contacts c
           join deal_contacts dc on dc.contact_id = c.id
           join hs_deals d on d.id = dc.deal_id
           where d.is_closed_won = true
             and c.analytics_source = 'PAID_SOCIAL'
-          group by c.id, c.source_detail
+          group by c.id, c.source_detail, c.created_at
           having count(distinct d.id) > 1
         ),
         deal_detail as (
           select distinct on (d.id, rc.contact_id)
                  rc.contact_id,
                  rc.source_detail,
+                 rc.lead_created_at,
                  d.id as deal_id,
                  d.name,
                  d.amount::numeric as amount,
@@ -171,6 +172,7 @@ export default async function handler(req, res) {
           byContact[r.contact_id] = {
             contactId: r.contact_id,
             source: r.source_detail || 'Paid Social',
+            leadCreatedAt: r.lead_created_at ? new Date(r.lead_created_at).toISOString().slice(0, 10) : null,
             deals: [],
             totalRevenue: 0,
           };
