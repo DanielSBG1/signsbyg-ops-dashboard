@@ -92,17 +92,24 @@ async function fetchMetaAdsMetrics(preset) {
                         and to_char(${end}::date, 'YYYY-MM')
       ),
       -- Cohort view: revenue from leads CREATED in this period
+      -- Deduplicate by deal_id to prevent multi-contact inflation
       rev as (
         select
-          coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
-          count(distinct d.id) as deals
-        from attribution_links al
-        join hs_deals d on d.id = al.deal_id
-        join deal_contacts dc on dc.deal_id = d.id
-        join hs_contacts c on c.id = dc.contact_id
-        where d.is_closed_won = true
-          and al.spend_category = 'meta_ads'
-          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+          coalesce(sum(weighted_amount), 0) as revenue,
+          count(*) as deals
+        from (
+          select distinct on (al.deal_id)
+                 al.deal_id,
+                 d.amount::numeric * al.weight::numeric as weighted_amount
+          from attribution_links al
+          join hs_deals d on d.id = al.deal_id
+          join deal_contacts dc on dc.deal_id = d.id
+          join hs_contacts c on c.id = dc.contact_id
+          where d.is_closed_won = true
+            and al.spend_category = 'meta_ads'
+            and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+          order by al.deal_id
+        ) deduped
       ),
       -- Closed view: deals that CLOSED in this period (regardless of lead date)
       closed as (
@@ -194,10 +201,13 @@ async function fetchMetaAdsMetrics(preset) {
         where day between ${pnlStart}::date and ${pnlEnd}::date
         group by 1
       ),
-      revenue as (
-        select to_char(c.created_at, 'YYYY-MM') as month,
-               sum(d.amount::numeric * al.weight::numeric) as revenue,
-               count(distinct d.id) as deals
+      -- Deduplicate deals by using earliest contact creation date per deal
+      -- so a deal with contacts in March and May only counts once (in March)
+      deal_months as (
+        select distinct on (al.deal_id)
+               al.deal_id,
+               d.amount::numeric * al.weight::numeric as weighted_amount,
+               to_char(min(c.created_at) over (partition by al.deal_id), 'YYYY-MM') as month
         from attribution_links al
         join hs_deals d on d.id = al.deal_id
         join deal_contacts dc on dc.deal_id = d.id
@@ -205,6 +215,13 @@ async function fetchMetaAdsMetrics(preset) {
         where d.is_closed_won = true
           and al.spend_category = 'meta_ads'
           and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+        order by al.deal_id
+      ),
+      revenue as (
+        select month,
+               sum(weighted_amount) as revenue,
+               count(*) as deals
+        from deal_months
         group by 1
       ),
       leads as (
@@ -257,17 +274,23 @@ async function fetchMetaAdsMetrics(preset) {
         group by 1
       ),
       rev as (
-        select al.campaign_id,
-               coalesce(sum(d.amount::numeric * al.weight::numeric), 0) as revenue,
-               count(distinct d.id) as deals
-        from attribution_links al
-        join hs_deals d on d.id = al.deal_id
-        join deal_contacts dc on dc.deal_id = d.id
-        join hs_contacts c on c.id = dc.contact_id
-        where d.is_closed_won = true
-          and al.spend_category = 'meta_ads'
-          and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
-        group by al.campaign_id
+        select campaign_id,
+               sum(weighted_amount) as revenue,
+               count(*) as deals
+        from (
+          select distinct on (al.deal_id)
+                 al.deal_id, al.campaign_id,
+                 d.amount::numeric * al.weight::numeric as weighted_amount
+          from attribution_links al
+          join hs_deals d on d.id = al.deal_id
+          join deal_contacts dc on dc.deal_id = d.id
+          join hs_contacts c on c.id = dc.contact_id
+          where d.is_closed_won = true
+            and al.spend_category = 'meta_ads'
+            and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
+          order by al.deal_id
+        ) deduped
+        group by campaign_id
       )
       select perf.campaign_id,
              perf.name,
@@ -685,7 +708,7 @@ export default async function handler(req, res) {
     }
 
     const forceRefresh = nocache === '1';
-    const cacheKey = `meta-ads:v12:${preset}`;
+    const cacheKey = `meta-ads:v13:${preset}`;
 
     if (!forceRefresh) {
       const hit = await getCached(cacheKey);
