@@ -111,7 +111,6 @@ async function fetchMetaAdsMetrics(preset) {
           join hs_deals d on d.id = dc.deal_id
           where d.is_closed_won = true
             and c.analytics_source = 'PAID_SOCIAL'
-            and c.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
           group by c.id
           having count(distinct d.id) > 1
         ) multi

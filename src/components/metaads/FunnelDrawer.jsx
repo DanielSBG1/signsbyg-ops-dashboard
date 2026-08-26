@@ -111,6 +111,7 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
                           <th className="text-left px-5 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Deal</th>
                           <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Amount</th>
                           <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Rep</th>
+                          <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Source</th>
                           <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Pipeline</th>
                           <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Closed</th>
                         </tr>
@@ -125,6 +126,15 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
                               {fmtMoney(deal.amount)}
                             </td>
                             <td className="px-3 py-2.5 text-xs text-gray-600">{deal.rep}</td>
+                            <td className="px-3 py-2.5 text-xs">
+                              {deal.adSetName ? (
+                                <span className="text-purple-600 font-medium">{deal.adSetName}</span>
+                              ) : deal.campaignName ? (
+                                <span className="text-gray-500">{deal.campaignName}</span>
+                              ) : (
+                                <span className="text-gray-300">unknown</span>
+                              )}
+                            </td>
                             <td className="px-3 py-2.5 text-xs text-gray-500">{deal.pipeline}</td>
                             <td className="px-3 py-2.5 text-right text-xs text-gray-400 tabular-nums">{fmtDate(deal.closeDate)}</td>
                           </tr>
@@ -154,7 +164,7 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
                     <th className="text-left px-5 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">Deal</th>
                     <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">Amount</th>
                     <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">Rep</th>
-                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">Campaign</th>
+                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">Source</th>
                     <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">Lead In</th>
                     <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">Closed</th>
                     <th className="text-right px-5 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">Days</th>
@@ -168,7 +178,16 @@ export default function FunnelDrawer({ mode, preset, onClose }) {
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-gray-900">{fmtMoney(deal.amount)}</td>
                       <td className="px-3 py-2.5 text-gray-600 text-xs">{deal.rep}</td>
-                      <td className="px-3 py-2.5 text-gray-500 text-xs truncate max-w-[140px]" title={deal.campaign}>{deal.campaign}</td>
+                      <td className="px-3 py-2.5 text-xs">
+                        {deal.adSet ? (
+                          <div>
+                            <span className="text-purple-600 font-medium">{deal.adSet}</span>
+                            <span className="text-gray-400 block text-[10px] truncate max-w-[140px]">{deal.campaign}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 truncate max-w-[140px]" title={deal.campaign}>{deal.campaign}</span>
+                        )}
+                      </td>
                       <td className="px-3 py-2.5 text-right text-xs text-gray-500 tabular-nums">{fmtDate(deal.leadCreatedAt)}</td>
                       <td className="px-3 py-2.5 text-right text-xs text-gray-500 tabular-nums">{fmtDate(deal.closeDate)}</td>
                       <td className={`px-5 py-2.5 text-right tabular-nums text-xs font-semibold ${velocityColor(deal.daysToClose)}`}>

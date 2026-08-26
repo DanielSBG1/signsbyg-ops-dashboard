@@ -60,13 +60,17 @@ export default async function handler(req, res) {
              al.level,
              al.spend_category,
              ct.created_at as lead_created_at,
-             ct.source_detail as lead_source
+             ct.source_detail as lead_source,
+             ml.ad_set_id,
+             adset.name as ad_set_name
       from attribution_links al
       join hs_deals d on d.id = al.deal_id
       left join hs_owners o on o.id = d.owner_id
       left join campaigns c on c.id = al.campaign_id
       join deal_contacts dc on dc.deal_id = d.id
       join hs_contacts ct on ct.id = dc.contact_id
+      left join meta_leads ml on ml.matched_contact_id = ct.id
+      left join ad_sets adset on adset.id = ml.ad_set_id
       where d.is_closed_won = true
         and al.spend_category = 'meta_ads'
         and ct.created_at::date between ${pnlStart}::date and ${pnlEnd}::date
@@ -103,6 +107,7 @@ export default async function handler(req, res) {
         closeDate: d.close_date ? new Date(d.close_date).toISOString().slice(0, 10) : null,
         leadCreatedAt: d.lead_created_at ? new Date(d.lead_created_at).toISOString().slice(0, 10) : null,
         campaign: d.campaign_name || 'Paid Social (unresolved)',
+        adSet: d.ad_set_name || null,
         daysToClose,
         level: d.level,
       });
@@ -123,8 +128,11 @@ export default async function handler(req, res) {
                  'amount', d.amount::numeric,
                  'pipeline', d.pipeline,
                  'closeDate', d.close_date,
-                 'ownerId', d.owner_id,
-                 'rep', o.name
+                 'rep', o.name,
+                 'campaignId', al.campaign_id,
+                 'campaignName', camp.name,
+                 'adSetId', ml.ad_set_id,
+                 'adSetName', adset.name
                ) order by d.close_date) as deals,
                count(distinct d.id) as deal_count,
                sum(d.amount::numeric) as total_revenue
@@ -132,6 +140,10 @@ export default async function handler(req, res) {
         join deal_contacts dc on dc.contact_id = c.id
         join hs_deals d on d.id = dc.deal_id
         left join hs_owners o on o.id = d.owner_id
+        left join attribution_links al on al.deal_id = d.id
+        left join campaigns camp on camp.id = al.campaign_id
+        left join meta_leads ml on ml.matched_contact_id = c.id
+        left join ad_sets adset on adset.id = ml.ad_set_id
         where d.is_closed_won = true
           and c.analytics_source = 'PAID_SOCIAL'
         group by c.id, c.source_detail
@@ -151,6 +163,8 @@ export default async function handler(req, res) {
           pipeline: PIPELINE_NAMES[d.pipeline] || d.pipeline || 'Unknown',
           closeDate: d.closeDate ? new Date(d.closeDate).toISOString().slice(0, 10) : null,
           rep: d.rep || 'Unassigned',
+          campaignName: d.campaignName || null,
+          adSetName: d.adSetName || null,
         })),
       }));
     }
