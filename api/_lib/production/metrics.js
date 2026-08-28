@@ -72,12 +72,24 @@ export function buildScheduleStats(openTasks, completedTasks, range, today) {
 }
 
 /**
- * Returns the "Production Due Date" custom field value (YYYY-MM-DD) for a task,
- * falling back to the task's standard due_on if the custom field is unset.
+ * Returns the effective production due date for a task.
+ *
+ * Uses the LATER of:
+ *   - "Production Due Date" custom field
+ *   - Native Asana due_on
+ *
+ * This handles the common reschedule pattern where the PM updates the native
+ * due_on (moving it forward) but leaves the original promised date in the
+ * custom field. Without this, the dashboard would still show the job as "late"
+ * based on the old custom field date.
  */
 export function extractProductionDueDate(task) {
   const cf = task.custom_fields?.find(f => f.gid === PRODUCTION_DUE_DATE_CF_GID);
-  return cf?.date_value?.date ?? task.due_on ?? null;
+  const cfDate = cf?.date_value?.date || null;
+  const nativeDate = task.due_on || null;
+  if (!cfDate) return nativeDate;
+  if (!nativeDate) return cfDate;
+  return cfDate > nativeDate ? cfDate : nativeDate;
 }
 
 /**
