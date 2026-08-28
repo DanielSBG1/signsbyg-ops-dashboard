@@ -225,16 +225,33 @@ function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
                 const full = jobMap[job.gid];
                 if (full) onSelectJob(full);
               }}
-              className={`w-full text-left px-5 py-3.5 hover:bg-black/[0.02] transition-colors flex items-center gap-4 ${isDone ? 'opacity-60' : ''}`}
+              className={`w-full text-left px-5 py-3.5 hover:bg-black/[0.02] transition-colors flex items-center gap-4 ${
+                isDone && job.isRescheduled
+                  ? job.driftSeverity === 'severe' ? 'bg-danger/5'
+                  : job.driftSeverity === 'moderate' ? 'bg-orange-50'
+                  : 'bg-amber-50'
+                  : isDone ? 'opacity-60' : ''
+              }`}
             >
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium truncate ${isDone ? 'text-gray-500 line-through decoration-white/20' : 'text-gray-900'}`}>{job.name}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5 font-medium">{formatDate(job.due_on)}</p>
+                <p className={`text-sm font-medium truncate ${isDone && !job.isRescheduled ? 'text-gray-500 line-through' : 'text-gray-900'}`}>{job.name}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[11px] text-gray-500 font-medium">{formatDate(job.due_on)}</p>
+                  {job.isRescheduled && (
+                    <span className={`text-[10px] font-semibold tabular-nums ${
+                      job.driftSeverity === 'severe' ? 'text-danger' :
+                      job.driftSeverity === 'moderate' ? 'text-orange-500' :
+                      'text-warning'
+                    }`}>
+                      ↻ +{job.driftDays}d from promise
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {!isDone && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold truncate max-w-[140px]"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                    style={{ backgroundColor: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}>
                     {stage}
                   </span>
                 )}
@@ -923,7 +940,9 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         <KpiCard
           label="On Time"
           value={onTimeTotal}
-          sub="completed on schedule"
+          sub={schedule?.completedWithDrift > 0
+            ? `${schedule.completedWithDrift} were rescheduled`
+            : 'completed on schedule'}
           color="success"
           icon={onTimeTotal > 0 ? '✓' : undefined}
           active={activeCard === 'onTime'}
@@ -948,7 +967,8 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         <KpiCard
           label="Rescheduled"
           value={rescheduledInPeriod.length}
-          sub="due this period with date changes"
+          sub={`${data.totals?.rescheduledThisWeek ?? 0} new this week`}
+          color={rescheduledInPeriod.length > 0 ? 'warning' : undefined}
           active={activeCard === 'rescheduled'}
           onClick={() => toggleCard('rescheduled')}
         />

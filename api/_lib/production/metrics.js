@@ -28,7 +28,10 @@ export function getWeekRange(dateStr) {
  * @param {{ start: string, end: string }} range  YYYY-MM-DD inclusive
  * @param {string} today          YYYY-MM-DD
  */
-export function buildScheduleStats(openTasks, completedTasks, range, today) {
+/**
+ * @param {Object} driftMap  { [gid]: { driftDays, driftSeverity, promisedDate, isRescheduled } }
+ */
+export function buildScheduleStats(openTasks, completedTasks, range, today, driftMap = {}) {
   const completedInRange = completedTasks.filter(t =>
     t.due_on && t.due_on >= range.start && t.due_on <= range.end
   );
@@ -46,14 +49,25 @@ export function buildScheduleStats(openTasks, completedTasks, range, today) {
 
   const overdueOpen = openInRange.filter(t => t.due_on < today).length;
 
+  const addDrift = (obj) => {
+    const d = driftMap[obj.gid];
+    if (d) {
+      obj.driftDays = d.driftDays;
+      obj.driftSeverity = d.driftSeverity;
+      obj.promisedDate = d.promisedDate;
+      obj.isRescheduled = d.isRescheduled;
+    }
+    return obj;
+  };
+
   const jobs = [
-    ...openInRange.map(t => ({
+    ...openInRange.map(t => addDrift({
       gid:    t.gid,
       name:   t.parent?.name ?? t.name,
       due_on: t.due_on,
       state:  t.due_on < today ? 'overdue' : 'in_progress',
     })),
-    ...completedInRange.map(t => ({
+    ...completedInRange.map(t => addDrift({
       gid:    t.gid,
       name:   t.parent?.name ?? t.name,
       due_on: t.due_on,
@@ -61,12 +75,15 @@ export function buildScheduleStats(openTasks, completedTasks, range, today) {
     })),
   ].sort((a, b) => (a.due_on < b.due_on ? -1 : 1));
 
+  const completedWithDrift = jobs.filter(j => j.state === 'on_time' && j.isRescheduled);
+
   return {
     scheduled:  completedInRange.length + openInRange.length,
     onTime,
     late:        completedLate + overdueOpen,
     completedLate,
     inProgress:  openInRange.filter(t => t.due_on >= today).length,
+    completedWithDrift: completedWithDrift.length,
     jobs,
   };
 }
@@ -347,7 +364,23 @@ export async function buildProductionMetrics() {
   // Exclude staged from the "open" pool so they don't count as in-progress
   const openForSchedule = normalizedIncompleteTasks.filter(t => !isInStaging(t));
 
-  const bss = (range) => buildScheduleStats(openForSchedule, allCompletedForSchedule, range, today);
+  // Build a drift lookup so schedule stats can show drift on completed jobs
+  const driftMap = {};
+  for (const j of allJobRecords) {
+    driftMap[j.gid] = {
+      driftDays: j.driftDays,
+      driftSeverity: j.driftSeverity,
+      promisedDate: j.promisedDate,
+      isRescheduled: j.isRescheduled,
+    };
+  }
+
+  // Count reschedules that happened THIS WEEK (from reschedule log timestamps)
+  const rescheduledThisWeek = allJobRecords.filter(j =>
+    j.rescheduleLog.some(entry => entry.changedAt?.slice(0, 10) >= thisWeekRange.start)
+  ).length;
+
+  const bss = (range) => buildScheduleStats(openForSchedule, allCompletedForSchedule, range, today, driftMap);
   const schedule = {
     thisWeek:    bss(thisWeekRange),
     nextWeek:    bss(nextWeekRange),
@@ -375,6 +408,7 @@ export async function buildProductionMetrics() {
       reviewed: jobs.filter(j => j.reviewed).length,
       unreviewed: jobs.filter(j => !j.reviewed).length,
       rescheduledJobs: jobs.filter(j => j.isRescheduled).length,
+      rescheduledThisWeek,
       rescheduledMild: jobs.filter(j => j.driftSeverity === 'mild').length,
       rescheduledModerate: jobs.filter(j => j.driftSeverity === 'moderate').length,
       rescheduledSevere: jobs.filter(j => j.driftSeverity === 'severe').length,
