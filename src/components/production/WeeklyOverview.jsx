@@ -332,7 +332,7 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
                           <span className="w-1.5 h-1.5 rounded-full bg-warning/50 shrink-0" />
                           <span className="text-gray-500">
                             Changed from <span className="text-gray-600 font-medium">{fromStr}</span>
-                            {' '}&rarr;{' '}
+                            {' '}→{' '}
                             <span className="text-gray-600 font-medium">{toStr}</span>
                             {atStr && <span className="text-gray-500"> on {atStr}</span>}
                           </span>
@@ -349,7 +349,7 @@ function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
                     }}
                     className="mt-2 ml-2 text-[10px] text-accent hover:underline"
                   >
-                    View full job details &rarr;
+                    View full job details →
                   </button>
                 </div>
               )}
@@ -940,8 +940,8 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         <KpiCard
           label="On Time"
           value={onTimeTotal}
-          sub={schedule?.completedWithDrift > 0
-            ? `${schedule.completedWithDrift} were rescheduled`
+          sub={periodData?.completedWithDrift > 0
+            ? `${periodData.completedWithDrift} were rescheduled`
             : 'completed on schedule'}
           color="success"
           icon={onTimeTotal > 0 ? '✓' : undefined}
@@ -972,6 +972,15 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           active={activeCard === 'rescheduled'}
           onClick={() => toggleCard('rescheduled')}
         />
+        {(data.stagedJobs?.length ?? 0) > 0 && (
+          <KpiCard
+            label="In Staging"
+            value={data.stagedJobs.length}
+            sub="ready for installation"
+            color="success"
+            icon="📦"
+          />
+        )}
       </div>
 
       {/* ── Inline job panel ── */}
@@ -988,6 +997,47 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           jobMap={jobMap}
           onSelectJob={setSelectedJob}
         />
+      )}
+
+      {/* ── Staging Area ── */}
+      {data.stagedJobs?.length > 0 && (
+        <div className="bg-white border border-emerald-200 rounded-2xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-emerald-100 flex items-center justify-between bg-emerald-50/50">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">Staging Area</p>
+            </div>
+            <p className="text-xs text-emerald-600">{data.stagedJobs.length} job{data.stagedJobs.length !== 1 ? 's' : ''} ready for installation</p>
+          </div>
+          <div className="divide-y divide-emerald-100">
+            {data.stagedJobs.map(job => (
+              <button
+                key={job.gid}
+                onClick={() => { const full = jobMap[job.gid]; if (full) setSelectedJob(full); }}
+                className="w-full text-left px-5 py-3 hover:bg-emerald-50/50 transition-colors flex items-center gap-4"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{job.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] text-gray-500">{formatDate(job.due_on)}</span>
+                    {job.department && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/[0.04] text-gray-500 font-medium">{job.department}</span>
+                    )}
+                    {job.isRescheduled && (
+                      <span className={`text-[10px] font-semibold tabular-nums ${
+                        job.driftSeverity === 'severe' ? 'text-danger' :
+                        job.driftSeverity === 'moderate' ? 'text-orange-500' : 'text-warning'
+                      }`}>↻ +{job.driftDays}d</span>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold shrink-0">
+                  Ready
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* ── Next Week Forecast strip ── */}
