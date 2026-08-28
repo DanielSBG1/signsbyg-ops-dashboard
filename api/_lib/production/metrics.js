@@ -279,10 +279,13 @@ export async function buildProductionMetrics() {
       const subTasks = subSubTaskMap[t.gid] ?? [];
       const count = parentSubtaskCount[t.parent.gid] ?? 1;
       const due_on = extractProductionDueDate(t);
-      const promisedDate = extractPromisedDate(t);
       const staged = isInStaging(t);
       const status = staged ? 'staged' : deriveStatus(due_on, today);
       const reviewed = isReviewed(t);
+      // Original promised date: from Asana story history (first date ever set on custom field)
+      // Falls back to current custom field value if no history available
+      const rescheduleData = rescheduleCounts[t.gid] ?? { count: 0, log: [], originalPromisedDate: null };
+      const promisedDate = rescheduleData.originalPromisedDate ?? extractPromisedDate(t);
       const drift = getRescheduleDrift(due_on, promisedDate);
       const isRescheduled = drift != null && drift > 0;
       return {
@@ -301,8 +304,8 @@ export async function buildProductionMetrics() {
         projectedLate: !staged && status !== 'late' && isProjectedLate(subTasks, today),
         redoType: detectRedoType(subTasks, count),
         department: inferDepartment(t),
-        reschedules: rescheduleCounts[t.gid]?.count ?? 0,
-        rescheduleLog: rescheduleCounts[t.gid]?.log ?? [],
+        reschedules: rescheduleData.count,
+        rescheduleLog: rescheduleData.log,
         subTasks,
       };
     });

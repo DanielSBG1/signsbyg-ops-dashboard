@@ -9,7 +9,7 @@ import { getCached, setCached } from '../cache.js';
 import { getTaskStories } from './asana.js';
 import { PRODUCTION_DUE_DATE_CF_GID } from './constants.js';
 
-const KV_KEY = 'production:reschedules:v1';
+const KV_KEY = 'production:reschedules:v2';
 const KV_TTL = 60 * 60 * 24 * 7; // 7 days — reschedule data is stable
 
 const CORRECTION_WINDOW_MS   = 60 * 60 * 1000; // 1 hour
@@ -32,18 +32,20 @@ function analyzeReschedulesFromStories(stories) {
     )
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-  if (changes.length === 0) return { count: 0, log: [] };
+  if (changes.length === 0) return { count: 0, log: [], originalPromisedDate: null };
 
   // Find the initial scheduling event (old date null -> new date set)
+  // This is the ORIGINAL promised date — the first date ever entered.
   const initial = changes.find(s => !s.old_date_value?.due_on && s.new_date_value?.due_on);
-  if (!initial) return { count: 0, log: [] };
+  if (!initial) return { count: 0, log: [], originalPromisedDate: null };
 
+  const originalPromisedDate = initial.new_date_value.due_on;
   const initTime  = new Date(initial.created_at).getTime();
-  const initDate  = new Date(initial.new_date_value.due_on + 'T12:00:00Z').getTime();
+  const initDate  = new Date(originalPromisedDate + 'T12:00:00Z').getTime();
   const initLeadH = (initDate - initTime) / (1000 * 60 * 60);
 
   // Rule 2: Lead time exemption — job first scheduled with <48h lead
-  if (initLeadH < MIN_LEAD_TIME_H) return { count: 0, log: [] };
+  if (initLeadH < MIN_LEAD_TIME_H) return { count: 0, log: [], originalPromisedDate };
 
   let count = 0;
   const log = [];
@@ -71,7 +73,7 @@ function analyzeReschedulesFromStories(stories) {
     }
   }
 
-  return { count, log };
+  return { count, log, originalPromisedDate };
 }
 
 /**
@@ -96,7 +98,7 @@ export async function getRescheduleCounts(tasks) {
         (t.modified_at && cached.lastModifiedAt === t.modified_at));
 
     if (stillValid) {
-      result[gid] = { count: cached.count, log: cached.log ?? [] };
+      result[gid] = { count: cached.count, log: cached.log ?? [], originalPromisedDate: cached.originalPromisedDate ?? null };
     } else {
       tasksToFetch.push(t);
     }
@@ -112,18 +114,20 @@ export async function getRescheduleCounts(tasks) {
     const gid = t.gid ?? t.id;
     try {
       const stories = await getTaskStories(gid);
-      const { count, log } = analyzeReschedulesFromStories(stories);
+      const { count, log, originalPromisedDate } = analyzeReschedulesFromStories(stories);
       cache[gid] = {
         count,
         log,
+        originalPromisedDate,
         lastModifiedAt: t.modified_at || null,
       };
-      result[gid] = { count, log };
+      result[gid] = { count, log, originalPromisedDate };
     } catch (err) {
       console.warn(`[prod:rescheduleCache] Fetch failed for task ${gid}: ${err.message}`);
       result[gid] = {
         count: cache[gid]?.count ?? 0,
         log: cache[gid]?.log ?? [],
+        originalPromisedDate: cache[gid]?.originalPromisedDate ?? null,
       };
     }
   }
