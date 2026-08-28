@@ -72,24 +72,30 @@ export function buildScheduleStats(openTasks, completedTasks, range, today) {
 }
 
 /**
- * Returns the effective production due date for a task.
- *
- * Uses the LATER of:
- *   - "Production Due Date" custom field
- *   - Native Asana due_on
- *
- * This handles the common reschedule pattern where the PM updates the native
- * due_on (moving it forward) but leaves the original promised date in the
- * custom field. Without this, the dashboard would still show the job as "late"
- * based on the old custom field date.
+ * Returns the current production schedule date for a task.
+ * Uses the native Asana due_on — this is the CURRENT schedule.
+ * The custom field holds the ORIGINAL promised date for drift tracking.
  */
 export function extractProductionDueDate(task) {
-  const cf = task.custom_fields?.find(f => f.gid === PRODUCTION_DUE_DATE_CF_GID);
-  const cfDate = cf?.date_value?.date || null;
-  const nativeDate = task.due_on || null;
-  if (!cfDate) return nativeDate;
-  if (!nativeDate) return cfDate;
-  return cfDate > nativeDate ? cfDate : nativeDate;
+  return task.due_on ?? null;
+}
+
+/**
+ * Days a job drifted from its original promise. Positive = late from promise.
+ */
+export function getRescheduleDrift(dueOn, promisedDate) {
+  if (!dueOn || !promisedDate) return null;
+  return Math.round((new Date(dueOn + 'T12:00:00') - new Date(promisedDate + 'T12:00:00')) / 86400000);
+}
+
+/**
+ * Severity: 'none' | 'mild' (1-7d) | 'moderate' (8-14d) | 'severe' (15d+)
+ */
+export function driftSeverity(driftDays) {
+  if (driftDays == null || driftDays <= 0) return 'none';
+  if (driftDays <= 7) return 'mild';
+  if (driftDays <= 14) return 'moderate';
+  return 'severe';
 }
 
 /**
@@ -273,19 +279,25 @@ export async function buildProductionMetrics() {
       const subTasks = subSubTaskMap[t.gid] ?? [];
       const count = parentSubtaskCount[t.parent.gid] ?? 1;
       const due_on = extractProductionDueDate(t);
+      const promisedDate = extractPromisedDate(t);
       const staged = isInStaging(t);
       const status = staged ? 'staged' : deriveStatus(due_on, today);
       const reviewed = isReviewed(t);
+      const drift = getRescheduleDrift(due_on, promisedDate);
+      const isRescheduled = drift != null && drift > 0;
       return {
         gid:  t.gid,
         name: t.parent.name,
         due_on,
         startDate:    t.start_on ?? null,
         createdAt:    t.created_at ? t.created_at.slice(0, 10) : null,
-        promisedDate: extractPromisedDate(t),
+        promisedDate,
         status,
         staged,
         reviewed,
+        isRescheduled,
+        driftDays: drift,
+        driftSeverity: driftSeverity(drift),
         projectedLate: !staged && status !== 'late' && isProjectedLate(subTasks, today),
         redoType: detectRedoType(subTasks, count),
         department: inferDepartment(t),
@@ -359,7 +371,10 @@ export async function buildProductionMetrics() {
       staged: stagedJobs.length,
       reviewed: jobs.filter(j => j.reviewed).length,
       unreviewed: jobs.filter(j => !j.reviewed).length,
-      rescheduledJobs: jobs.filter(j => j.reschedules > 0).length,
+      rescheduledJobs: jobs.filter(j => j.isRescheduled).length,
+      rescheduledMild: jobs.filter(j => j.driftSeverity === 'mild').length,
+      rescheduledModerate: jobs.filter(j => j.driftSeverity === 'moderate').length,
+      rescheduledSevere: jobs.filter(j => j.driftSeverity === 'severe').length,
       totalReschedules: jobs.reduce((s, j) => s + j.reschedules, 0),
     },
     jobs,

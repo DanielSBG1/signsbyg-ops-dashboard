@@ -364,7 +364,12 @@ function JobCard({ job, today, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left rounded-xl border ${cfg.borderClass} bg-black/[0.02] hover:bg-black/[0.03] transition-all duration-150 p-3 space-y-2.5 group`}
+      className={`w-full text-left rounded-xl border ${
+        job.driftSeverity === 'severe' ? 'border-danger/40 bg-danger/5' :
+        job.driftSeverity === 'moderate' ? 'border-orange-400/40 bg-orange-50' :
+        job.driftSeverity === 'mild' ? 'border-warning/40 bg-amber-50' :
+        `${cfg.borderClass} bg-black/[0.02]`
+      } hover:bg-black/[0.03] transition-all duration-150 p-3 space-y-2.5 group`}
     >
       {/* Department + status badges at top */}
       <div className="flex items-center gap-1.5 flex-wrap">
@@ -386,9 +391,13 @@ function JobCard({ job, today, onClick }) {
             Redo
           </span>
         )}
-        {job.reschedules > 0 && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-warning/20 text-warning font-semibold tabular-nums">
-            ↻{job.reschedules}
+        {job.isRescheduled && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold tabular-nums ${
+            job.driftSeverity === 'severe' ? 'bg-danger/20 text-danger' :
+            job.driftSeverity === 'moderate' ? 'bg-orange-400/20 text-orange-500' :
+            'bg-warning/20 text-warning'
+          }`}>
+            ↻ +{job.driftDays}d
           </span>
         )}
       </div>
