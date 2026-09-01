@@ -34,7 +34,7 @@ export default function PmSection() {
             <h1 className="text-2xl font-bold">Project Management</h1>
             {data && (
               <p className="text-gray-500 text-xs mt-1">
-                Live snapshot \u00b7 Updated {new Date(data.generatedAt).toLocaleTimeString()}
+                Live snapshot · Updated {new Date(data.generatedAt).toLocaleTimeString()}
               </p>
             )}
           </div>
