@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import HealthBadge from './HealthBadge';
 
-// ─── Constants ────────────────────────────────────────────────
+// \u2500\u2500\u2500 Constants \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 const STAGES = [
   { name: 'Design',       key: 'design',       color: '#3b82f6' },
@@ -39,13 +40,13 @@ function matchStage(section) {
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '\u2014';
   try {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   } catch { return dateStr; }
 }
 
-// ─── Department tasks modal ────────────────────────────────────
+// \u2500\u2500\u2500 Department tasks modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 const DEPT_SORT_COLS = [
   { key: 'name',     label: 'Job Name' },
@@ -101,7 +102,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
             <span className="text-lg font-bold text-gray-900">{stage.name}</span>
             <span className="text-sm text-gray-500">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">\u00d7</button>
         </div>
 
         {/* Column headers */}
@@ -115,7 +116,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
               }`}
             >
               {col.label}
-              {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+              {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>}
             </button>
           ))}
         </div>
@@ -130,7 +131,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
                 className="grid grid-cols-[1fr_120px_120px_90px] gap-4 items-center px-6 py-3 hover:bg-black/[0.02]"
               >
                 <span className="text-sm text-gray-800 truncate" title={task.name}>{task.name}</span>
-                <span className="text-sm text-gray-500 truncate">{task.assignee ?? '—'}</span>
+                <span className="text-sm text-gray-500 truncate">{task.assignee ?? '\u2014'}</span>
                 <span className={`text-sm tabular-nums ${isOverdue ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
                   {formatDate(task.due_on)}
                   {isOverdue && <span className="ml-1 text-xs">(late)</span>}
@@ -140,7 +141,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
                     ? <span className="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2 py-0.5 rounded-full">REDO</span>
                     : isOverdue
                       ? <span className="text-xs text-red-400/70">Overdue</span>
-                      : <span className="text-xs text-gray-500">—</span>
+                      : <span className="text-xs text-gray-500">\u2014</span>
                   }
                 </span>
               </div>
@@ -152,7 +153,7 @@ function DeptTasksModal({ stage, tasks, onClose }) {
   );
 }
 
-// ─── Cumulative progress section ──────────────────────────────
+// \u2500\u2500\u2500 Cumulative progress section \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function HealthJobsModal({ segment, onClose, onJobClick }) {
   const [sortCol, setSortCol] = useState('score');
@@ -204,7 +205,7 @@ function HealthJobsModal({ segment, onClose, onJobClick }) {
             <span className="text-lg font-bold text-gray-900">{segment.label}</span>
             <span className="text-sm text-gray-500">{segment.count} job{segment.count !== 1 ? 's' : ''}</span>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">\u00d7</button>
         </div>
 
         {/* Column headers */}
@@ -216,7 +217,7 @@ function HealthJobsModal({ segment, onClose, onJobClick }) {
               }`}
             >
               {col.label}
-              {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+              {sortCol === col.key && <span className="text-[10px]">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>}
             </button>
           ))}
           <span className="text-xs uppercase tracking-wider text-gray-500">Flags</span>
@@ -237,7 +238,7 @@ function HealthJobsModal({ segment, onClose, onJobClick }) {
                   {job.score}
                 </span>
                 <span className={`text-sm tabular-nums ${isPastDue ? 'text-red-400 font-semibold' : 'text-gray-500'}`}>
-                  {job.due_on ? formatDate(job.due_on) : '—'}
+                  {job.due_on ? formatDate(job.due_on) : '\u2014'}
                 </span>
                 <div className="flex gap-1 flex-wrap">
                   {job.hasRedo && <span className="text-[10px] bg-orange-500/20 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded-full">REDO</span>}
@@ -269,7 +270,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
   const totalDeptTasks = deptSegments.reduce((s, d) => s + d.count, 0);
 
   // Each job gets exactly one segment (most severe wins):
-  // No Date → Late → Critical → At Risk → Watch → On Track
+  // No Date \u2192 Late \u2192 Critical \u2192 At Risk \u2192 Watch \u2192 On Track
   const healthSegments = useMemo(() => {
     const buckets = {
       noDate:   { label: 'No Due Date', color: '#6b7280', jobs: [] },
@@ -309,11 +310,11 @@ function CumulativeProgressSection({ data, onJobClick }) {
           )}
         </div>
 
-        {/* Stage distribution — clickable segments */}
+        {/* Stage distribution \u2014 clickable segments */}
         {totalDeptTasks > 0 && (
           <div>
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-              <span>Active tasks by stage — click to view projects</span>
+              <span>Active tasks by stage \u2014 click to view projects</span>
               <span>{totalDeptTasks} total</span>
             </div>
             <div className="flex h-7 rounded-lg overflow-hidden gap-px">
@@ -347,7 +348,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
         {totalJobs > 0 && (
           <div>
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-              <span>Job health distribution — click to view jobs</span>
+              <span>Job health distribution \u2014 click to view jobs</span>
               <span>{totalJobs} jobs</span>
             </div>
             <div className="flex h-7 rounded-lg overflow-hidden gap-px">
@@ -394,7 +395,7 @@ function CumulativeProgressSection({ data, onJobClick }) {
   );
 }
 
-// ─── KPI card ─────────────────────────────────────────────────
+// \u2500\u2500\u2500 KPI card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function KpiCard({ label, value, colorClass = 'text-gray-900' }) {
   return (
@@ -405,7 +406,7 @@ function KpiCard({ label, value, colorClass = 'text-gray-900' }) {
   );
 }
 
-// ─── Alert panels ─────────────────────────────────────────────
+// \u2500\u2500\u2500 Alert panels \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function AlertPanel({ title, empty, children }) {
   const hasChildren = React.Children.count(children) > 0;
@@ -438,7 +439,7 @@ function AlertRow({ job, onClick }) {
   );
 }
 
-// ─── PM Portfolio ──────────────────────────────────────────────
+// \u2500\u2500\u2500 PM Portfolio \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 const TODAY_STR = new Date().toISOString().slice(0, 10);
 
@@ -580,7 +581,7 @@ function MiniPmCard({ pm, onClick }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-gray-500">{jobCount} jobs</span>
           {unprocessedCount > 0 && (
-            <span className="text-[10px] text-red-400 font-semibold">🚨 {unprocessedCount}</span>
+            <span className="text-[10px] text-red-400 font-semibold">\ud83d\udea8 {unprocessedCount}</span>
           )}
           {overdueCount > 0 && (
             <span className="text-[10px] text-red-400 font-semibold">{overdueCount} late</span>
@@ -616,7 +617,7 @@ function MiniPmCard({ pm, onClick }) {
   );
 }
 
-// ─── PM Detail Panel (inline expansion) ──────────────────────
+// \u2500\u2500\u2500 PM Detail Panel (inline expansion) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function formatShortDate(dateStr) {
   if (!dateStr) return 'No date';
@@ -646,7 +647,47 @@ function JobRow({ task, dueOn, showLastActivity }) {
   );
 }
 
+const VIRTUALIZE_THRESHOLD = 20;
+const COLUMN_HEIGHT = 400;
+const ROW_ESTIMATE = 48;
+
+function VirtualJobList({ tasks, showLastActivity }) {
+  const parentRef = useRef(null);
+  const virtualizer = useVirtualizer({
+    count: tasks.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_ESTIMATE,
+    overscan: 5,
+  });
+
+  return (
+    <div ref={parentRef} style={{ height: `${COLUMN_HEIGHT}px`, overflow: 'auto' }}>
+      <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const t = tasks[virtualRow.index];
+          return (
+            <div
+              key={t.gid}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <JobRow task={t} dueOn={t.dueOn} showLastActivity={showLastActivity} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function JobColumn({ title, count, color, borderColor, tasks, showLastActivity }) {
+  const useVirtual = tasks.length > VIRTUALIZE_THRESHOLD;
+
   return (
     <div className={`bg-white border ${borderColor} rounded-2xl overflow-hidden flex flex-col`}>
       <div className="px-5 py-4 border-b border-gray-200">
@@ -655,12 +696,16 @@ function JobColumn({ title, count, color, borderColor, tasks, showLastActivity }
           <span className={`text-2xl font-bold tabular-nums ${color}`}>{count}</span>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto max-h-[400px]">
-        {tasks.length === 0
-          ? <p className="text-gray-500 text-sm text-center py-8">None</p>
-          : tasks.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} showLastActivity={showLastActivity} />)
-        }
-      </div>
+      {tasks.length === 0
+        ? <p className="text-gray-500 text-sm text-center py-8">None</p>
+        : useVirtual
+          ? <VirtualJobList tasks={tasks} showLastActivity={showLastActivity} />
+          : (
+            <div className="flex-1 overflow-y-auto max-h-[400px]">
+              {tasks.map(t => <JobRow key={t.gid} task={t} dueOn={t.dueOn} showLastActivity={showLastActivity} />)}
+            </div>
+          )
+      }
     </div>
   );
 }
@@ -800,7 +845,7 @@ function PmDetailPanel({ pm, tasks, scorecardMap, onClose }) {
   );
 }
 
-// ─── PM Portfolio Section ─────────────────────────────────────
+// \u2500\u2500\u2500 PM Portfolio Section \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
   const [expandedPm, setExpandedPm] = useState(null);
@@ -828,7 +873,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">PM Portfolio</h2>
 
-      {/* Active PMs — large cards (hidden when one is expanded) */}
+      {/* Active PMs \u2014 large cards (hidden when one is expanded) */}
       {!expandedPm && activeStats.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {activeStats.map(pm => (
@@ -847,7 +892,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
         />
       )}
 
-      {/* Unmanaged projects — flagged as needing reassignment */}
+      {/* Unmanaged projects \u2014 flagged as needing reassignment */}
       {unmanagedTotal > 0 && (
         <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2">
@@ -869,7 +914,7 @@ function PmPortfolioSection({ auditData, scorecards, onAuditPmClick }) {
   );
 }
 
-// ─── Main tab ─────────────────────────────────────────────────
+// \u2500\u2500\u2500 Main tab \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClick }) {
   const { totals, scorecards } = data;
@@ -880,7 +925,7 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
   return (
     <div className="space-y-6">
 
-      {/* Overall pipeline — top */}
+      {/* Overall pipeline \u2014 top */}
       <CumulativeProgressSection data={data} onJobClick={onJobClick} />
 
       {/* PM Portfolio */}
@@ -898,7 +943,7 @@ export default function OverviewTab({ data, auditData, onJobClick, onAuditPmClic
         <KpiCard label="Overdue Subtasks"  value={totals.overdueSubtasks} colorClass="text-red-400" />
       </div>
 
-      {/* Alerts — large 3-across cards */}
+      {/* Alerts \u2014 large 3-across cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <AlertPanel title="Critical Jobs" empty="No critical jobs">
           {criticalJobs.map(j => (

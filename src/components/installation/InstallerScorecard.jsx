@@ -1,11 +1,19 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
 import {
-  AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Filler,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Filler, Tooltip, Legend);
+
+// \u2500\u2500\u2500 Constants \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 const COLORS = {
   success: '#22c55e',
@@ -36,7 +44,7 @@ const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
 
 const COMPLETED_STATUSES = new Set(['early', 'on_time', 'bled_over', 'rescheduled', 'failed']);
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function rateColorClass(rate) {
   if (rate >= 80) return 'text-success';
@@ -67,7 +75,7 @@ function fmtWeekLabel(isoDate) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-// ─── Period math ──────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Period math \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function getMondayOf(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
@@ -121,7 +129,7 @@ function jobInRange(job, range) {
   return d >= range.start && d <= range.end;
 }
 
-// ─── Compute crew stats from jobs ─────────────────────────────────────────────
+// \u2500\u2500\u2500 Compute crew stats from jobs \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function computeCrewStats(crewName, jobs) {
   const crewJobs = jobs.filter(j => (j.crews ?? []).includes(crewName));
@@ -174,23 +182,7 @@ function computeCrewStats(crewName, jobs) {
   };
 }
 
-// ─── Chart tooltip ────────────────────────────────────────────────────────────
-
-function ChartTooltip({ active, payload, label, formatter }) {
-  if (!active || !payload || payload.length === 0) return null;
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-xl">
-      <p className="text-xs text-gray-500 mb-1.5 font-medium">{label}</p>
-      {payload.map((entry, i) => (
-        <p key={i} className="text-xs" style={{ color: entry.color || '#111827' }}>
-          {entry.name}: {formatter ? formatter(entry.value, entry.name) : entry.value}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Stat card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function StatCard({ title, children }) {
   return (
@@ -201,7 +193,7 @@ function StatCard({ title, children }) {
   );
 }
 
-// ─── Sortable column header ───────────────────────────────────────────────────
+// \u2500\u2500\u2500 Sortable column header \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className }) {
   const isActive = currentSort === sortKey;
@@ -216,7 +208,7 @@ function SortHeader({ label, sortKey, currentSort, currentDir, onSort, className
   );
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Status badge \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 const STATUS_BADGE = {
   early:       { label: 'Early',       cls: 'bg-success/20 text-success' },
@@ -229,7 +221,7 @@ const STATUS_BADGE = {
   failed:      { label: 'Failed',      cls: 'bg-danger/20 text-danger' },
 };
 
-// ─── Leaderboard ──────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Leaderboard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onCrewClick }) {
   const sortOpt = LEADERBOARD_SORTS.find(o => o.key === sortKey);
@@ -360,7 +352,7 @@ function InstallerLeaderboard({ crews, sortKey, onSortChange, onViewProfile, onC
   );
 }
 
-// ─── Crew section (expandable job list) ───────────────────────────────────────
+// \u2500\u2500\u2500 Crew section (expandable job list) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
   const [sortKey, setSortKey] = useState('installDate');
@@ -474,7 +466,7 @@ function CrewSection({ crew, expanded, onToggle, onViewProfile, sectionRef }) {
   );
 }
 
-// ─── Crew profile page ────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Crew profile page \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function CrewProfile({ crew, allJobs, onClose }) {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -685,62 +677,60 @@ function CrewProfile({ crew, allJobs, onClose }) {
       <div className="bg-black/[0.03] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-600 mb-4">First-Time Completion Rate Over Time</h3>
         {weeklyData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={weeklyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <defs>
-                <linearGradient id="ftRateGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.success} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={COLORS.success} stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-              <XAxis
-                dataKey="label"
-                tick={{ fill: 'rgba(0,0,0,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
-                tickLine={false}
-              />
-              <YAxis
-                domain={[0, 100]}
-                tick={{ fill: 'rgba(0,0,0,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
-                tickLine={false}
-                tickFormatter={v => `${v}%`}
-              />
-              <Tooltip
-                content={
-                  <ChartTooltip
-                    formatter={(value, name) => {
-                      if (name === 'First-Time Rate') return `${value}%`;
-                      return value;
-                    }}
-                  />
-                }
-              />
-              <Area
-                type="monotone"
-                dataKey="firstTimeRate"
-                name="First-Time Rate"
-                stroke={COLORS.success}
-                strokeWidth={2}
-                fill="url(#ftRateGradient)"
-                connectNulls
-                dot={(props) => {
-                  const { cx, cy, payload } = props;
-                  if (payload.firstTimeRate === null) return null;
-                  return (
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={4}
-                      fill={rateHexColor(payload.firstTimeRate)}
-                      stroke="none"
-                    />
-                  );
-                }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div style={{ height: 250 }}>
+            <Line
+              data={{
+                labels: weeklyData.map((w) => w.label),
+                datasets: [
+                  {
+                    label: 'First-Time Rate',
+                    data: weeklyData.map((w) => w.firstTimeRate),
+                    borderColor: COLORS.success,
+                    backgroundColor: COLORS.success + '4d',
+                    borderWidth: 2,
+                    pointRadius: weeklyData.map((w) => (w.firstTimeRate === null ? 0 : 4)),
+                    pointBackgroundColor: weeklyData.map((w) =>
+                      w.firstTimeRate !== null ? rateHexColor(w.firstTimeRate) : 'transparent'
+                    ),
+                    tension: 0,
+                    fill: true,
+                    spanGaps: true,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: '#ffffff',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    titleColor: '#6b7280',
+                    bodyColor: '#111827',
+                    callbacks: {
+                      label: (ctx) => `First-Time Rate: ${ctx.parsed.y}%`,
+                    },
+                  },
+                },
+                scales: {
+                  x: {
+                    ticks: { color: 'rgba(0,0,0,0.4)', font: { size: 11 } },
+                    grid: { color: 'rgba(0,0,0,0.06)' },
+                    border: { color: 'rgba(0,0,0,0.1)' },
+                  },
+                  y: {
+                    min: 0,
+                    max: 100,
+                    ticks: { color: 'rgba(0,0,0,0.4)', font: { size: 11 }, callback: (v) => `${v}%` },
+                    grid: { color: 'rgba(0,0,0,0.06)' },
+                    border: { color: 'rgba(0,0,0,0.1)' },
+                  },
+                },
+              }}
+            />
+          </div>
         ) : (
           <p className="text-sm text-gray-500 text-center py-12">No completion data yet</p>
         )}
@@ -810,7 +800,7 @@ function CrewProfile({ crew, allJobs, onClose }) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Main Component \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 export default function InstallerScorecard({ data }) {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
