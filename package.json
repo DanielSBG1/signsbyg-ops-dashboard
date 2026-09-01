@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "@supabase/supabase-js": "^2.112.4",
     "@tanstack/react-virtual": "^3.14.10",
     "@vercel/kv": "^3.0.0",
     "chart.js": "^4.5.1",
