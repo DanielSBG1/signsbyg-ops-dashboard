@@ -14,14 +14,15 @@ import { Bar, Line } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Tooltip, Legend);
 
-// \u2500\u2500\u2500 Constants \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nconst COLORS = {
+// --- Constants ------------------------------------------------------
+const COLORS = {
   success: '#22c55e',
   danger:  '#ef4444',
   accent:  '#06b6d4',
   warning: '#eab308',
 };
 
-// \u2500\u2500\u2500 Helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Helpers --------------------------------------------------------
 
 function rateColorClass(rate) {
   if (rate >= 80) return 'text-success';
@@ -41,7 +42,7 @@ function rateHexColor(rate) {
   return COLORS.danger;
 }
 
-/** ISO date string \u2192 Date at midnight UTC */
+/** ISO date string -> Date at midnight UTC */
 function parseDate(iso) {
   if (!iso) return null;
   return new Date(iso.slice(0, 10) + 'T00:00:00Z');
@@ -56,7 +57,7 @@ function getMonday(d) {
   return copy.toISOString().slice(0, 10);
 }
 
-/** Format "2025-07-07" \u2192 "Jul 7" */
+/** Format "2025-07-07" -> "Jul 7" */
 function fmtWeekLabel(isoDate) {
   const d = new Date(isoDate + 'T00:00:00Z');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -64,7 +65,7 @@ function fmtWeekLabel(isoDate) {
 
 /** Format ISO date for display */
 function fmtDate(iso) {
-  if (!iso) return '\u2014';
+  if (!iso) return '--';
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
@@ -77,7 +78,7 @@ function diffDays(a, b) {
   return Math.round((da - db) / (1000 * 60 * 60 * 24));
 }
 
-// \u2500\u2500\u2500 Stat Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Stat Card ------------------------------------------------------
 
 function StatCard({ title, children }) {
   return (
@@ -88,9 +89,9 @@ function StatCard({ title, children }) {
   );
 }
 
-// \u2500\u2500\u2500 Main Component \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Main Component -------------------------------------------------
 
-// \u2500\u2500\u2500 Period helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Period helpers --------------------------------------------------
 function getMondayOfDate(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
   const day = d.getDay();
@@ -174,7 +175,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
   const overdue = overdueArr.length;
   const onTimeRate = (completed + overdue) > 0 ? Math.round((onTime / (completed + overdue)) * 100) : 0;
 
-  // \u2500\u2500 Avg days early/late \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // -- Avg days early/late ---------------------------------------
   const avgDaysEarlyLate = useMemo(() => {
     const completedWithDates = subtasks.filter(s => s.completed && s.due_on && s.completed_at);
     if (completedWithDates.length === 0) return null;
@@ -185,7 +186,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
     return totalDiff / completedWithDates.length;
   }, [subtasks]);
 
-  // \u2500\u2500 Weekly buckets \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // -- Weekly buckets ------------------------------------------
   const weeklyData = useMemo(() => {
     const buckets = {};
 
@@ -209,7 +210,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
     // Sort weeks chronologically
     const sorted = Object.values(buckets).sort((a, b) => a.week.localeCompare(b.week));
 
-    // Ensure at least 8 weeks \u2014 fill gaps
+    // Ensure at least 8 weeks -- fill gaps
     if (sorted.length > 0) {
       const firstWeek = new Date(sorted[0].week + 'T00:00:00Z');
       const lastWeek = new Date(sorted[sorted.length - 1].week + 'T00:00:00Z');
@@ -242,7 +243,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
     }));
   }, [subtasks]);
 
-  // \u2500\u2500 Completion speed per week \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // -- Completion speed per week -------------------------------------
   const speedData = useMemo(() => {
     const buckets = {};
 
@@ -267,14 +268,14 @@ export default function TeamMemberProfile({ memberData, onClose }) {
       }));
   }, [subtasks]);
 
-  // \u2500\u2500 Open tasks sorted by due date \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // -- Open tasks sorted by due date ---------------------------------
   const openTasks = useMemo(() => {
     return subtasks
       .filter(s => !s.completed)
       .sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999'));
   }, [subtasks]);
 
-  // \u2500\u2500 Days until due helper \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // -- Days until due helper -------------------------------------
   function daysUntilDue(dueOn) {
     if (!dueOn) return null;
     return diffDays(dueOn, today);
@@ -282,7 +283,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
 
   return (
     <div className="space-y-6">
-      {/* \u2500\u2500 1. HEADER BAR \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* -- 1. HEADER BAR -------------------------------- */}
       <div className="flex items-center gap-4">
         <button
           onClick={onClose}
@@ -296,7 +297,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         </span>
       </div>
 
-      {/* \u2500\u2500 PERIOD SELECTOR \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* -- PERIOD SELECTOR ------------------------------ */}
       <div className="flex flex-wrap gap-1.5">
         {PROFILE_PERIODS.map(p => (
           <button
@@ -313,7 +314,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         ))}
       </div>
 
-      {/* \u2500\u2500 2. STAT CARDS ROW \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* -- 2. STAT CARDS ROW ------------------------------ */}
       <div className="grid grid-cols-4 gap-4">
         <StatCard title="Completion Rate">
           <p className={`text-3xl font-bold tabular-nums ${rateColorClass(onTimeRate)}`}>
@@ -358,7 +359,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         </StatCard>
       </div>
 
-      {/* \u2500\u2500 3. ON-TIME RATE TREND CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* -- 3. ON-TIME RATE TREND CHART ---------------------- */}
       <div className="bg-black/[0.03] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-600 mb-4">On-Time Rate Over Time</h3>
         {weeklyData.length > 0 ? (
@@ -421,7 +422,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         )}
       </div>
 
-      {/* \u2500\u2500 4. WEEKLY BREAKDOWN CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* -- 4. WEEKLY BREAKDOWN CHART ------------------------ */}
       <div className="bg-black/[0.03] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-600 mb-4">Weekly Task Breakdown</h3>
         {weeklyData.length > 0 ? (
@@ -481,7 +482,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         )}
       </div>
 
-      {/* \u2500\u2500 5. COMPLETION SPEED CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* -- 5. COMPLETION SPEED CHART ------------------------ */}
       <div className="bg-black/[0.03] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-600 mb-4">Avg Completion Speed (days)</h3>
         {speedData.length > 0 ? (
@@ -540,7 +541,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         )}
       </div>
 
-      {/* \u2500\u2500 6. CURRENT TASKS TABLE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* -- 6. CURRENT TASKS TABLE --------------------------- */}
       <div className="bg-black/[0.03] rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-600">
