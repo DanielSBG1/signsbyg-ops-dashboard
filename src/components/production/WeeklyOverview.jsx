@@ -1,8 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import JobDrawer from './JobDrawer';
 import { computeProductionHealth, BAND_CONFIG } from '../../utils/health.js';
+import KpiStrip from './weekly/KpiStrip.jsx';
+import JobCard from './weekly/JobCard.jsx';
+import StagingArea from './weekly/StagingArea.jsx';
+import RescheduledPanel from './weekly/RescheduledPanel.jsx';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Constants \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 const DEPT_META = [
   { key: 'channel_letters', label: 'Channel Letters', short: 'CL',    color: '#06b6d4' },
@@ -35,7 +39,7 @@ const STATE_BADGE = {
   projected_late: { label: 'Projected Late', cls: 'bg-orange-400/20 text-orange-400' },
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function getWeekDays(today) {
   const d = new Date(today + 'T12:00:00Z');
@@ -67,7 +71,6 @@ function currentStage(jobGid, jobMap) {
   if (!job) return 'Complete';
   const incomplete = job.subTasks.filter(s => !s.completed);
   if (incomplete.length === 0) return 'Complete';
-  // Return the first incomplete stage (chronological order they appear)
   return incomplete[0].name ?? 'In Progress';
 }
 
@@ -75,7 +78,7 @@ function isAtRisk(job, today) {
   return job.subTasks.some(s => !s.completed && s.due_on && s.due_on <= today);
 }
 
-// ─── Alert card (large red numbers for critical attention items) ──────────────
+// \u2500\u2500\u2500 Alert card (large red numbers for critical attention items) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function AlertCard({ label, value, sub, active, onClick }) {
   return (
@@ -95,45 +98,13 @@ function AlertCard({ label, value, sub, active, onClick }) {
       </p>
       {sub && <p className="text-gray-500 text-xs mt-2">{sub}</p>}
       <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-danger' : 'text-gray-500'}`}>
-        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
+        {active ? 'Click to collapse \u2191' : 'Click to see jobs \u2193'}
       </p>
     </button>
   );
 }
 
-// ─── KPI card ────────────────────────────────────────────────────────────────
-
-function KpiCard({ label, value, sub, color, icon, active, onClick }) {
-  const colorMap = {
-    success: 'text-success',
-    danger:  'text-danger',
-    warning: 'text-warning',
-    orange:  'text-orange-400',
-  };
-  const cls = colorMap[color] ?? 'text-gray-900';
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left bg-white border rounded-2xl p-6 transition-all duration-150 ${
-        active
-          ? 'border-accent/60 ring-1 ring-accent/30 bg-accent/[0.04]'
-          : 'border-gray-200 hover:border-gray-200'
-      }`}
-    >
-      <p className="text-gray-500 text-[11px] font-semibold uppercase tracking-widest mb-3">{label}</p>
-      <div className="flex items-baseline gap-2">
-        <p className={`text-5xl font-bold tabular-nums leading-none ${cls}`}>{value ?? '—'}</p>
-        {icon && <span className="text-2xl leading-none">{icon}</span>}
-      </div>
-      {sub && <p className="text-gray-500 text-xs mt-2">{sub}</p>}
-      <p className={`text-[10px] mt-3 transition-colors ${active ? 'text-accent' : 'text-gray-500'}`}>
-        {active ? 'Click to collapse ↑' : 'Click to see jobs ↓'}
-      </p>
-    </button>
-  );
-}
-
-// ─── Unreviewed job panel (shows promised date + days waiting) ────────────────
+// \u2500\u2500\u2500 Unreviewed job panel (shows promised date + days waiting) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
   if (jobs.length === 0) {
@@ -175,12 +146,12 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
               <div className="text-right shrink-0">
                 {job.promisedDate
                   ? <span className="text-[11px] text-warning font-semibold">{formatDate(job.promisedDate)}</span>
-                  : <span className="text-[11px] text-gray-500">—</span>}
+                  : <span className="text-[11px] text-gray-500">\u2014</span>}
               </div>
               <div className="text-right shrink-0">
                 {job.due_on
                   ? <span className="text-[11px] text-gray-500">{formatDate(job.due_on)}</span>
-                  : <span className="text-[11px] text-gray-500">—</span>}
+                  : <span className="text-[11px] text-gray-500">\u2014</span>}
               </div>
               <div className="text-right shrink-0">
                 <span className={`text-sm font-bold tabular-nums ${urgency}`}>
@@ -195,7 +166,7 @@ function UnreviewedJobPanel({ jobs, jobMap, onSelectJob }) {
   );
 }
 
-// ─── Inline job panel ─────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Inline job panel \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
   const borderCls = accentColor === 'danger' ? 'border-danger/30' : 'border-accent/20';
@@ -243,7 +214,7 @@ function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
                       job.driftSeverity === 'moderate' ? 'text-orange-500' :
                       'text-warning'
                     }`}>
-                      ↻ +{job.driftDays}d from promise
+                      \u21bb +{job.driftDays}d from promise
                     </span>
                   )}
                 </div>
@@ -267,188 +238,7 @@ function JobPanel({ jobs, jobMap, onSelectJob, accentColor }) {
   );
 }
 
-// ─── Rescheduled job panel (shows reschedule count + expandable log) ─────────
-
-function RescheduledJobPanel({ jobs, jobMap, onSelectJob }) {
-  const [expandedGid, setExpandedGid] = useState(null);
-
-  if (jobs.length === 0) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-500 text-sm">
-        No rescheduled jobs right now.
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white border border-warning/30 rounded-2xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-        <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">Rescheduled Jobs</p>
-        <p className="text-xs text-gray-500">{jobs.length} job{jobs.length !== 1 ? 's' : ''}</p>
-      </div>
-      {/* Column headers */}
-      <div className="px-5 py-2 border-b border-gray-100 grid grid-cols-[1fr_auto_auto] gap-4 items-center">
-        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Job</span>
-        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest text-right">Current Due</span>
-        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest text-right">Reschedules</span>
-      </div>
-      <div className="divide-y divide-white/[0.04]">
-        {jobs.map(job => {
-          const isExpanded = expandedGid === job.gid;
-          return (
-            <div key={job.gid}>
-              <button
-                onClick={() => setExpandedGid(isExpanded ? null : job.gid)}
-                className="w-full text-left px-5 py-3.5 hover:bg-black/[0.02] transition-colors grid grid-cols-[1fr_auto_auto] gap-4 items-center"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{job.name}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  {job.due_on
-                    ? <span className="text-[11px] text-gray-500">{formatDate(job.due_on)}</span>
-                    : <span className="text-[11px] text-gray-500">&mdash;</span>}
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="inline-flex items-center gap-1 text-sm font-bold tabular-nums text-warning">
-                    ↻{job.reschedules}
-                  </span>
-                </div>
-              </button>
-              {/* Expandable reschedule log */}
-              {isExpanded && job.rescheduleLog.length > 0 && (
-                <div className="px-5 pb-4">
-                  <div className="ml-2 border-l-2 border-warning/20 pl-3 space-y-2 py-1">
-                    {job.rescheduleLog.map((entry, i) => {
-                      const fromStr = formatDate(entry.from);
-                      const toStr = formatDate(entry.to);
-                      const atStr = entry.changedAt
-                        ? new Date(entry.changedAt).toLocaleDateString('en-US', {
-                            month: 'short', day: 'numeric', timeZone: 'UTC',
-                          })
-                        : '';
-                      return (
-                        <div key={i} className="flex items-center gap-2 text-[11px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-warning/50 shrink-0" />
-                          <span className="text-gray-500">
-                            Changed from <span className="text-gray-600 font-medium">{fromStr}</span>
-                            {' '}→{' '}
-                            <span className="text-gray-600 font-medium">{toStr}</span>
-                            {atStr && <span className="text-gray-500"> on {atStr}</span>}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Link to open in drawer */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const full = jobMap[job.gid];
-                      if (full) onSelectJob(full);
-                    }}
-                    className="mt-2 ml-2 text-[10px] text-accent hover:underline"
-                  >
-                    View full job details →
-                  </button>
-                </div>
-              )}
-              {isExpanded && job.rescheduleLog.length === 0 && (
-                <div className="px-5 pb-4">
-                  <p className="text-[11px] text-gray-500 ml-2">No detailed log available.</p>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Job card (inside a day column) ──────────────────────────────────────────
-
-function JobCard({ job, today, onClick }) {
-  const { band } = job._health;
-  const cfg  = BAND_CONFIG[band];
-  const dept = DEPT_BY_KEY[job.department];
-
-  const total     = job.subTasks.length;
-  const completed = job.subTasks.filter(s => s.completed).length;
-  const overdue   = job.subTasks.filter(s => !s.completed && s.due_on && s.due_on <= today).length;
-  const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left rounded-xl border ${
-        job.driftSeverity === 'severe' ? 'border-danger/40 bg-danger/5' :
-        job.driftSeverity === 'moderate' ? 'border-orange-400/40 bg-orange-50' :
-        job.driftSeverity === 'mild' ? 'border-warning/40 bg-amber-50' :
-        `${cfg.borderClass} bg-black/[0.02]`
-      } hover:bg-black/[0.03] transition-all duration-150 p-3 space-y-2.5 group`}
-    >
-      {/* Department + status badges at top */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {dept && (
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
-            style={{ backgroundColor: `${dept.color}22`, color: dept.color }}
-          >
-            {dept.label}
-          </span>
-        )}
-        {job.status === 'late' && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-danger/20 text-danger font-semibold">
-            Late
-          </span>
-        )}
-        {job.redoType && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-400/20 text-orange-400 font-semibold">
-            Redo
-          </span>
-        )}
-        {job.isRescheduled && (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold tabular-nums ${
-            job.driftSeverity === 'severe' ? 'bg-danger/20 text-danger' :
-            job.driftSeverity === 'moderate' ? 'bg-orange-400/20 text-orange-500' :
-            'bg-warning/20 text-warning'
-          }`}>
-            ↻ +{job.driftDays}d
-          </span>
-        )}
-      </div>
-
-      {/* Job name */}
-      <div className="flex items-start gap-2">
-        <span className={`mt-[3px] w-2 h-2 rounded-full shrink-0 ${cfg.fillClass}`} />
-        <span className="text-sm font-medium text-gray-900 leading-snug group-hover:text-gray-900">
-          {job.name}
-        </span>
-      </div>
-
-      {/* Progress bar */}
-      {total > 0 && (
-        <div className="space-y-1">
-          <div className="h-1 rounded-full bg-black/[0.05] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-success transition-all"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-500">{completed}/{total} stages</span>
-            {overdue > 0 && (
-              <span className="text-[10px] text-danger font-semibold">{overdue} overdue</span>
-            )}
-          </div>
-        </div>
-      )}
-    </button>
-  );
-}
-
-// ─── Department stage summary (bottom of each day column) ────────────────────
+// \u2500\u2500\u2500 Department stage summary (bottom of each day column) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function DeptStageSummary({ subTasksByDept }) {
   const hasAny = DEPT_META.some(d => (subTasksByDept[d.key]?.length ?? 0) > 0);
@@ -458,7 +248,7 @@ function DeptStageSummary({ subTasksByDept }) {
 
   return (
     <div className="space-y-2 pt-3 border-t border-gray-100">
-      <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Stages due — click to see tasks</p>
+      <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Stages due \u2014 click to see tasks</p>
       {DEPT_META.map(dept => {
         const tasks = subTasksByDept[dept.key] ?? [];
         if (tasks.length === 0) return null;
@@ -480,7 +270,7 @@ function DeptStageSummary({ subTasksByDept }) {
                 {openTasks.length > 0 && (
                   <span className="text-[10px] text-danger tabular-nums font-semibold">({openTasks.length} open)</span>
                 )}
-                <span className="text-gray-500 text-[10px]">{isExpanded ? '▲' : '▼'}</span>
+                <span className="text-gray-500 text-[10px]">{isExpanded ? '\u25b2' : '\u25bc'}</span>
               </div>
             </button>
             {isExpanded && (
@@ -502,7 +292,7 @@ function DeptStageSummary({ subTasksByDept }) {
                           )}
                         </div>
                         {t.completed && t.completed_at && (
-                          <span className="text-success/60 shrink-0 text-[10px]">✓</span>
+                          <span className="text-success/60 shrink-0 text-[10px]">\u2713</span>
                         )}
                       </div>
                     </button>
@@ -549,7 +339,7 @@ function DeptStageSummary({ subTasksByDept }) {
                               rel="noopener noreferrer"
                               className="text-[10px] text-accent hover:underline"
                             >
-                              Open subtask in Asana ↗
+                              Open subtask in Asana \u2197
                             </a>
                           )}
                           {t._parentGid && (
@@ -559,7 +349,7 @@ function DeptStageSummary({ subTasksByDept }) {
                               rel="noopener noreferrer"
                               className="text-[10px] text-gray-500 hover:text-gray-600 hover:underline"
                             >
-                              Open main job ↗
+                              Open main job \u2197
                             </a>
                           )}
                         </div>
@@ -576,7 +366,7 @@ function DeptStageSummary({ subTasksByDept }) {
   );
 }
 
-// ─── Day column ───────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Day column \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   const atRiskCount = jobs.filter(j => j._atRisk || j.status === 'late').length;
@@ -612,7 +402,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
           </span>
           {atRiskCount > 0 && (
             <>
-              <span className="text-gray-500">·</span>
+              <span className="text-gray-500">\u00b7</span>
               <span className="text-[11px] text-danger font-semibold">
                 {atRiskCount} at risk
               </span>
@@ -643,7 +433,7 @@ function DayColumn({ day, jobs, subTasksByDept, isToday, today, onSelectJob }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Main component \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 export default function WeeklyOverview({ data, onSwitchToList }) {
   const [selectedJob,  setSelectedJob]  = useState(null);
@@ -703,7 +493,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
     return map;
   }, [annotatedJobs, weekDays, showCalendar]);
 
-  // Group sub-tasks by day → department
+  // Group sub-tasks by day \u2192 department
   const subTasksByDay = useMemo(() => {
     if (!showCalendar) return {};
     const validDates = new Set(weekDays.map(d => d.date));
@@ -737,7 +527,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
 
   const atRiskTotal = (schedule.late ?? 0) - completedLateTotal + projectedLateInPeriod.length;
 
-  // Rescheduled jobs due in this period — schedule health indicator
+  // Rescheduled jobs due in this period \u2014 schedule health indicator
   const rescheduledInPeriod = useMemo(() => {
     if (!schedule.jobs) return [];
     const rescheduledGids = new Set(data.jobs.filter(j => j.reschedules > 0).map(j => j.gid));
@@ -749,7 +539,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
       });
   }, [schedule.jobs, data.jobs, jobMap]);
 
-  // Late open orders: active jobs past their due date — this number should be zero
+  // Late open orders: active jobs past their due date \u2014 this number should be zero
   const rolloverJobs = useMemo(() =>
     data.jobs
       .filter(j => j.due_on && j.due_on < today)
@@ -778,16 +568,11 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   }, [data.jobs, today]);
 
   // Not-processed jobs: reviewed but only has 1 subtask assigned to Fernando.
-  // Fernando gets a single "crear subtareas" task to build the production
-  // breakdown. If the only subtask is his, the job hasn't been processed yet.
-  // Jobs with 0 subtasks OR 1 subtask assigned to someone else (e.g. Eduardo
-  // doing fabrication) are NOT counted — those are either empty or already
-  // in production with a real task.
   const notProcessedJobs = useMemo(() => {
     return data.jobs
       .filter(j => {
         if (!j.reviewed) return false;
-        if (j.subTasks.length === 0) return true; // no subtasks at all
+        if (j.subTasks.length === 0) return true;
         if (j.subTasks.length === 1) {
           const assignee = (j.subTasks[0].assignee || '').toLowerCase();
           return assignee.includes('fernando');
@@ -863,12 +648,12 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
   return (
     <div className="space-y-5">
 
-      {/* ── Needs Attention alerts ── */}
+      {/* \u2500\u2500 Needs Attention alerts \u2500\u2500 */}
       <div className="grid grid-cols-3 gap-4">
         <AlertCard
           label="Late Open Orders"
           value={rolloverJobs.length}
-          sub="past due date — should be zero"
+          sub="past due date \u2014 should be zero"
           active={activeAlert === 'rollover'}
           onClick={() => toggleAlert('rollover')}
         />
@@ -882,13 +667,13 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         <AlertCard
           label="Not Processed"
           value={notProcessedJobs.length}
-          sub="reviewed but no production breakdown yet (≤1 subtask)"
+          sub="reviewed but no production breakdown yet (\u22641 subtask)"
           active={activeAlert === 'notprocessed'}
           onClick={() => toggleAlert('notprocessed')}
         />
       </div>
 
-      {/* ── Alert panel ── */}
+      {/* \u2500\u2500 Alert panel \u2500\u2500 */}
       {activeAlert === 'rollover' && (
         <JobPanel
           jobs={alertPanelJobs}
@@ -911,7 +696,8 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
           onSelectJob={setSelectedJob}
         />
       )}
-      {/* ── Period selector ── */}
+
+      {/* \u2500\u2500 Period selector \u2500\u2500 */}
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -928,62 +714,20 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         ))}
       </div>
 
-      {/* ── KPI strip ── */}
-      <div className="grid grid-cols-5 gap-4">
-        <KpiCard
-          label="Jobs Scheduled"
-          value={scheduledTotal}
-          sub="total jobs in period"
-          active={activeCard === 'scheduled'}
-          onClick={() => toggleCard('scheduled')}
-        />
-        <KpiCard
-          label="On Time"
-          value={onTimeTotal}
-          sub={periodData?.completedWithDrift > 0
-            ? `${periodData.completedWithDrift} were rescheduled`
-            : 'completed on schedule'}
-          color="success"
-          icon={onTimeTotal > 0 ? '✓' : undefined}
-          active={activeCard === 'onTime'}
-          onClick={() => toggleCard('onTime')}
-        />
-        <KpiCard
-          label="Completed Late"
-          value={completedLateTotal}
-          sub="finished after due date"
-          color={completedLateTotal > 0 ? 'danger' : undefined}
-          active={activeCard === 'completedLate'}
-          onClick={() => toggleCard('completedLate')}
-        />
-        <KpiCard
-          label="At Risk"
-          value={atRiskTotal}
-          sub="overdue or behind schedule"
-          color={atRiskTotal > 0 ? 'orange' : undefined}
-          active={activeCard === 'atRisk'}
-          onClick={() => toggleCard('atRisk')}
-        />
-        <KpiCard
-          label="Rescheduled"
-          value={rescheduledInPeriod.length}
-          sub={`${data.totals?.rescheduledThisWeek ?? 0} new this week`}
-          color={rescheduledInPeriod.length > 0 ? 'warning' : undefined}
-          active={activeCard === 'rescheduled'}
-          onClick={() => toggleCard('rescheduled')}
-        />
-        {(data.stagedJobs?.length ?? 0) > 0 && (
-          <KpiCard
-            label="In Staging"
-            value={data.stagedJobs.length}
-            sub="ready for installation"
-            color="success"
-            icon="📦"
-          />
-        )}
-      </div>
+      {/* \u2500\u2500 KPI strip \u2500\u2500 */}
+      <KpiStrip
+        scheduledTotal={scheduledTotal}
+        onTimeTotal={onTimeTotal}
+        completedLateTotal={completedLateTotal}
+        atRiskTotal={atRiskTotal}
+        rescheduledInPeriod={rescheduledInPeriod}
+        stagedJobs={data.stagedJobs}
+        rescheduledThisWeek={data.totals?.rescheduledThisWeek ?? 0}
+        activeCard={activeCard}
+        onToggleCard={toggleCard}
+      />
 
-      {/* ── Inline job panel ── */}
+      {/* \u2500\u2500 Inline job panel \u2500\u2500 */}
       {activeCard && activeCard !== 'rescheduled' && (
         <JobPanel
           jobs={panelJobs}
@@ -992,55 +736,21 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         />
       )}
       {activeCard === 'rescheduled' && (
-        <RescheduledJobPanel
+        <RescheduledPanel
           jobs={rescheduledInPeriod}
           jobMap={jobMap}
           onSelectJob={setSelectedJob}
         />
       )}
 
-      {/* ── Staging Area ── */}
-      {data.stagedJobs?.length > 0 && (
-        <div className="bg-white border border-emerald-200 rounded-2xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-emerald-100 flex items-center justify-between bg-emerald-50/50">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">Staging Area</p>
-            </div>
-            <p className="text-xs text-emerald-600">{data.stagedJobs.length} job{data.stagedJobs.length !== 1 ? 's' : ''} ready for installation</p>
-          </div>
-          <div className="divide-y divide-emerald-100">
-            {data.stagedJobs.map(job => (
-              <button
-                key={job.gid}
-                onClick={() => { const full = jobMap[job.gid]; if (full) setSelectedJob(full); }}
-                className="w-full text-left px-5 py-3 hover:bg-emerald-50/50 transition-colors flex items-center gap-4"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{job.name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[11px] text-gray-500">{formatDate(job.due_on)}</span>
-                    {job.department && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/[0.04] text-gray-500 font-medium">{job.department}</span>
-                    )}
-                    {job.isRescheduled && (
-                      <span className={`text-[10px] font-semibold tabular-nums ${
-                        job.driftSeverity === 'severe' ? 'text-danger' :
-                        job.driftSeverity === 'moderate' ? 'text-orange-500' : 'text-warning'
-                      }`}>↻ +{job.driftDays}d</span>
-                    )}
-                  </div>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold shrink-0">
-                  Ready
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* \u2500\u2500 Staging Area \u2500\u2500 */}
+      <StagingArea
+        stagedJobs={data.stagedJobs}
+        jobMap={jobMap}
+        onSelectJob={setSelectedJob}
+      />
 
-      {/* ── Next Week Forecast strip ── */}
+      {/* \u2500\u2500 Next Week Forecast strip \u2500\u2500 */}
       {activePeriod !== 'nextWeek' && (() => {
         const nw = data.schedule?.nextWeek ?? {};
         const nwScheduled = nw.scheduled ?? 0;
@@ -1069,7 +779,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         );
       })()}
 
-      {/* ── Legend + list-view toggle (week periods only) ── */}
+      {/* \u2500\u2500 Legend + list-view toggle (week periods only) \u2500\u2500 */}
       {showCalendar && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -1089,12 +799,12 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
             onClick={onSwitchToList}
             className="text-[11px] text-gray-500 hover:text-gray-500 transition-colors"
           >
-            List view →
+            List view \u2192
           </button>
         </div>
       )}
 
-      {/* ── Mon–Fri day columns (week periods only) ── */}
+      {/* \u2500\u2500 Mon\u2013Fri day columns (week periods only) \u2500\u2500 */}
       {showCalendar && (
         <div className="grid grid-cols-5 gap-3 items-start">
           {weekDays.map(day => (
@@ -1111,7 +821,7 @@ export default function WeeklyOverview({ data, onSwitchToList }) {
         </div>
       )}
 
-      {/* ── Job drawer ── */}
+      {/* \u2500\u2500 Job drawer \u2500\u2500 */}
       {selectedJob && (
         <JobDrawer job={selectedJob} onClose={() => setSelectedJob(null)} />
       )}

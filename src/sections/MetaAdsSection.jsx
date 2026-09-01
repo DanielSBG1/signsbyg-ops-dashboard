@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SectionSkeleton } from '../components/Skeleton';
 import { useMetaAdsData } from '../hooks/useMetaAdsData';
 import MetaAdsOverview from '../components/metaads/MetaAdsOverview';
 import AdSetsTab from '../components/metaads/AdSetsTab';
@@ -112,14 +113,7 @@ export default function MetaAdsSection() {
         </div>
 
         {/* Loading */}
-        {loading && !data && (
-          <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-              <p className="text-gray-500 text-sm">Loading Meta Ads data...</p>
-            </div>
-          </div>
-        )}
+        {loading && !data && <SectionSkeleton />}
 
         {/* Error */}
         {error && (

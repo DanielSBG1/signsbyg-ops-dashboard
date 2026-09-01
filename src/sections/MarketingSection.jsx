@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { SectionSkeleton } from '../components/Skeleton';
 
-// Full marketing dashboard HTML — loaded as a self-contained iframe so all
+// Full marketing dashboard HTML \u2014 loaded as a self-contained iframe so all
 // Chart.js behaviour, filters, and tab switching work exactly as built.
 async function fetchHtml() {
   const res = await fetch('/marketing-dashboard.html');
@@ -48,12 +49,7 @@ export default function MarketingSection() {
           sandbox="allow-scripts allow-same-origin"
         />
       ) : (
-        <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-500 text-sm">Loading marketing dashboard…</p>
-          </div>
-        </div>
+        <SectionSkeleton />
       )}
     </div>
   );

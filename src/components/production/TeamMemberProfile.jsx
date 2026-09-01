@@ -1,19 +1,27 @@
 import React, { useMemo, useState } from 'react';
 import {
-  AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
-} from 'recharts';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Filler,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar, Line } from 'react-chartjs-2';
 
-// ─── Constants ──────────────────────────────────────────────
-const COLORS = {
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Tooltip, Legend);
+
+// \u2500\u2500\u2500 Constants \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nconst COLORS = {
   success: '#22c55e',
   danger:  '#ef4444',
   accent:  '#06b6d4',
   warning: '#eab308',
 };
 
-// ─── Helpers ────────────────────────────────────────────────
+// \u2500\u2500\u2500 Helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function rateColorClass(rate) {
   if (rate >= 80) return 'text-success';
@@ -33,7 +41,7 @@ function rateHexColor(rate) {
   return COLORS.danger;
 }
 
-/** ISO date string → Date at midnight UTC */
+/** ISO date string \u2192 Date at midnight UTC */
 function parseDate(iso) {
   if (!iso) return null;
   return new Date(iso.slice(0, 10) + 'T00:00:00Z');
@@ -48,7 +56,7 @@ function getMonday(d) {
   return copy.toISOString().slice(0, 10);
 }
 
-/** Format "2025-07-07" → "Jul 7" */
+/** Format "2025-07-07" \u2192 "Jul 7" */
 function fmtWeekLabel(isoDate) {
   const d = new Date(isoDate + 'T00:00:00Z');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -69,23 +77,7 @@ function diffDays(a, b) {
   return Math.round((da - db) / (1000 * 60 * 60 * 24));
 }
 
-// ─── Custom Tooltip ─────────────────────────────────────────
-
-function ChartTooltip({ active, payload, label, formatter }) {
-  if (!active || !payload || payload.length === 0) return null;
-  return (
-    <div className="bg-[#1a2035] border border-gray-200 rounded-lg p-3 shadow-xl">
-      <p className="text-xs text-gray-500 mb-1.5 font-medium">{label}</p>
-      {payload.map((entry, i) => (
-        <p key={i} className="text-xs" style={{ color: entry.color || '#fff' }}>
-          {entry.name}: {formatter ? formatter(entry.value, entry.name) : entry.value}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-// ─── Stat Card ──────────────────────────────────────────────
+// \u2500\u2500\u2500 Stat Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function StatCard({ title, children }) {
   return (
@@ -96,9 +88,9 @@ function StatCard({ title, children }) {
   );
 }
 
-// ─── Main Component ─────────────────────────────────────────
+// \u2500\u2500\u2500 Main Component \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
-// ─── Period helpers ──────────────────────────────────────────
+// \u2500\u2500\u2500 Period helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function getMondayOfDate(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
   const day = d.getDay();
@@ -182,7 +174,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
   const overdue = overdueArr.length;
   const onTimeRate = (completed + overdue) > 0 ? Math.round((onTime / (completed + overdue)) * 100) : 0;
 
-  // ── Avg days early/late ───────────────────────────────────
+  // \u2500\u2500 Avg days early/late \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const avgDaysEarlyLate = useMemo(() => {
     const completedWithDates = subtasks.filter(s => s.completed && s.due_on && s.completed_at);
     if (completedWithDates.length === 0) return null;
@@ -193,7 +185,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
     return totalDiff / completedWithDates.length;
   }, [subtasks]);
 
-  // ── Weekly buckets ────────────────────────────────────────
+  // \u2500\u2500 Weekly buckets \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const weeklyData = useMemo(() => {
     const buckets = {};
 
@@ -217,7 +209,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
     // Sort weeks chronologically
     const sorted = Object.values(buckets).sort((a, b) => a.week.localeCompare(b.week));
 
-    // Ensure at least 8 weeks — fill gaps
+    // Ensure at least 8 weeks \u2014 fill gaps
     if (sorted.length > 0) {
       const firstWeek = new Date(sorted[0].week + 'T00:00:00Z');
       const lastWeek = new Date(sorted[sorted.length - 1].week + 'T00:00:00Z');
@@ -250,7 +242,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
     }));
   }, [subtasks]);
 
-  // ── Completion speed per week ─────────────────────────────
+  // \u2500\u2500 Completion speed per week \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const speedData = useMemo(() => {
     const buckets = {};
 
@@ -275,14 +267,14 @@ export default function TeamMemberProfile({ memberData, onClose }) {
       }));
   }, [subtasks]);
 
-  // ── Open tasks sorted by due date ─────────────────────────
+  // \u2500\u2500 Open tasks sorted by due date \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const openTasks = useMemo(() => {
     return subtasks
       .filter(s => !s.completed)
       .sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999'));
   }, [subtasks]);
 
-  // ── Days until due helper ─────────────────────────────────
+  // \u2500\u2500 Days until due helper \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   function daysUntilDue(dueOn) {
     if (!dueOn) return null;
     return diffDays(dueOn, today);
@@ -290,7 +282,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
 
   return (
     <div className="space-y-6">
-      {/* ── 1. HEADER BAR ────────────────────────────────── */}
+      {/* \u2500\u2500 1. HEADER BAR \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="flex items-center gap-4">
         <button
           onClick={onClose}
@@ -304,7 +296,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         </span>
       </div>
 
-      {/* ── PERIOD SELECTOR ──────────────────────────────── */}
+      {/* \u2500\u2500 PERIOD SELECTOR \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="flex flex-wrap gap-1.5">
         {PROFILE_PERIODS.map(p => (
           <button
@@ -321,7 +313,7 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         ))}
       </div>
 
-      {/* ── 2. STAT CARDS ROW ────────────────────────────── */}
+      {/* \u2500\u2500 2. STAT CARDS ROW \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="grid grid-cols-4 gap-4">
         <StatCard title="Completion Rate">
           <p className={`text-3xl font-bold tabular-nums ${rateColorClass(onTimeRate)}`}>
@@ -366,144 +358,189 @@ export default function TeamMemberProfile({ memberData, onClose }) {
         </StatCard>
       </div>
 
-      {/* ── 3. ON-TIME RATE TREND CHART ──────────────────── */}
+      {/* \u2500\u2500 3. ON-TIME RATE TREND CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="bg-black/[0.03] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-600 mb-4">On-Time Rate Over Time</h3>
         {weeklyData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={weeklyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <defs>
-                <linearGradient id="onTimeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.success} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={COLORS.success} stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis
-                dataKey="label"
-                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                tickLine={false}
-              />
-              <YAxis
-                domain={[0, 100]}
-                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                tickLine={false}
-                tickFormatter={v => `${v}%`}
-              />
-              <Tooltip
-                content={
-                  <ChartTooltip
-                    formatter={(value, name) => {
-                      if (name === 'onTimeRate') return `${value}%`;
-                      return value;
-                    }}
-                  />
-                }
-              />
-              <Area
-                type="monotone"
-                dataKey="onTimeRate"
-                name="On-Time Rate"
-                stroke={COLORS.success}
-                strokeWidth={2}
-                fill="url(#onTimeGradient)"
-                connectNulls
-                dot={(props) => {
-                  const { cx, cy, payload } = props;
-                  if (payload.onTimeRate === null) return null;
-                  return (
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={4}
-                      fill={rateHexColor(payload.onTimeRate)}
-                      stroke="none"
-                    />
-                  );
-                }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div style={{ height: 250 }}>
+            <Line
+              data={{
+                labels: weeklyData.map((w) => w.label),
+                datasets: [
+                  {
+                    label: 'On-Time Rate',
+                    data: weeklyData.map((w) => w.onTimeRate),
+                    borderColor: COLORS.success,
+                    backgroundColor: COLORS.success + '4d',
+                    borderWidth: 2,
+                    pointRadius: weeklyData.map((w) => (w.onTimeRate === null ? 0 : 4)),
+                    pointBackgroundColor: weeklyData.map((w) =>
+                      w.onTimeRate !== null ? rateHexColor(w.onTimeRate) : 'transparent'
+                    ),
+                    tension: 0,
+                    fill: true,
+                    spanGaps: true,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: '#1a2035',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    titleColor: '#6b7280',
+                    bodyColor: '#ffffff',
+                    callbacks: {
+                      label: (ctx) => `On-Time Rate: ${ctx.parsed.y}%`,
+                    },
+                  },
+                },
+                scales: {
+                  x: {
+                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } },
+                    grid: { color: 'rgba(255,255,255,0.06)' },
+                    border: { color: 'rgba(255,255,255,0.1)' },
+                  },
+                  y: {
+                    min: 0,
+                    max: 100,
+                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 }, callback: (v) => `${v}%` },
+                    grid: { color: 'rgba(255,255,255,0.06)' },
+                    border: { color: 'rgba(255,255,255,0.1)' },
+                  },
+                },
+              }}
+            />
+          </div>
         ) : (
           <p className="text-sm text-gray-500 text-center py-12">No completion data yet</p>
         )}
       </div>
 
-      {/* ── 4. WEEKLY BREAKDOWN CHART ────────────────────── */}
+      {/* \u2500\u2500 4. WEEKLY BREAKDOWN CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="bg-black/[0.03] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-600 mb-4">Weekly Task Breakdown</h3>
         {weeklyData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={weeklyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis
-                dataKey="label"
-                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                tickLine={false}
-                allowDecimals={false}
-              />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="onTime" name="On Time" stackId="tasks" fill={COLORS.success} radius={[0, 0, 0, 0]} />
-              <Bar dataKey="late" name="Late" stackId="tasks" fill={COLORS.danger} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ height: 250 }}>
+            <Bar
+              data={{
+                labels: weeklyData.map((w) => w.label),
+                datasets: [
+                  {
+                    label: 'On Time',
+                    data: weeklyData.map((w) => w.onTime),
+                    backgroundColor: COLORS.success,
+                    stack: 'tasks',
+                    borderRadius: 0,
+                  },
+                  {
+                    label: 'Late',
+                    data: weeklyData.map((w) => w.late),
+                    backgroundColor: COLORS.danger,
+                    stack: 'tasks',
+                    borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: '#1a2035',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    titleColor: '#6b7280',
+                    bodyColor: '#ffffff',
+                  },
+                },
+                scales: {
+                  x: {
+                    stacked: true,
+                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } },
+                    grid: { color: 'rgba(255,255,255,0.06)' },
+                    border: { color: 'rgba(255,255,255,0.1)' },
+                  },
+                  y: {
+                    stacked: true,
+                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 }, precision: 0 },
+                    grid: { color: 'rgba(255,255,255,0.06)' },
+                    border: { color: 'rgba(255,255,255,0.1)' },
+                  },
+                },
+              }}
+            />
+          </div>
         ) : (
           <p className="text-sm text-gray-500 text-center py-12">No completion data yet</p>
         )}
       </div>
 
-      {/* ── 5. COMPLETION SPEED CHART ────────────────────── */}
+      {/* \u2500\u2500 5. COMPLETION SPEED CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="bg-black/[0.03] rounded-xl p-6">
         <h3 className="text-sm font-semibold text-gray-600 mb-4">Avg Completion Speed (days)</h3>
         {speedData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={speedData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis
-                dataKey="label"
-                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                tickLine={false}
-              />
-              <Tooltip
-                content={
-                  <ChartTooltip
-                    formatter={(value) => {
-                      if (value >= 0) return `${value} days early`;
-                      return `${Math.abs(value)} days late`;
-                    }}
-                  />
-                }
-              />
-              <Bar dataKey="avgDays" name="Avg Speed" radius={[4, 4, 0, 0]}>
-                {speedData.map((entry, index) => (
-                  <Cell
-                    key={index}
-                    fill={entry.avgDays >= 0 ? COLORS.success : COLORS.danger}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ height: 250 }}>
+            <Bar
+              data={{
+                labels: speedData.map((w) => w.label),
+                datasets: [
+                  {
+                    label: 'Avg Speed',
+                    data: speedData.map((w) => w.avgDays),
+                    backgroundColor: speedData.map((w) =>
+                      w.avgDays >= 0 ? COLORS.success : COLORS.danger
+                    ),
+                    borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: '#1a2035',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    titleColor: '#6b7280',
+                    bodyColor: '#ffffff',
+                    callbacks: {
+                      label: (ctx) => {
+                        const val = ctx.parsed.y;
+                        if (val >= 0) return `Avg Speed: ${val} days early`;
+                        return `Avg Speed: ${Math.abs(val)} days late`;
+                      },
+                    },
+                  },
+                },
+                scales: {
+                  x: {
+                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } },
+                    grid: { color: 'rgba(255,255,255,0.06)' },
+                    border: { color: 'rgba(255,255,255,0.1)' },
+                  },
+                  y: {
+                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } },
+                    grid: { color: 'rgba(255,255,255,0.06)' },
+                    border: { color: 'rgba(255,255,255,0.1)' },
+                  },
+                },
+              }}
+            />
+          </div>
         ) : (
           <p className="text-sm text-gray-500 text-center py-12">No speed data available</p>
         )}
       </div>
 
-      {/* ── 6. CURRENT TASKS TABLE ───────────────────────── */}
+      {/* \u2500\u2500 6. CURRENT TASKS TABLE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
       <div className="bg-black/[0.03] rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-600">
