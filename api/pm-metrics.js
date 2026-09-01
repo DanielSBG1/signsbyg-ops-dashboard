@@ -55,6 +55,7 @@ export default async function handler(req, res) {
         slim = {
           generatedAt: full.generatedAt,
           totals: full.totals,
+          scorecards: full.scorecards,
           departmentLoad: toSlimDepartmentLoad(full.departmentLoad),
           schedule: full.schedule ?? null,
         };

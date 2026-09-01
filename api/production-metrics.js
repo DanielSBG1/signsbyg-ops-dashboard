@@ -67,8 +67,10 @@ export default async function handler(req, res) {
         slim = {
           generatedAt: full.generatedAt,
           totals: full.totals,
-          departmentLoad: toSlimDepartmentLoad(full.departmentLoad),
-          schedule: toSlimSchedule(full.schedule),
+          jobs: full.jobs,
+          stagedJobs: full.stagedJobs,
+          departmentLoad: full.departmentLoad,
+          schedule: full.schedule,
         };
         if (!bust) await setCached('prod:metrics', slim, CACHE_TTL);
       }
