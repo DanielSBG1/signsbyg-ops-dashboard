@@ -1,6 +1,17 @@
 // src/components/excellence/CompanyTrend.jsx
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend);
 
 const TEAM_COLORS = {
   pm:           '#a855f7',
@@ -14,30 +25,13 @@ const TEAM_LABELS = {
   pm: 'PM', sales: 'Sales', production: 'Production', installation: 'Installation', admin: 'Admin',
 };
 
-function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-xl min-w-[150px]">
-      <p className="text-xs text-gray-500 mb-2">{label}</p>
-      {[...payload].sort((a, b) => b.value - a.value).map(p => (
-        <div key={p.dataKey} className="flex items-center justify-between gap-4 py-0.5">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-            <span className="text-xs text-gray-600">{TEAM_LABELS[p.dataKey]}</span>
-          </div>
-          <span className="text-xs font-bold text-gray-900 tabular-nums">{p.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export default function CompanyTrend({ history = [] }) {
   if (history.length < 2) {
     return (
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">Company Trend</h3>
-        <p className="text-gray-500 text-sm text-center py-8">Trend data builds over time — check back next month.</p>
+        <p className="text-gray-500 text-sm text-center py-8">Trend data builds over time \u2014 check back next month.</p>
       </div>
     );
   }
@@ -47,28 +41,63 @@ export default function CompanyTrend({ history = [] }) {
     period: h.period.slice(0, 7), // YYYY-MM
   }));
 
+  const teamKeys = Object.keys(TEAM_COLORS);
+
+  const chartJsData = {
+    labels: chartData.map((h) => h.period),
+    datasets: teamKeys.map((key) => ({
+      label: key,
+      data: chartData.map((h) => h[key] ?? null),
+      borderColor: TEAM_COLORS[key],
+      backgroundColor: TEAM_COLORS[key],
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0,
+      spanGaps: false,
+    })),
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#ffffff',
+        borderColor: '#e5e7eb',
+        borderWidth: 1,
+        titleColor: '#6b7280',
+        bodyColor: '#111827',
+        callbacks: {
+          title: (items) => items[0]?.label ?? '',
+          label: (ctx) => `${TEAM_LABELS[ctx.dataset.label]}: ${ctx.parsed.y}`,
+        },
+        itemSort: (a, b) => b.parsed.y - a.parsed.y,
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: 'rgba(0,0,0,0.4)', font: { size: 11 } },
+        grid: { color: 'rgba(0,0,0,0.06)', dash: [3, 3] },
+        border: { display: false },
+      },
+      y: {
+        min: 0,
+        max: 100,
+        ticks: { color: 'rgba(0,0,0,0.4)', font: { size: 11 } },
+        grid: { color: 'rgba(0,0,0,0.06)', dash: [3, 3] },
+        border: { display: false },
+      },
+    },
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6">
       <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-6">Company Trend</h3>
-      <ResponsiveContainer width="100%" height={220}>
-        <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-          <XAxis dataKey="period" tick={{ fill: 'rgba(0,0,0,0.4)', fontSize: 11 }} tickLine={false} axisLine={false} />
-          <YAxis domain={[0, 100]} tick={{ fill: 'rgba(0,0,0,0.4)', fontSize: 11 }} tickLine={false} axisLine={false} />
-          <Tooltip content={<CustomTooltip />} />
-          {Object.keys(TEAM_COLORS).map(key => (
-            <Line
-              key={key}
-              type="monotone"
-              dataKey={key}
-              stroke={TEAM_COLORS[key]}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, strokeWidth: 0 }}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
+      <div style={{ height: 220 }}>
+        <Line data={chartJsData} options={chartOptions} />
+      </div>
       {/* Legend */}
       <div className="flex flex-wrap gap-4 mt-4 justify-center">
         {Object.entries(TEAM_COLORS).map(([key, color]) => (

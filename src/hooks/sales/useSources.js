@@ -1,20 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { idbRead, idbWrite } from '../../lib/idbCache.js';
 
 const STALE_MAX_MS = 2 * 60 * 60 * 1000; // 2 hours
 
-function lsKey(period, start, end) { return `sbg_src_${period}_${start || ''}_${end || ''}`; }
-function lsRead(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const { d, t } = JSON.parse(raw);
-    if (Date.now() - t > STALE_MAX_MS) return null;
-    return d;
-  } catch { return null; }
-}
-function lsWrite(key, data) {
-  try { localStorage.setItem(key, JSON.stringify({ d: data, t: Date.now() })); } catch {}
-}
+function cacheKey(period, start, end) { return `sbg_src_${period}_${start || ''}_${end || ''}`; }
 
 export function useSources(enabled = true) {
   const [data, setData] = useState(null);
@@ -30,8 +19,8 @@ export function useSources(enabled = true) {
     if (!enabled) return;
     setError(null);
 
-    const key = lsKey(period, customRange.start, customRange.end);
-    const stale = lsRead(key);
+    const key = cacheKey(period, customRange.start, customRange.end);
+    const stale = await idbRead(key, STALE_MAX_MS);
     if (stale) {
       setData(stale);
       setLoading(false);
@@ -53,7 +42,7 @@ export function useSources(enabled = true) {
       const res = await fetch(url, { signal: controller.signal });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const json = await res.json();
-      lsWrite(key, json);
+      await idbWrite(key, json);
       setData(json);
       setLastRefreshed(new Date());
     } catch (err) {

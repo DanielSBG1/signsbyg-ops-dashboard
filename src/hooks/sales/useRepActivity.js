@@ -1,30 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import useVisibleInterval from '../useVisibleInterval.js';
+import { idbRead, idbWrite } from '../../lib/idbCache.js';
 
-const LS_PREFIX = 'sbg_ra_v4';
+const IDB_PREFIX = 'sbg_ra_v4';
 const STALE_MAX_MS = 10 * 60 * 1000;  // 10 minutes
 const REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
-function lsKey(period, customRange) {
-  return `${LS_PREFIX}:${period}:${customRange?.start || ''}:${customRange?.end || ''}`;
-}
-
-function lsRead(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const { d, t } = JSON.parse(raw);
-    if (Date.now() - t > STALE_MAX_MS) return null;
-    return d;
-  } catch { return null; }
-}
-
-function lsWrite(key, data) {
-  try {
-    const json = JSON.stringify({ d: data, t: Date.now() });
-    if (json.length > 200_000) return;
-    localStorage.setItem(key, json);
-  } catch {}
+function cacheKey(period, customRange) {
+  return `${IDB_PREFIX}:${period}:${customRange?.start || ''}:${customRange?.end || ''}`;
 }
 
 export function useRepActivity(enabled = true, period = 'today', customRange = null) {
@@ -41,8 +24,8 @@ export function useRepActivity(enabled = true, period = 'today', customRange = n
     if (!enabled) return;
     setError(null);
 
-    const key = lsKey(period, customRange);
-    const stale = lsRead(key);
+    const key = cacheKey(period, customRange);
+    const stale = await idbRead(key, STALE_MAX_MS);
     if (stale) {
       setData(stale);
       setLoading(false);
@@ -61,7 +44,7 @@ export function useRepActivity(enabled = true, period = 'today', customRange = n
       const res = await fetch(`/api/sales-rep-activity?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const json = await res.json();
-      lsWrite(key, json);
+      await idbWrite(key, json);
       setData(json);
     } catch (err) {
       if (err.name === 'AbortError') return;

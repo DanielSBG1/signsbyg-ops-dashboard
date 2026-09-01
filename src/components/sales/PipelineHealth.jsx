@@ -1,6 +1,16 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import React, { useState, useRef } from 'react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 import { usePipeline } from '../../hooks/sales/usePipeline';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 const COLORS = ['#4361ee', '#06d6a0', '#ffd166', '#ef476f', '#8b5cf6', '#f97316', '#06b6d4', '#ec4899'];
 
@@ -60,13 +70,64 @@ function PipelineCard({ name, data, onModal }) {
 
   const chartData = data.stages.filter((s) => s.count > 0);
 
+  const chartHeight = Math.max(160, chartData.length * 36);
+
+  const chartJsData = {
+    labels: chartData.map((s) => s.label),
+    datasets: [
+      {
+        data: chartData.map((s) => s.value),
+        backgroundColor: chartData.map((_, i) => COLORS[i % COLORS.length] + 'cc'),
+        borderRadius: 6,
+        borderSkipped: 'left',
+      },
+    ],
+  };
+
+  const chartOptions = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const idx = elements[0].index;
+        const stage = chartData[idx];
+        onModal(`${name} \u2014 ${stage.label}`, stage.deals.map((d) => ({ ...d, stage: stage.label })));
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#ffffff',
+        borderColor: '#e5e7eb',
+        borderWidth: 1,
+        titleColor: '#6b7280',
+        bodyColor: '#111827',
+        callbacks: {
+          label: (ctx) => {
+            const stage = chartData[ctx.dataIndex];
+            return `${stage.count} deals \u2014 $${ctx.parsed.x.toLocaleString()}`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: { display: false },
+      y: {
+        ticks: { color: 'rgba(107,114,128,0.8)', font: { size: 11 } },
+        grid: { display: false },
+        border: { display: false },
+      },
+    },
+  };
+
   return (
     <div className="bg-black/[0.03] rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-sm">{name}</h3>
         <div className="flex items-center gap-3 text-xs">
           <button
-            onClick={() => onModal(`${name} — All Deals`, data.dealList)}
+            onClick={() => onModal(`${name} \u2014 All Deals`, data.dealList)}
             className="text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
           >
             {data.totalDeals} deals
@@ -74,7 +135,7 @@ function PipelineCard({ name, data, onModal }) {
           <span className="font-semibold text-accent">${data.totalValue.toLocaleString()}</span>
           {data.staleDeals > 0 && (
             <button
-              onClick={() => onModal(`${name} — Stale Deals`, data.staleList)}
+              onClick={() => onModal(`${name} \u2014 Stale Deals`, data.staleList)}
               className="bg-warning/20 text-warning px-2 py-0.5 rounded-full font-medium hover:bg-warning/30 transition-colors cursor-pointer"
             >
               {data.staleDeals} stale
@@ -83,39 +144,9 @@ function PipelineCard({ name, data, onModal }) {
         </div>
       </div>
       {chartData.length > 0 ? (
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ left: 0, right: 10, top: 0, bottom: 0 }}
-            onClick={(e) => {
-              if (e?.activePayload?.[0]) {
-                const stage = e.activePayload[0].payload;
-                onModal(`${name} — ${stage.label}`, stage.deals.map((d) => ({ ...d, stage: stage.label })));
-              }
-            }}
-          >
-            <XAxis type="number" hide />
-            <YAxis
-              type="category"
-              dataKey="label"
-              width={120}
-              tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-              labelStyle={{ color: 'white' }}
-              formatter={(val, name, props) => [`${props.payload.count} deals — $${val.toLocaleString()}`, '']}
-            />
-            <Bar dataKey="value" radius={[0, 6, 6, 0]} style={{ cursor: 'pointer' }}>
-              {chartData.map((entry, i) => (
-                <Cell key={entry.id} fill={COLORS[i % COLORS.length]} fillOpacity={0.8} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <div style={{ height: chartHeight }}>
+          <Bar data={chartJsData} options={chartOptions} style={{ cursor: 'pointer' }} />
+        </div>
       ) : (
         <p className="text-gray-500 text-sm text-center py-6">No deals in this period</p>
       )}
@@ -157,7 +188,7 @@ export default function PipelineHealth() {
           </div>
         </div>
 
-        {/* Period picker — intentionally smaller than TopBar (text-xs/py-1) to fit inside the card */}
+        {/* Period picker \u2014 intentionally smaller than TopBar (text-xs/py-1) to fit inside the card */}
         <div className="flex flex-wrap items-center gap-2">
           {PERIODS.map((p) => (
             <button

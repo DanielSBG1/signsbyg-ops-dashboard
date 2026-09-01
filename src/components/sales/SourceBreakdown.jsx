@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-  LineChart, Line, CartesianGrid,
-} from 'recharts';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar, Line } from 'react-chartjs-2';
 import { useSources } from '../../hooks/sales/useSources';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend);
 
 const SOURCE_COLORS = {
   facebook: '#4361ee',
@@ -96,7 +105,7 @@ export default function SourceBreakdown() {
           )}
         </div>
 
-        {/* Period picker — intentionally smaller than TopBar (text-xs/py-1) to fit inside the card */}
+        {/* Period picker \u2014 intentionally smaller than TopBar (text-xs/py-1) to fit inside the card */}
         <div className="flex flex-wrap items-center gap-2">
           {PERIODS.map((p) => (
             <button
@@ -147,40 +156,60 @@ export default function SourceBreakdown() {
           {/* Bar Chart */}
           <div>
             {barData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={Math.max(160, barData.length * 36)}>
-                <BarChart
-                  data={barData}
-                  layout="vertical"
-                  margin={{ left: 0, right: 40, top: 0, bottom: 0 }}
-                  onClick={(e) => {
-                    if (e?.activePayload?.[0]) {
-                      const entry = e.activePayload[0].payload;
-                      const leads = (data.leads?.[entry.id] || []);
-                      setModal({ title: `${entry.name} Leads`, leads });
-                    }
+              <div style={{ height: Math.max(160, barData.length * 36) }}>
+                <Bar
+                  style={{ cursor: 'pointer' }}
+                  data={{
+                    labels: barData.map((d) => d.name),
+                    datasets: [
+                      {
+                        data: barData.map((d) => d.value),
+                        backgroundColor: barData.map((d) => d.color + 'd9'),
+                        borderRadius: 6,
+                        borderSkipped: 'left',
+                      },
+                    ],
                   }}
-                >
-                  <XAxis type="number" hide />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={130}
-                    tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                    labelStyle={{ color: 'white' }}
-                    formatter={(val) => [`${val} leads (${total > 0 ? Math.round((val / total) * 100) : 0}%)`, '']}
-                  />
-                  <Bar dataKey="value" radius={[0, 6, 6, 0]} style={{ cursor: 'pointer' }} label={{ position: 'right', fill: 'rgba(255,255,255,0.4)', fontSize: 11, formatter: (v) => v }}>
-                    {barData.map((entry) => (
-                      <Cell key={entry.id} fill={entry.color} fillOpacity={0.85} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                  options={{
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, elements) => {
+                      if (elements.length > 0) {
+                        const idx = elements[0].index;
+                        const entry = barData[idx];
+                        const leads = (data.leads?.[entry.id] || []);
+                        setModal({ title: `${entry.name} Leads`, leads });
+                      }
+                    },
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        backgroundColor: '#ffffff',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        titleColor: '#6b7280',
+                        bodyColor: '#111827',
+                        callbacks: {
+                          label: (ctx) => {
+                            const val = ctx.parsed.x;
+                            const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                            return `${val} leads (${pct}%)`;
+                          },
+                        },
+                      },
+                    },
+                    scales: {
+                      x: { display: false },
+                      y: {
+                        ticks: { color: 'rgba(107,114,128,0.8)', font: { size: 11 } },
+                        grid: { display: false },
+                        border: { display: false },
+                      },
+                    },
+                  }}
+                />
+              </div>
             ) : (
               <p className="text-gray-500 text-sm text-center py-12">No leads in this period</p>
             )}
@@ -190,37 +219,56 @@ export default function SourceBreakdown() {
           <div>
             <h3 className="text-sm text-gray-500 font-medium mb-3">Leads Per Day</h3>
             {data.daily && data.daily.length > 0 ? (
-              <ResponsiveContainer width="100%" height={Math.max(160, barData.length * 36)}>
-                <LineChart data={data.daily} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                    tickFormatter={(d) => { const parts = d.split('-'); return `${parts[1]}/${parts[2]}`; }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                    labelStyle={{ color: 'white' }}
-                    formatter={(val) => [`${val} leads`, '']}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#4361ee"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: '#4361ee' }}
-                    activeDot={{ r: 5 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <div style={{ height: Math.max(160, barData.length * 36) }}>
+                <Line
+                  data={{
+                    labels: data.daily.map((d) => {
+                      const parts = d.date.split('-');
+                      return `${parts[1]}/${parts[2]}`;
+                    }),
+                    datasets: [
+                      {
+                        data: data.daily.map((d) => d.count),
+                        borderColor: '#4361ee',
+                        backgroundColor: '#4361ee',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        backgroundColor: '#ffffff',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        titleColor: '#6b7280',
+                        bodyColor: '#111827',
+                        callbacks: {
+                          label: (ctx) => `${ctx.parsed.y} leads`,
+                        },
+                      },
+                    },
+                    scales: {
+                      x: {
+                        ticks: { color: 'rgba(107,114,128,0.6)', font: { size: 11 } },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        border: { display: false },
+                      },
+                      y: {
+                        ticks: { color: 'rgba(107,114,128,0.6)', font: { size: 11 }, precision: 0 },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        border: { display: false },
+                      },
+                    },
+                  }}
+                />
+              </div>
             ) : (
               <p className="text-gray-500 text-sm text-center py-12">No daily data available</p>
             )}
