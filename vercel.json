@@ -12,7 +12,7 @@
     { "path": "/api/warmup?tier=warm",            "schedule": "*/15 * * * *"  },
     { "path": "/api/warmup?tier=cold",            "schedule": "*/30 * * * *"  },
     { "path": "/api/warmup?tier=drilldown",       "schedule": "*/15 * * * *"  },
-    { "path": "/api/installation-metrics",        "schedule": "*/10 * * * *"  },
+    { "path": "/api/v2/installation-metrics",     "schedule": "*/10 * * * *"  },
     { "path": "/api/sales-rep-activity",          "schedule": "*/10 * * * *"  }
   ]
 }

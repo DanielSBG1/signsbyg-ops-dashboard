@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import useVisibleInterval from './useVisibleInterval.js';
 
-const POLL_MS = 120_000;
+const POLL_MS = 600_000; // 10 min — data changes slowly
 
 export function useExcellenceScores(period = 'month') {
   const [data, setData] = useState(null);
