@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SectionSkeleton } from '../components/Skeleton';
 import { usePmData } from '../hooks/usePmData';
 import { usePmAudit } from '../hooks/usePmAudit';
 import OverviewTab from '../components/pm/OverviewTab';
@@ -33,7 +34,7 @@ export default function PmSection() {
             <h1 className="text-2xl font-bold">Project Management</h1>
             {data && (
               <p className="text-gray-500 text-xs mt-1">
-                Live snapshot · Updated {new Date(data.generatedAt).toLocaleTimeString()}
+                Live snapshot \u00b7 Updated {new Date(data.generatedAt).toLocaleTimeString()}
               </p>
             )}
           </div>
@@ -54,7 +55,7 @@ export default function PmSection() {
           ))}
         </div>
 
-        {loading && <div className="text-center py-20 text-gray-500">Loading PM data...</div>}
+        {loading && !data && <SectionSkeleton />}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400">
             Error: {error}

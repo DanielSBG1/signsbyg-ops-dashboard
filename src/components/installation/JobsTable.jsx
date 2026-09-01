@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 const STATUS_STYLES = {
   early:       'bg-success/20 text-success',
@@ -40,6 +41,77 @@ function getSortValue(job, key) {
   if (key === 'crews') return (job.crews || []).join(', ');
   if (key === 'reschedules') return job.reschedules || 0;
   return job[key] || '';
+}
+
+const ROW_HEIGHT = 57; // approximate px height of each table row
+const TABLE_VIEWPORT_HEIGHT = 600; // px height of the scrollable tbody area
+const VIRTUALIZE_THRESHOLD = 20;
+
+function VirtualTableBody({ rows, sortKey, sortDir }) {
+  const parentRef = useRef(null);
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 5,
+  });
+
+  return (
+    <div ref={parentRef} style={{ height: `${TABLE_VIEWPORT_HEIGHT}px`, overflow: 'auto' }}>
+      <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const j = rows[virtualRow.index];
+          return (
+            <div
+              key={j.id}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+                display: 'grid',
+                gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 60px 1fr 1fr 1fr',
+                alignItems: 'center',
+                borderBottom: '1px solid #f3f4f6',
+              }}
+              className="hover:bg-black/[0.02] transition-colors"
+            >
+              <div className="py-3 px-3 min-w-0">
+                <a href={j.url} target="_blank" rel="noreferrer"
+                  className="text-sm font-medium text-gray-900 hover:text-accent transition-colors truncate block">
+                  {j.name}
+                </a>
+                {j.address && <p className="text-[11px] text-gray-500 truncate mt-0.5">{j.address}</p>}
+              </div>
+              <div className="py-3 px-3">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-black/[0.05] text-gray-500'}`}>
+                  {STATUS_LABELS[j.status] || j.status}
+                </span>
+              </div>
+              <div className="py-3 px-3 text-xs text-gray-500 truncate">{j.section || '\u2014'}</div>
+              <div className="py-3 px-3 text-gray-500 tabular-nums text-xs">
+                {j.createdAt
+                  ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
+                  : '\u2014'}
+              </div>
+              <div className="py-3 px-3 text-xs text-gray-600 tabular-nums">{j.installDate || '\u2014'}</div>
+              <div className="py-3 px-3 text-center tabular-nums text-xs">
+                {j.reschedules > 0 ? (
+                  <span className={`font-bold ${j.reschedules >= 2 ? 'text-danger' : 'text-warning'}`}>{j.reschedules}</span>
+                ) : (
+                  <span className="text-gray-500">0</span>
+                )}
+              </div>
+              <div className="py-3 px-3 text-xs text-gray-500 truncate">{(j.crews || []).join(', ') || '\u2014'}</div>
+              <div className="py-3 px-3 text-xs text-gray-500 truncate">{j.metro || '\u2014'}</div>
+              <div className="py-3 px-3 text-xs text-gray-500 truncate">{j.pm || '\u2014'}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function JobsTable({ jobs }) {
@@ -86,6 +158,8 @@ export default function JobsTable({ jobs }) {
     });
   }, [jobs, statusFilter, crewFilter, search, sortKey, sortDir]);
 
+  const useVirtual = filtered.length > VIRTUALIZE_THRESHOLD;
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
 
@@ -122,7 +196,7 @@ export default function JobsTable({ jobs }) {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table header */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -143,51 +217,53 @@ export default function JobsTable({ jobs }) {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
-            {filtered.slice(0, 200).map(j => (
-              <tr key={j.id} className="hover:bg-black/[0.02] transition-colors">
-                <td className="py-3 px-3 min-w-0">
-                  <a href={j.url} target="_blank" rel="noreferrer"
-                    className="text-sm font-medium text-gray-900 hover:text-accent transition-colors truncate block">
-                    {j.name}
-                  </a>
-                  {j.address && <p className="text-[11px] text-gray-500 truncate mt-0.5">{j.address}</p>}
-                </td>
-                <td className="py-3 px-3">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-black/[0.05] text-gray-500'}`}>
-                    {STATUS_LABELS[j.status] || j.status}
-                  </span>
-                </td>
-                <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.section || '\u2014'}</td>
-                <td className="py-3 px-3 text-gray-500 tabular-nums text-xs">
-                  {j.createdAt
-                    ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
-                    : '\u2014'}
-                </td>
-                <td className="py-3 px-3 text-xs text-gray-600 tabular-nums">{j.installDate || '\u2014'}</td>
-                <td className="py-3 px-3 text-center tabular-nums text-xs">
-                  {j.reschedules > 0 ? (
-                    <span className={`font-bold ${j.reschedules >= 2 ? 'text-danger' : 'text-warning'}`}>{j.reschedules}</span>
-                  ) : (
-                    <span className="text-gray-500">0</span>
-                  )}
-                </td>
-                <td className="py-3 px-3 text-xs text-gray-500 truncate">{(j.crews || []).join(', ') || '\u2014'}</td>
-                <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.metro || '\u2014'}</td>
-                <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.pm || '\u2014'}</td>
-              </tr>
-            ))}
-          </tbody>
+          {!useVirtual && (
+            <tbody className="divide-y divide-gray-100">
+              {filtered.map(j => (
+                <tr key={j.id} className="hover:bg-black/[0.02] transition-colors">
+                  <td className="py-3 px-3 min-w-0">
+                    <a href={j.url} target="_blank" rel="noreferrer"
+                      className="text-sm font-medium text-gray-900 hover:text-accent transition-colors truncate block">
+                      {j.name}
+                    </a>
+                    {j.address && <p className="text-[11px] text-gray-500 truncate mt-0.5">{j.address}</p>}
+                  </td>
+                  <td className="py-3 px-3">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold w-fit ${STATUS_STYLES[j.status] ?? 'bg-black/[0.05] text-gray-500'}`}>
+                      {STATUS_LABELS[j.status] || j.status}
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.section || '\u2014'}</td>
+                  <td className="py-3 px-3 text-gray-500 tabular-nums text-xs">
+                    {j.createdAt
+                      ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
+                      : '\u2014'}
+                  </td>
+                  <td className="py-3 px-3 text-xs text-gray-600 tabular-nums">{j.installDate || '\u2014'}</td>
+                  <td className="py-3 px-3 text-center tabular-nums text-xs">
+                    {j.reschedules > 0 ? (
+                      <span className={`font-bold ${j.reschedules >= 2 ? 'text-danger' : 'text-warning'}`}>{j.reschedules}</span>
+                    ) : (
+                      <span className="text-gray-500">0</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-3 text-xs text-gray-500 truncate">{(j.crews || []).join(', ') || '\u2014'}</td>
+                  <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.metro || '\u2014'}</td>
+                  <td className="py-3 px-3 text-xs text-gray-500 truncate">{j.pm || '\u2014'}</td>
+                </tr>
+              ))}
+            </tbody>
+          )}
         </table>
       </div>
 
+      {/* Virtualized rows (rendered outside <table> for DOM flexibility) */}
+      {useVirtual && filtered.length > 0 && (
+        <VirtualTableBody rows={filtered} sortKey={sortKey} sortDir={sortDir} />
+      )}
+
       {filtered.length === 0 && (
         <div className="px-6 py-12 text-center text-gray-500 text-sm">No jobs match your filters.</div>
-      )}
-      {filtered.length > 200 && (
-        <div className="px-6 py-3 border-t border-gray-100 text-center text-gray-500 text-xs">
-          Showing first 200 of {filtered.length} jobs
-        </div>
       )}
     </div>
   );

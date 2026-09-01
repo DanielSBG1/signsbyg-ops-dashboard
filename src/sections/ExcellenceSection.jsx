@@ -1,5 +1,6 @@
 // src/sections/ExcellenceSection.jsx
 import React, { useState, useEffect } from 'react';
+import { SectionSkeleton } from '../components/Skeleton';
 import { useExcellenceScores } from '../hooks/useExcellenceScores.js';
 import TeamScorecard  from '../components/excellence/TeamScorecard.jsx';
 import TeamDrillDown  from '../components/excellence/TeamDrillDown.jsx';
@@ -84,11 +85,7 @@ export default function ExcellenceSection() {
         </div>
 
         {/* Loading / error */}
-        {loading && !data && (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
+        {loading && !data && <SectionSkeleton />}
         {error && (
           <div className="bg-danger/10 border border-danger/30 rounded-xl px-4 py-3 text-sm text-danger">
             Error loading scores: {error?.message ?? String(error)}
@@ -116,7 +113,7 @@ export default function ExcellenceSection() {
               <span className="text-xl">{teams[activeTeam].emoji}</span>
               <h2 className="text-lg font-bold">{teams[activeTeam].label}</h2>
               <span className="text-3xl font-bold tabular-nums ml-2">{teams[activeTeam].score}</span>
-              <button onClick={() => setActiveTeam(null)} className="ml-auto text-gray-500 hover:text-gray-500 text-xl leading-none">×</button>
+              <button onClick={() => setActiveTeam(null)} className="ml-auto text-gray-500 hover:text-gray-500 text-xl leading-none">\u00d7</button>
             </div>
             <TeamDrillDown team={teams[activeTeam]} />
           </div>

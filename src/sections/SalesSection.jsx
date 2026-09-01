@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import { SectionSkeleton, SkeletonChart } from '../components/Skeleton';
 import { useMetrics } from '../hooks/sales/useMetrics';
 import { useHandoffs } from '../hooks/sales/useHandoffs';
 import { useCalls } from '../hooks/sales/useCalls';
@@ -25,11 +26,7 @@ const Handoffs           = lazy(() => import('../components/sales/Handoffs'));
 const RepScorecard       = lazy(() => import('../components/sales/RepScorecard'));
 
 function TabFallback() {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  return <SkeletonChart />;
 }
 
 export default function SalesSection() {
@@ -66,11 +63,11 @@ export default function SalesSection() {
   const handoffs    = useHandoffs(handoffsEnabled);
   const callsData   = useCalls(callsEnabled);
   const repActivity = useRepActivity(metricsEnabled, metrics.period, metrics.customRange);
-  // Cohort deals for wide periods (month+) — fetched in parallel, never blocks render
+  // Cohort deals for wide periods (month+) \u2014 fetched in parallel, never blocks render
   const cohortDealsHook = useCohortDeals(metricsEnabled, metrics.period, metrics.customRange);
   const cohortDeals = cohortDealsHook.data ?? metrics.data?.cohortDeals ?? [];
 
-  // Rep-scoped contact fetch — only fires for wide periods (month+) when a rep is
+  // Rep-scoped contact fetch \u2014 only fires for wide periods (month+) when a rep is
   // selected and the leaderboard is in leads-sort mode (narrow periods already have
   // all contacts in the main metrics payload).
   const leadsMode = filterRepStatusHint === 'new_lead' || filterRepStatusHint === null;
@@ -82,10 +79,10 @@ export default function SalesSection() {
   );
 
   // Determine which detail panel to show:
-  // - deals sort (revenue/won/conversion) + rep selected → DealDetail
-  // - funnel deals/won/decided row clicked → DealDetail
-  // - metric card: deals-type cards → DealDetail; leads-type cards → LeadDetail
-  // - everything else → LeadDetail
+  // - deals sort (revenue/won/conversion) + rep selected \u2192 DealDetail
+  // - funnel deals/won/decided row clicked \u2192 DealDetail
+  // - metric card: deals-type cards \u2192 DealDetail; leads-type cards \u2192 LeadDetail
+  // - everything else \u2192 LeadDetail
   const dealsRow = funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided' || funnelFilter.row === 'sent');
   const showDealDetail = dealsRow || (filterRep && filterRepStatusHint === 'qualified');
 
@@ -114,12 +111,7 @@ export default function SalesSection() {
               </div>
             )}
             {metrics.loading && !metrics.data ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-                  <p className="text-gray-500 text-sm">Loading dashboard...</p>
-                </div>
-              </div>
+              <SectionSkeleton />
             ) : metrics.data ? (
               <>
                 <MetricCards
@@ -235,12 +227,7 @@ export default function SalesSection() {
               </div>
             )}
             {metrics.loading && !metrics.data ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-                  <p className="text-gray-500 text-sm">Loading dashboard...</p>
-                </div>
-              </div>
+              <SectionSkeleton />
             ) : metrics.data ? (
               <Suspense fallback={<TabFallback />}>
                 <PipelineHealthPage pipelineHealth={metrics.data.pipelineHealth} />

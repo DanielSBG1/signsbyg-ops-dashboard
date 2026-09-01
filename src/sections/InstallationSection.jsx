@@ -1,4 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
+import { SectionSkeleton } from '../components/Skeleton';
 import { useInstallationMetrics } from '../hooks/useInstallationMetrics';
 import InstallationOverview from '../components/installation/InstallationOverview';
 import CalendarView from '../components/installation/CalendarView';
@@ -47,9 +48,7 @@ export default function InstallationSection() {
           ))}
         </div>
 
-        {loading && !data && (
-          <div className="text-center py-20 text-gray-500">Loading installation data...</div>
-        )}
+        {loading && !data && <SectionSkeleton />}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
             Error: {error}
