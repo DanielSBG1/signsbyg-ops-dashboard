@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import useVisibleInterval from '../useVisibleInterval.js';
+import { idbRead, idbWrite } from '../../lib/idbCache.js';
 
 const REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
 
@@ -13,25 +14,8 @@ const STALE_MAX_BY_PERIOD = {
 };
 const STALE_MAX_DEFAULT = 2 * 60 * 60 * 1000;
 
-function lsKey(period, start, end) {
+function cacheKey(period, start, end) {
   return `sbg_m2_${period}_${start || ''}_${end || ''}`;
-}
-function lsRead(key, period) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const { d, t } = JSON.parse(raw);
-    const maxAge = STALE_MAX_BY_PERIOD[period] ?? STALE_MAX_DEFAULT;
-    if (Date.now() - t > maxAge) return null;
-    return d;
-  } catch { return null; }
-}
-function lsWrite(key, data) {
-  try {
-    const json = JSON.stringify({ d: data, t: Date.now() });
-    if (json.length > 200_000) return;
-    localStorage.setItem(key, json);
-  } catch {}
 }
 
 export function useMetrics(enabled = true) {
@@ -52,8 +36,9 @@ export function useMetrics(enabled = true) {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const key = lsKey(period, customRange.start, customRange.end);
-    const stale = lsRead(key, period);
+    const key = cacheKey(period, customRange.start, customRange.end);
+    const maxAge = STALE_MAX_BY_PERIOD[period] ?? STALE_MAX_DEFAULT;
+    const stale = await idbRead(key, maxAge);
     if (stale && !force) {
       setData(stale);
       setLoading(false);
@@ -73,7 +58,7 @@ export function useMetrics(enabled = true) {
       const res = await fetch(url, { signal: controller.signal });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const json = await res.json();
-      lsWrite(key, json);
+      await idbWrite(key, json);
       setData(json);
       setLastRefreshed(new Date());
 
@@ -107,20 +92,15 @@ export function useMetrics(enabled = true) {
   useEffect(() => {
     if (!enabled || !data) return;
     const allPeriods = ['today', 'week', 'lastweek', 'month', 'quarter', 'q1', 'q2', 'q3', 'q4'];
-    function warmPeriod(p) {
+    async function warmPeriod(p) {
       if (p === period) return;
-      const cachedKey = lsKey(p, '', '');
+      const wKey = cacheKey(p, '', '');
       const maxAge = STALE_MAX_BY_PERIOD[p] ?? STALE_MAX_DEFAULT;
-      try {
-        const raw = localStorage.getItem(cachedKey);
-        if (raw) {
-          const { t } = JSON.parse(raw);
-          if (Date.now() - t < maxAge / 2) return;
-        }
-      } catch {}
+      const cached = await idbRead(wKey, maxAge / 2);
+      if (cached) return;
       fetch(`/api/sales-metrics?period=${p}`)
         .then((r) => (r.ok ? r.json() : null))
-        .then((json) => { if (json) lsWrite(cachedKey, json); })
+        .then((json) => { if (json) idbWrite(wKey, json); })
         .catch(() => {});
     }
     const t1 = setTimeout(() => { for (const p of allPeriods.slice(0, 4)) warmPeriod(p); }, 500);

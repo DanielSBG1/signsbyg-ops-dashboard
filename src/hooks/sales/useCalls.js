@@ -1,27 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import useVisibleInterval from '../useVisibleInterval.js';
+import { idbRead, idbWrite } from '../../lib/idbCache.js';
 
 const REFRESH_INTERVAL = 15 * 60 * 1000;
 const STALE_MAX_MS = 2 * 60 * 60 * 1000; // 2 hours
 
-function lsKey(period, start, end) {
+function cacheKey(period, start, end) {
   return `sbg_c_${period}_${start || ''}_${end || ''}`;
-}
-function lsRead(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const { d, t } = JSON.parse(raw);
-    if (Date.now() - t > STALE_MAX_MS) return null;
-    return d;
-  } catch { return null; }
-}
-function lsWrite(key, data) {
-  try {
-    const json = JSON.stringify({ d: data, t: Date.now() });
-    if (json.length > 200_000) return;
-    localStorage.setItem(key, json);
-  } catch {}
 }
 
 export function useCalls(enabled = true) {
@@ -44,8 +29,8 @@ export function useCalls(enabled = true) {
     abortRef.current = controller;
     const { signal } = controller;
 
-    const key = lsKey(period, customRange.start, customRange.end);
-    const stale = lsRead(key);
+    const key = cacheKey(period, customRange.start, customRange.end);
+    const stale = await idbRead(key, STALE_MAX_MS);
     if (stale) {
       setData(stale);
       setLoading(false);
@@ -69,7 +54,7 @@ export function useCalls(enabled = true) {
 
       const totalPages = first.pagination?.totalPages || 1;
       if (totalPages <= 1) {
-        lsWrite(key, first);
+        await idbWrite(key, first);
         setLastRefreshed(new Date());
         return;
       }
@@ -119,7 +104,7 @@ export function useCalls(enabled = true) {
           },
         },
       };
-      lsWrite(key, merged);
+      await idbWrite(key, merged);
       setData(merged);
       setLastRefreshed(new Date());
     } catch (err) {
