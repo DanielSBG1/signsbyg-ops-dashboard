@@ -10,7 +10,7 @@ export function useProductionData() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/v2/production-metrics');
+      const res = await fetch('/api/production-metrics');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!json.ok) throw new Error(json.error ?? 'API error');

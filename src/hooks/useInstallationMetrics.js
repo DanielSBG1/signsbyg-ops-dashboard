@@ -14,14 +14,14 @@ export function useInstallationMetrics() {
     setError(null);
     try {
       // Phase 1: slim summary (no jobs array)
-      const res = await fetch('/api/v2/installation-metrics');
+      const res = await fetch('/api/installation-metrics');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(json);
       setLastRefreshed(new Date());
 
       // Phase 2: fetch full jobs array in background
-      fetch('/api/v2/installation-metrics?include=jobs')
+      fetch('/api/installation-metrics?include=jobs')
         .then((r) => r.ok ? r.json() : null)
         .then((full) => {
           if (full) setData((prev) => prev ? { ...prev, jobs: full.jobs, jobsOmitted: false } : full);
