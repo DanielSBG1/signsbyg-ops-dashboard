@@ -49,7 +49,7 @@ export function useMetrics(enabled = true) {
     }
     setError(null);
     try {
-      let baseUrl = `/api/sales-metrics?period=${period}`;
+      let baseUrl = `/api/v2/sales-metrics?period=${period}`;
       if (period === 'custom' && customRange.start && customRange.end) {
         baseUrl += `&start=${customRange.start}&end=${customRange.end}`;
       }
@@ -98,7 +98,7 @@ export function useMetrics(enabled = true) {
       const maxAge = STALE_MAX_BY_PERIOD[p] ?? STALE_MAX_DEFAULT;
       const cached = await idbRead(wKey, maxAge / 2);
       if (cached) return;
-      fetch(`/api/sales-metrics?period=${p}`)
+      fetch(`/api/v2/sales-metrics?period=${p}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((json) => { if (json) idbWrite(wKey, json); })
         .catch(() => {});
