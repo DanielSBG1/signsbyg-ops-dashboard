@@ -298,23 +298,24 @@ export async function getAllOpenDeals() {
 }
 
 export async function getClosedWonDealsInRange(startISO, endISO, closedWonStages) {
-  // HubSpot search doesn't support IN for dealstage, so we use multiple filter groups (OR)
-  const allResults = [];
-  for (const stage of closedWonStages) {
-    const page = await searchAllCRM('deals', {
-      filters: [
-        { propertyName: 'closedate', operator: 'GTE', value: startISO },
-        { propertyName: 'closedate', operator: 'LTE', value: endISO },
-        { propertyName: 'dealstage', operator: 'EQ', value: stage },
-      ],
-      properties: [
-        'dealname', 'amount', 'closedate', 'dealstage', 'pipeline',
-        'hubspot_owner_id', 'pm_name', 'sbg_scope_of_work', 'street_address',
-      ],
-      sorts: [{ propertyName: 'closedate', direction: 'DESCENDING' }],
-    });
-    allResults.push(...page.results);
-  }
+  // HubSpot search doesn't support IN for dealstage, so we query per stage in parallel
+  const pages = await Promise.all(
+    closedWonStages.map((stage) =>
+      searchAllCRM('deals', {
+        filters: [
+          { propertyName: 'closedate', operator: 'GTE', value: startISO },
+          { propertyName: 'closedate', operator: 'LTE', value: endISO },
+          { propertyName: 'dealstage', operator: 'EQ', value: stage },
+        ],
+        properties: [
+          'dealname', 'amount', 'closedate', 'dealstage', 'pipeline',
+          'hubspot_owner_id', 'pm_name', 'sbg_scope_of_work', 'street_address',
+        ],
+        sorts: [{ propertyName: 'closedate', direction: 'DESCENDING' }],
+      })
+    )
+  );
+  const allResults = pages.flatMap((p) => p.results);
   return { results: allResults, total: allResults.length };
 }
 
@@ -452,6 +453,56 @@ export async function getDealNotes(dealId) {
   } while (after);
 
   return allNotes;
+}
+
+// Batch fetch deal→note associations. Returns Map<dealId, noteId[]>.
+export async function getDealNoteAssociationsBatch(dealIds) {
+  const map = new Map();
+  if (!dealIds || dealIds.length === 0) return map;
+  const CHUNK = 100;
+  for (let i = 0; i < dealIds.length; i += CHUNK) {
+    const chunk = dealIds.slice(i, i + CHUNK);
+    const res = await rateLimitedFetch(
+      `${HUBSPOT_BASE}/crm/v4/associations/deals/notes/batch/read`,
+      {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ inputs: chunk.map((id) => ({ id: String(id) })) }),
+      }
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+    for (const r of data.results || []) {
+      const noteIds = (r.to || []).map((t) => String(t.toObjectId));
+      map.set(String(r.from.id), noteIds);
+    }
+  }
+  return map;
+}
+
+// Batch-read note objects by ID with selected properties.
+export async function getNotesByIds(noteIds) {
+  const out = [];
+  if (!noteIds || noteIds.length === 0) return out;
+  const CHUNK = 100;
+  for (let i = 0; i < noteIds.length; i += CHUNK) {
+    const chunk = noteIds.slice(i, i + CHUNK);
+    const res = await rateLimitedFetch(
+      `${HUBSPOT_BASE}/crm/v3/objects/notes/batch/read`,
+      {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({
+          properties: ['hs_note_body', 'hs_created_by_user_name', 'hs_createdate'],
+          inputs: chunk.map((id) => ({ id: String(id) })),
+        }),
+      }
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+    out.push(...(data.results || []));
+  }
+  return out;
 }
 
 // Fallback owner directory (HubSpot owners API requires scopes the token may lack)

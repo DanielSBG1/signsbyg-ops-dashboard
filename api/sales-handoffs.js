@@ -1,4 +1,4 @@
-import { getClosedWonDealsInRange, getDealContacts, getDealNotes, getOwners } from './_lib/sales/hubspot.js';
+import { getClosedWonDealsInRange, getDealContactAssociationsBatch, getDealNoteAssociationsBatch, getNotesByIds, getOwners } from './_lib/sales/hubspot.js';
 import { getDateRange } from './_lib/sales/periods.js';
 import { CLOSED_WON_STAGES, DESIGNER_NAMES } from './_lib/sales/constants.js';
 import { getCached, setCached } from './_lib/cache.js';
@@ -35,41 +35,55 @@ export default async function handler(req, res) {
       ownerMap[o.id] = `${o.firstName || ''} ${o.lastName || ''}`.trim() || o.email;
     }
 
-    // For each deal, fetch contacts and notes in parallel with graceful fallbacks
-    const deals = await Promise.all(
-      dealsResult.results.map(async (deal) => {
-        const p = deal.properties;
-        const [hasContact, notes] = await Promise.all([
-          getDealContacts(deal.id).catch(() => false),
-          getDealNotes(deal.id).catch(() => []),
-        ]);
+    // Batch-fetch contacts and notes for all deals (replaces N+1 per-deal calls)
+    const dealIds = dealsResult.results.map((d) => d.id);
 
-        const contractUrl = checkContractUrl(notes);
-        const drawingUrl = checkDrawingUrl(notes);
+    const [contactAssocMap, noteAssocMap] = await Promise.all([
+      getDealContactAssociationsBatch(dealIds).catch(() => new Map()),
+      getDealNoteAssociationsBatch(dealIds).catch(() => new Map()),
+    ]);
 
-        const fields = {
-          pm_name: !!p.pm_name && p.pm_name.trim() !== '',
-          sbg_scope_of_work: !!p.sbg_scope_of_work && p.sbg_scope_of_work.trim() !== '',
-          contact: hasContact,
-          amount: !!p.amount && parseFloat(p.amount) > 0,
-          street_address: !!p.street_address && p.street_address.trim() !== '',
-          contract_url: contractUrl,
-          drawing_url: drawingUrl,
-        };
+    // Collect all unique note IDs and batch-read their properties
+    const allNoteIds = new Set();
+    for (const ids of noteAssocMap.values()) {
+      for (const id of ids) allNoteIds.add(id);
+    }
+    const noteObjects = await getNotesByIds([...allNoteIds]).catch(() => []);
+    const noteById = new Map();
+    for (const n of noteObjects) noteById.set(String(n.id), n);
 
-        const completeness = Object.values(fields).filter(Boolean).length;
+    const deals = dealsResult.results.map((deal) => {
+      const p = deal.properties;
 
-        return {
-          id: deal.id,
-          name: p.dealname || 'Unnamed Deal',
-          rep: ownerMap[p.hubspot_owner_id] || `Owner ${p.hubspot_owner_id}`,
-          repId: p.hubspot_owner_id || '',
-          closeDate: p.closedate ? p.closedate.split('T')[0] : '',
-          fields,
-          completeness,
-        };
-      })
-    );
+      const hasContact = (contactAssocMap.get(String(deal.id)) || []).length > 0;
+      const dealNoteIds = noteAssocMap.get(String(deal.id)) || [];
+      const notes = dealNoteIds.map((id) => noteById.get(id)).filter(Boolean);
+
+      const contractUrl = checkContractUrl(notes);
+      const drawingUrl = checkDrawingUrl(notes);
+
+      const fields = {
+        pm_name: !!p.pm_name && p.pm_name.trim() !== '',
+        sbg_scope_of_work: !!p.sbg_scope_of_work && p.sbg_scope_of_work.trim() !== '',
+        contact: hasContact,
+        amount: !!p.amount && parseFloat(p.amount) > 0,
+        street_address: !!p.street_address && p.street_address.trim() !== '',
+        contract_url: contractUrl,
+        drawing_url: drawingUrl,
+      };
+
+      const completeness = Object.values(fields).filter(Boolean).length;
+
+      return {
+        id: deal.id,
+        name: p.dealname || 'Unnamed Deal',
+        rep: ownerMap[p.hubspot_owner_id] || `Owner ${p.hubspot_owner_id}`,
+        repId: p.hubspot_owner_id || '',
+        closeDate: p.closedate ? p.closedate.split('T')[0] : '',
+        fields,
+        completeness,
+      };
+    });
 
     // Aggregate summary
     const totalDeals = deals.length;
