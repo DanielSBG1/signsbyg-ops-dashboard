@@ -40,72 +40,18 @@ export function useCalls(enabled = true) {
     }
     setError(null);
     try {
-      const baseUrl = `/api/sales-calls?period=${period}${
+      const url = `/api/v2/sales-calls?period=${period}${
         period === 'custom' && customRange.start && customRange.end
           ? `&start=${customRange.start}&end=${customRange.end}`
           : ''
       }`;
 
-      const firstRes = await fetch(`${baseUrl}&page=0`, { signal });
-      if (!firstRes.ok) throw new Error(`API error: ${firstRes.status}`);
-      const first = await firstRes.json();
+      const res = await fetch(url, { signal });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
       if (signal.aborted) return;
-      setData(first);
-
-      const totalPages = first.pagination?.totalPages || 1;
-      if (totalPages <= 1) {
-        await idbWrite(key, first);
-        setLastRefreshed(new Date());
-        return;
-      }
-
-      const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 1);
-      const results = await Promise.allSettled(
-        remainingPages.map((p) => fetch(`${baseUrl}&page=${p}`, { signal }).then((r) => r.json()))
-      );
-
-      if (signal.aborted) return;
-
-      let allCalls = [...first.calls];
-      for (const r of results) {
-        if (r.status === 'fulfilled' && r.value.calls) {
-          allCalls.push(...r.value.calls);
-        }
-      }
-      const seen = new Set();
-      allCalls = allCalls.filter((c) => {
-        if (seen.has(c.id)) return false;
-        seen.add(c.id);
-        return true;
-      });
-      allCalls.sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0));
-
-      const merged = {
-        ...first,
-        calls: allCalls,
-        summary: {
-          total: allCalls.length,
-          inbound: allCalls.filter((c) => c.direction === 'incoming').length,
-          outbound: allCalls.filter((c) => c.direction === 'outgoing').length,
-          missed: allCalls.filter((c) => c.status === 'missed' || c.voicemail).length,
-          answered: allCalls.filter((c) => c.duration > 0 && !c.voicemail).length,
-          avgDuration: (() => {
-            const withDur = allCalls.filter((c) => c.duration > 0);
-            return withDur.length > 0
-              ? Math.round(withDur.reduce((s, c) => s + c.duration, 0) / withDur.length)
-              : 0;
-          })(),
-          byClassification: {
-            new_prospect: allCalls.filter((c) => c.classification === 'new_prospect').length,
-            existing_lead: allCalls.filter((c) => c.classification === 'existing_lead').length,
-            existing_deal: allCalls.filter((c) => c.classification === 'existing_deal').length,
-            existing_customer: allCalls.filter((c) => c.classification === 'existing_customer').length,
-            unknown: allCalls.filter((c) => c.classification === 'unknown').length,
-          },
-        },
-      };
-      await idbWrite(key, merged);
-      setData(merged);
+      await idbWrite(key, json);
+      setData(json);
       setLastRefreshed(new Date());
     } catch (err) {
       if (err.name === 'AbortError') return;
