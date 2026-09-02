@@ -36,7 +36,7 @@ export function useRepLeads(enabled, repId, period, customRange) {
     if (period === 'custom' && customRange?.end) params.set('end', customRange.end);
 
     const controller = new AbortController();
-    fetch(`/api/sales-rep-leads?${params}`, { signal: controller.signal })
+    fetch(`/api/v2/sales-rep-leads?${params}`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`sales-rep-leads API error: ${r.status}`);
         return r.json();

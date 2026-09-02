@@ -35,7 +35,7 @@ export function useHandoffs(enabled = true) {
     abortRef.current = controller;
 
     try {
-      let url = `/api/sales-handoffs?period=${period}`;
+      let url = `/api/v2/sales-handoffs?period=${period}`;
       if (period === 'custom' && customRange.start && customRange.end) {
         url += `&start=${customRange.start}&end=${customRange.end}`;
       }

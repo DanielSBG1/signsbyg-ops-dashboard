@@ -34,7 +34,7 @@ export function useCohortDeals(enabled, period, customRange) {
     if (period === 'custom' && customRange?.end) params.set('end', customRange.end);
 
     const controller = new AbortController();
-    fetch(`/api/sales-cohort-deals?${params}`, { signal: controller.signal })
+    fetch(`/api/v2/sales-cohort-deals?${params}`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`sales-cohort-deals API error: ${r.status}`);
         return r.json();

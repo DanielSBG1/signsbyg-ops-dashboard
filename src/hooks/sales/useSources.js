@@ -35,7 +35,7 @@ export function useSources(enabled = true) {
     abortRef.current = controller;
 
     try {
-      let url = `/api/sales-sources?period=${period}`;
+      let url = `/api/v2/sales-sources?period=${period}`;
       if (period === 'custom' && customRange.start && customRange.end) {
         url += `&start=${customRange.start}&end=${customRange.end}`;
       }

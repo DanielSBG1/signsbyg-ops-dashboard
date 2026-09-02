@@ -36,7 +36,7 @@ export function useStageConversion(enabled = true) {
     abortRef.current = controller;
 
     try {
-      let url = `/api/sales-stage-conversion?period=${period}&mode=${mode}`;
+      let url = `/api/v2/sales-stage-conversion?period=${period}&mode=${mode}`;
       if (period === 'custom' && customRange.start && customRange.end) {
         url += `&start=${customRange.start}&end=${customRange.end}`;
       }
