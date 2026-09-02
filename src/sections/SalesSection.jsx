@@ -63,11 +63,11 @@ export default function SalesSection() {
   const handoffs    = useHandoffs(handoffsEnabled);
   const callsData   = useCalls(callsEnabled);
   const repActivity = useRepActivity(metricsEnabled, metrics.period, metrics.customRange);
-  // Cohort deals for wide periods (month+) \u2014 fetched in parallel, never blocks render
+  // Cohort deals for wide periods (month+) — fetched in parallel, never blocks render
   const cohortDealsHook = useCohortDeals(metricsEnabled, metrics.period, metrics.customRange);
   const cohortDeals = cohortDealsHook.data ?? metrics.data?.cohortDeals ?? [];
 
-  // Rep-scoped contact fetch \u2014 only fires for wide periods (month+) when a rep is
+  // Rep-scoped contact fetch — only fires for wide periods (month+) when a rep is
   // selected and the leaderboard is in leads-sort mode (narrow periods already have
   // all contacts in the main metrics payload).
   const leadsMode = filterRepStatusHint === 'new_lead' || filterRepStatusHint === null;
@@ -79,10 +79,10 @@ export default function SalesSection() {
   );
 
   // Determine which detail panel to show:
-  // - deals sort (revenue/won/conversion) + rep selected \u2192 DealDetail
-  // - funnel deals/won/decided row clicked \u2192 DealDetail
-  // - metric card: deals-type cards \u2192 DealDetail; leads-type cards \u2192 LeadDetail
-  // - everything else \u2192 LeadDetail
+  // - deals sort (revenue/won/conversion) + rep selected → DealDetail
+  // - funnel deals/won/decided row clicked → DealDetail
+  // - metric card: deals-type cards → DealDetail; leads-type cards → LeadDetail
+  // - everything else → LeadDetail
   const dealsRow = funnelFilter && (funnelFilter.row === 'deals' || funnelFilter.row === 'won' || funnelFilter.row === 'decided' || funnelFilter.row === 'sent');
   const showDealDetail = dealsRow || (filterRep && filterRepStatusHint === 'qualified');
 
@@ -197,13 +197,17 @@ export default function SalesSection() {
 
         {tab === 'rep' && (
           <Suspense fallback={<div className="text-center py-20 text-gray-500">Loading scorecards...</div>}>
-            <RepScorecard
-              reps={metrics.data?.reps}
-              selectedRepId={selectedRepTab}
-              onSelectRep={setSelectedRepTab}
-              periodDeals={metrics.data?.periodDeals}
-              period={metrics.period}
-            />
+            {metrics.loading && !metrics.data ? (
+              <div className="text-center py-20 text-gray-500">Loading sales data...</div>
+            ) : (
+              <RepScorecard
+                reps={metrics.data?.reps || []}
+                selectedRepId={selectedRepTab}
+                onSelectRep={setSelectedRepTab}
+                periodDeals={metrics.data?.periodDeals || []}
+                period={metrics.period}
+              />
+            )}
           </Suspense>
         )}
 
