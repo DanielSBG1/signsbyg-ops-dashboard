@@ -19,6 +19,7 @@ import SpeedToLead from '../components/sales/SpeedToLead';
 import RepActivity from '../components/sales/RepActivity';
 import StageConversion from '../components/sales/StageConversion';
 import DealsTimeline from '../components/sales/DealsTimeline';
+import DailyLeads from '../components/sales/DailyLeads';
 
 const PipelineHealthPage = lazy(() => import('../components/sales/PipelineHealthPage'));
 const CallsPage          = lazy(() => import('../components/sales/CallsPage'));
@@ -110,6 +111,9 @@ export default function SalesSection() {
                 Failed to load data: {metrics.error}
               </div>
             )}
+            {/* Daily Leads Module — always visible, independent of period */}
+            <DailyLeads />
+
             {metrics.loading && !metrics.data ? (
               <SectionSkeleton />
             ) : metrics.data ? (
