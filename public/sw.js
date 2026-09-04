@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sbg-ops-v1';
+const CACHE_NAME = 'sbg-ops-v2';
 const PRECACHE = ['/'];
 
 self.addEventListener('install', (e) => {
