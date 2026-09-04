@@ -33,15 +33,17 @@ export default async function handler(req, res) {
     }
 
     // ── 3 parallel Supabase queries ──
+    // Use HubSpot's createdate (stored in properties JSONB), NOT Supabase's created_at
+    // (which is the ingestion timestamp from the seed script)
     const [contactsRes, callsRes, dealsRes] = await Promise.all([
-      // 1. HubSpot contacts created today
+      // 1. HubSpot contacts created in period (filter by properties->>createdate)
       supabase
         .from('hubspot_contacts')
         .select('id, properties')
-        .gte('created_at', dayStart)
-        .lte('created_at', dayEnd),
+        .gte('properties->>createdate', dayStart)
+        .lte('properties->>createdate', dayEnd),
 
-      // 2. Inbound calls classified as new_lead today
+      // 2. Inbound calls classified as new_lead in period
       supabase
         .from('openphone_calls')
         .select('id, participant_phone, user_name, duration, ai_classification, ai_summary, created_at, transcript')
@@ -50,12 +52,12 @@ export default async function handler(req, res) {
         .gte('created_at', dayStart)
         .lte('created_at', dayEnd),
 
-      // 3. Deals created today (same-day conversions)
+      // 3. Deals created in period (filter by properties->>createdate)
       supabase
         .from('hubspot_deals')
         .select('id, properties')
-        .gte('created_at', dayStart)
-        .lte('created_at', dayEnd),
+        .gte('properties->>createdate', dayStart)
+        .lte('properties->>createdate', dayEnd),
     ]);
 
     // ── Process contacts ──
