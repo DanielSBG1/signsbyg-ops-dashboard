@@ -103,6 +103,10 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
     sourceBreakdown, contacts, callLeads: callLeadsList, deals,
   } = data;
 
+  // Phone leads = HubSpot contacts from phone source + AI-classified OpenPhone calls
+  const hubspotPhoneLeads = sourceBreakdown?.['Phone Call'] || 0;
+  const totalPhoneLeads = hubspotPhoneLeads + callLeads;
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
       {/* ── Header ── */}
@@ -132,9 +136,9 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
         />
         <KpiCard
           label="PHONE CALLS"
-          value={callLeads}
-          valueClass={callLeads > 0 ? 'text-cyan-600 text-4xl' : 'text-gray-400 text-4xl'}
-          sub="New leads from calls"
+          value={totalPhoneLeads}
+          valueClass={totalPhoneLeads > 0 ? 'text-cyan-600 text-4xl' : 'text-gray-400 text-4xl'}
+          sub={callLeads > 0 ? `${hubspotPhoneLeads} HubSpot · ${callLeads} AI-classified` : 'From phone inquiries'}
           onClick={() => setExpanded(true)}
         />
         <KpiCard
