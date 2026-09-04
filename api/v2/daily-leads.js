@@ -1,12 +1,10 @@
 /**
- * v2/daily-leads — Daily lead intake module.
+ * v2/daily-leads — Lead intake + conversion module.
  *
- * Combines:
- * 1. HubSpot contacts created today (from Supabase)
- * 2. Classified OpenPhone calls (new_lead calls from Supabase)
- * 3. Same-day deal conversions
+ * Shows total leads by source (HubSpot + AI-classified phone calls)
+ * and how many of those leads converted into deals.
  *
- * Response time: <200ms (all from Supabase)
+ * "Converted" = a deal exists whose associated contact was created in this period.
  */
 import supabase from '../_lib/supabase.js';
 import { getDateRange } from '../_lib/sales/periods.js';
@@ -25,7 +23,7 @@ export default async function handler(req, res) {
     const dayStart = range.start;
     const dayEnd = range.end + 'T23:59:59.999Z';
 
-    const cacheKey = `daily-leads:v2:${period}:${customStart || ''}:${customEnd || ''}`;
+    const cacheKey = `daily-leads:v3:${period}:${customStart || ''}:${customEnd || ''}`;
     const cached = await getCached(cacheKey);
     if (cached) {
       res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
@@ -33,10 +31,8 @@ export default async function handler(req, res) {
     }
 
     // ── 3 parallel Supabase queries ──
-    // Use HubSpot's createdate (stored in properties JSONB), NOT Supabase's created_at
-    // (which is the ingestion timestamp from the seed script)
     const [contactsRes, callsRes, dealsRes] = await Promise.all([
-      // 1. HubSpot contacts created in period (filter by properties->>createdate)
+      // 1. HubSpot contacts created in period
       supabase
         .from('hubspot_contacts')
         .select('id, properties')
@@ -52,12 +48,11 @@ export default async function handler(req, res) {
         .gte('created_at', dayStart)
         .lte('created_at', dayEnd),
 
-      // 3. Deals created in period (filter by properties->>createdate)
+      // 3. ALL deals with associations (to find which reference period contacts)
       supabase
         .from('hubspot_deals')
-        .select('id, properties')
-        .gte('properties->>createdate', dayStart)
-        .lte('properties->>createdate', dayEnd),
+        .select('id, properties, associations')
+        .not('associations', 'is', null),
     ]);
 
     // ── Process contacts ──
@@ -73,6 +68,7 @@ export default async function handler(req, res) {
         lifecycleStage: p.lifecyclestage || null,
         owner: p.hubspot_owner_id || null,
         createdAt: p.createdate || null,
+        numDeals: parseInt(p.num_associated_deals) || 0,
       };
     });
 
@@ -88,20 +84,6 @@ export default async function handler(req, res) {
       hasTranscript: Boolean(c.transcript),
     }));
 
-    // ── Process deals ──
-    const deals = (dealsRes.data || []).map(d => {
-      const p = d.properties || {};
-      return {
-        id: d.id,
-        name: p.dealname || 'Unnamed Deal',
-        amount: parseFloat(p.amount) || 0,
-        stage: p.dealstage || null,
-        pipeline: p.pipeline || null,
-        owner: p.hubspot_owner_id || null,
-        createdAt: p.createdate || null,
-      };
-    });
-
     // ── Deduplicate: remove call leads whose phone matches a HubSpot contact ──
     const contactPhones = new Set();
     for (const c of contacts) {
@@ -112,6 +94,29 @@ export default async function handler(req, res) {
       return !contactPhones.has(normalized);
     });
 
+    // ── Find deals converted FROM these period leads ──
+    // A deal is "converted" if its associations.contacts includes a contact created in this period
+    const periodContactIds = new Set(contacts.map(c => c.id));
+    const convertedDeals = [];
+    for (const d of dealsRes.data || []) {
+      const assocContacts = d.associations?.contacts || [];
+      const matchedContact = assocContacts.find(a => periodContactIds.has(String(a.id)));
+      if (matchedContact) {
+        const p = d.properties || {};
+        convertedDeals.push({
+          id: d.id,
+          name: p.dealname || 'Unnamed Deal',
+          amount: parseFloat(p.amount) || 0,
+          stage: p.dealstage || null,
+          pipeline: p.pipeline || null,
+          owner: p.hubspot_owner_id || null,
+          createdAt: p.createdate || null,
+          contactId: String(matchedContact.id),
+        });
+      }
+    }
+    const convertedRevenue = convertedDeals.reduce((s, d) => s + d.amount, 0);
+
     // ── Classify contacts by source ──
     const sourceBreakdown = {};
     for (const c of contacts) {
@@ -119,11 +124,16 @@ export default async function handler(req, res) {
       sourceBreakdown[src] = (sourceBreakdown[src] || 0) + 1;
     }
 
+    // Count Facebook/Meta leads specifically
+    const fbLeads = contacts.filter(c => {
+      const src = classifySource(c.source, c.sourceDetail);
+      return src === 'Facebook';
+    }).length;
+
     const totalHubSpotLeads = contacts.length;
     const totalCallLeads = uniqueCallLeads.length;
     const totalLeads = totalHubSpotLeads + totalCallLeads;
-    const totalDeals = deals.length;
-    const conversionRate = totalLeads > 0 ? Math.round((totalDeals / totalLeads) * 100) : 0;
+    const conversionRate = totalLeads > 0 ? Math.round((convertedDeals.length / totalLeads) * 100) : 0;
 
     const result = {
       ok: true,
@@ -135,20 +145,18 @@ export default async function handler(req, res) {
         totalLeads,
         hubspotLeads: totalHubSpotLeads,
         callLeads: totalCallLeads,
-        sameDayDeals: totalDeals,
+        fbLeads,
+        dealsConverted: convertedDeals.length,
+        convertedRevenue,
         conversionRate,
 
         // Breakdowns
         sourceBreakdown,
-        byHour: buildHourlyBreakdown(contacts, uniqueCallLeads),
 
         // Detail lists
         contacts,
         callLeads: uniqueCallLeads,
-        deals,
-
-        // Call classification stats (all calls today, not just new_lead)
-        callClassificationPending: 0, // will be filled if we query for unclassified
+        deals: convertedDeals,
       },
     };
 
@@ -161,8 +169,6 @@ export default async function handler(req, res) {
   }
 }
 
-// ── Helpers ──
-
 function classifySource(source, detail) {
   const s = (source || '').toLowerCase();
   const d = (detail || '').toLowerCase();
@@ -174,31 +180,4 @@ function classifySource(source, detail) {
   if (s === 'offline' && d.includes('crm_ui')) return 'Manual Entry';
   if (s === 'offline') return 'Phone Call';
   return source || 'Unknown';
-}
-
-function buildHourlyBreakdown(contacts, callLeads) {
-  const hours = Array.from({ length: 24 }, (_, i) => ({
-    hour: i,
-    label: `${i === 0 ? 12 : i > 12 ? i - 12 : i}${i < 12 ? 'am' : 'pm'}`,
-    hubspot: 0,
-    calls: 0,
-    total: 0,
-  }));
-
-  for (const c of contacts) {
-    if (c.createdAt) {
-      const h = new Date(c.createdAt).getHours();
-      hours[h].hubspot++;
-      hours[h].total++;
-    }
-  }
-  for (const c of callLeads) {
-    if (c.createdAt) {
-      const h = new Date(c.createdAt).getHours();
-      hours[h].calls++;
-      hours[h].total++;
-    }
-  }
-
-  return hours;
 }

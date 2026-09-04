@@ -11,32 +11,39 @@ const SOURCE_COLORS = {
   Unknown: '#94a3b8',
 };
 
-function formatPhone(phone) {
-  if (!phone) return '';
-  const digits = phone.replace(/[^0-9]/g, '');
-  if (digits.length === 11 && digits.startsWith('1')) {
-    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-  }
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-  return phone;
-}
-
-function formatTime(iso) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'America/Chicago',
-  });
-}
-
 const PERIOD_LABELS = {
   today: "Today's", yesterday: "Yesterday's", week: "This Week's", lastweek: "Last Week's",
   month: "This Month's", lastmonth: "Last Month's", quarter: "This Quarter's",
   q1: "Q1", q2: "Q2", q3: "Q3", q4: "Q4", custom: "Custom Period",
 };
+
+function formatPhone(phone) {
+  if (!phone) return '';
+  const digits = phone.replace(/[^0-9]/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return phone;
+}
+
+function formatTime(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' });
+}
+
+function fmtCurrency(v) {
+  if (!v) return '$0';
+  return `$${Number(v).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+}
+
+function classifySourceSimple(source) {
+  const s = (source || '').toLowerCase();
+  if (s.includes('paid_social') || s.includes('facebook')) return 'Facebook';
+  if (s.includes('organic')) return 'Organic';
+  if (s.includes('direct')) return 'Direct / Website';
+  if (s.includes('referral')) return 'Referral';
+  if (s === 'offline') return 'Phone Call';
+  return source || 'Unknown';
+}
 
 export default function DailyLeads({ period = 'today', customRange = {} }) {
   const [data, setData] = useState(null);
@@ -64,8 +71,6 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
   }, [period, customRange.start, customRange.end]);
 
   useEffect(() => { setLoading(true); fetchData(); }, [fetchData]);
-
-  // Auto-refresh every 2 minutes
   useEffect(() => {
     const interval = setInterval(fetchData, 120000);
     return () => clearInterval(interval);
@@ -85,7 +90,7 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
   if (error && !data) {
     return (
       <div className="bg-danger/10 border border-danger/30 rounded-2xl p-4 text-danger text-sm">
-        Failed to load daily leads: {error}
+        Failed to load leads: {error}
       </div>
     );
   }
@@ -93,8 +98,9 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
   if (!data) return null;
 
   const {
-    totalLeads, hubspotLeads, callLeads, sameDayDeals,
-    conversionRate, sourceBreakdown, contacts, callLeads: callLeadsList, deals,
+    totalLeads, hubspotLeads, callLeads, fbLeads,
+    dealsConverted, convertedRevenue, conversionRate,
+    sourceBreakdown, contacts, callLeads: callLeadsList, deals,
   } = data;
 
   return (
@@ -104,7 +110,7 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
         <div>
           <h2 className="text-lg font-bold text-gray-900">{PERIOD_LABELS[period] || period} Leads</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            New lead intake + same-day deal conversions
+            New lead intake + deal conversions from those leads
           </p>
         </div>
         <button
@@ -115,34 +121,34 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
         </button>
       </div>
 
-      {/* ── KPI Strip (clickable) ── */}
+      {/* ── KPI Strip ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-gray-100">
         <KpiCard
           label="TOTAL NEW LEADS"
           value={totalLeads}
           valueClass="text-accent text-4xl"
-          sub={`${hubspotLeads} HubSpot · ${callLeads} phone calls`}
+          sub={`${hubspotLeads} HubSpot · ${callLeads} calls`}
           onClick={() => setExpanded(true)}
         />
         <KpiCard
-          label="SAME-DAY DEALS"
-          value={sameDayDeals}
-          valueClass={sameDayDeals > 0 ? 'text-success text-4xl' : 'text-gray-400 text-4xl'}
-          sub={`${conversionRate}% conversion rate`}
-          onClick={() => setExpanded(true)}
-        />
-        <KpiCard
-          label="TOP SOURCE"
-          value={topSource(sourceBreakdown)}
-          valueClass="text-gray-900 text-lg"
-          sub={topSourceCount(sourceBreakdown)}
-          onClick={() => setExpanded(true)}
-        />
-        <KpiCard
-          label="PHONE LEADS"
+          label="PHONE CALLS"
           value={callLeads}
           valueClass={callLeads > 0 ? 'text-cyan-600 text-4xl' : 'text-gray-400 text-4xl'}
-          sub="AI-classified from calls"
+          sub="New leads from calls"
+          onClick={() => setExpanded(true)}
+        />
+        <KpiCard
+          label="META / FACEBOOK"
+          value={fbLeads}
+          valueClass={fbLeads > 0 ? 'text-blue-500 text-4xl' : 'text-gray-400 text-4xl'}
+          sub="Facebook ad leads"
+          onClick={() => setExpanded(true)}
+        />
+        <KpiCard
+          label="DEALS CONVERTED"
+          value={dealsConverted}
+          valueClass={dealsConverted > 0 ? 'text-success text-4xl' : 'text-gray-400 text-4xl'}
+          sub={dealsConverted > 0 ? `${fmtCurrency(convertedRevenue)} · ${conversionRate}%` : `${conversionRate}% conversion`}
           onClick={() => setExpanded(true)}
         />
       </div>
@@ -178,10 +184,7 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
               .sort((a, b) => b[1] - a[1])
               .map(([src, count]) => (
                 <span key={src} className="text-[10px] text-gray-500 flex items-center gap-1">
-                  <span
-                    className="w-2 h-2 rounded-full inline-block"
-                    style={{ backgroundColor: SOURCE_COLORS[src] || '#94a3b8' }}
-                  />
+                  <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: SOURCE_COLORS[src] || '#94a3b8' }} />
                   {src} {count}
                 </span>
               ))}
@@ -204,24 +207,29 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 HubSpot Leads ({contacts.length})
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {contacts.map(c => (
                   <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-sm font-medium text-gray-900">{c.name}</span>
-                      {c.email && <span className="text-xs text-gray-500 ml-2">{c.email}</span>}
+                      {c.email && <span className="text-xs text-gray-400 ml-2 truncate">{c.email}</span>}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
+                      {c.numDeals > 0 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/10 text-success font-medium">
+                          {c.numDeals} deal{c.numDeals > 1 ? 's' : ''}
+                        </span>
+                      )}
                       <span
                         className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                         style={{
-                          backgroundColor: (SOURCE_COLORS[classifySourceSimple(c.source)] || '#94a3b8') + '20',
+                          backgroundColor: (SOURCE_COLORS[classifySourceSimple(c.source)] || '#94a3b8') + '15',
                           color: SOURCE_COLORS[classifySourceSimple(c.source)] || '#94a3b8',
                         }}
                       >
                         {classifySourceSimple(c.source)}
                       </span>
-                      <span className="text-xs text-gray-400">{formatTime(c.createdAt)}</span>
+                      <span className="text-xs text-gray-400 w-20 text-right">{formatTime(c.createdAt)}</span>
                     </div>
                   </div>
                 ))}
@@ -231,11 +239,11 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
 
           {/* Phone call leads */}
           {callLeadsList.length > 0 && (
-            <div className="px-6 py-4 bg-cyan-50/30">
+            <div className="px-6 py-4 bg-cyan-50/30 border-t border-gray-100">
               <h3 className="text-xs font-semibold text-cyan-700 uppercase tracking-wider mb-3">
                 Phone Call Leads ({callLeadsList.length})
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {callLeadsList.map(c => (
                   <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-cyan-100/50 last:border-0">
                     <div>
@@ -246,9 +254,9 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
                     </div>
                     <div className="flex items-center gap-2">
                       {c.summary && (
-                        <span className="text-xs text-gray-500 max-w-[200px] truncate">{c.summary}</span>
+                        <span className="text-xs text-gray-500 max-w-[250px] truncate">{c.summary}</span>
                       )}
-                      <span className="text-xs text-gray-400">{formatTime(c.createdAt)}</span>
+                      <span className="text-xs text-gray-400 w-20 text-right">{formatTime(c.createdAt)}</span>
                     </div>
                   </div>
                 ))}
@@ -256,22 +264,27 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
             </div>
           )}
 
-          {/* Same-day deals */}
+          {/* Converted deals */}
           {deals.length > 0 && (
-            <div className="px-6 py-4 bg-green-50/30">
+            <div className="px-6 py-4 bg-green-50/30 border-t border-gray-100">
               <h3 className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-3">
-                Same-Day Deals ({deals.length})
+                Deals Converted from These Leads ({deals.length}) · {fmtCurrency(convertedRevenue)}
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {deals.map(d => (
-                  <div key={d.id} className="flex items-center justify-between py-1.5">
-                    <span className="text-sm font-medium text-gray-900">{d.name}</span>
-                    <span className="text-sm font-bold text-success">
-                      ${(d.amount || 0).toLocaleString()}
-                    </span>
+                  <div key={d.id} className="flex items-center justify-between py-1.5 border-b border-green-100/50 last:border-0">
+                    <span className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{d.name}</span>
+                    <span className="text-sm font-bold text-success tabular-nums">{fmtCurrency(d.amount)}</span>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* No data state */}
+          {contacts.length === 0 && callLeadsList.length === 0 && (
+            <div className="px-6 py-8 text-center">
+              <p className="text-gray-400 text-sm">No leads in this period</p>
             </div>
           )}
         </div>
@@ -279,8 +292,6 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
     </div>
   );
 }
-
-// ── Helper components ──
 
 function KpiCard({ label, value, valueClass, sub, onClick }) {
   return (
@@ -293,28 +304,4 @@ function KpiCard({ label, value, valueClass, sub, onClick }) {
       <p className="text-xs text-gray-400 mt-1">{sub}</p>
     </button>
   );
-}
-
-function classifySourceSimple(source) {
-  const s = (source || '').toLowerCase();
-  if (s.includes('paid_social') || s.includes('facebook')) return 'Facebook';
-  if (s.includes('organic')) return 'Organic';
-  if (s.includes('direct')) return 'Direct / Website';
-  if (s.includes('referral')) return 'Referral';
-  if (s === 'offline') return 'Phone Call';
-  return source || 'Unknown';
-}
-
-function topSource(breakdown) {
-  const entries = Object.entries(breakdown || {});
-  if (entries.length === 0) return 'None';
-  entries.sort((a, b) => b[1] - a[1]);
-  return entries[0][0];
-}
-
-function topSourceCount(breakdown) {
-  const entries = Object.entries(breakdown || {});
-  if (entries.length === 0) return 'No leads yet';
-  entries.sort((a, b) => b[1] - a[1]);
-  return `${entries[0][1]} leads from ${entries[0][0]}`;
 }

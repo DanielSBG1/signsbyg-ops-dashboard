@@ -118,16 +118,6 @@ export default function SalesSection() {
               <SectionSkeleton />
             ) : metrics.data ? (
               <>
-                <MetricCards
-                  summary={metrics.data.summary}
-                  period={metrics.period}
-                  activeCard={funnelFilter?.type === 'metric' ? funnelFilter.key : null}
-                  onCardClick={(filter) => {
-                    setFilterRep(null);
-                    setFilterRepStatusHint(null);
-                    setFunnelFilter((prev) => (prev?.type === 'metric' && prev?.key === filter.key ? null : filter));
-                  }}
-                />
                 <SpeedToLead sla={metrics.data.sla} />
                 <Leaderboard
                   reps={metrics.data.reps}
