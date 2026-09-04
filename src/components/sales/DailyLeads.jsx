@@ -115,31 +115,35 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
         </button>
       </div>
 
-      {/* ── KPI Strip ── */}
+      {/* ── KPI Strip (clickable) ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-gray-100">
         <KpiCard
           label="TOTAL NEW LEADS"
           value={totalLeads}
           valueClass="text-accent text-4xl"
           sub={`${hubspotLeads} HubSpot · ${callLeads} phone calls`}
+          onClick={() => setExpanded(true)}
         />
         <KpiCard
           label="SAME-DAY DEALS"
           value={sameDayDeals}
           valueClass={sameDayDeals > 0 ? 'text-success text-4xl' : 'text-gray-400 text-4xl'}
           sub={`${conversionRate}% conversion rate`}
+          onClick={() => setExpanded(true)}
         />
         <KpiCard
           label="TOP SOURCE"
           value={topSource(sourceBreakdown)}
           valueClass="text-gray-900 text-lg"
           sub={topSourceCount(sourceBreakdown)}
+          onClick={() => setExpanded(true)}
         />
         <KpiCard
           label="PHONE LEADS"
           value={callLeads}
           valueClass={callLeads > 0 ? 'text-cyan-600 text-4xl' : 'text-gray-400 text-4xl'}
           sub="AI-classified from calls"
+          onClick={() => setExpanded(true)}
         />
       </div>
 
@@ -278,13 +282,16 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
 
 // ── Helper components ──
 
-function KpiCard({ label, value, valueClass, sub }) {
+function KpiCard({ label, value, valueClass, sub, onClick }) {
   return (
-    <div className="bg-white p-5">
+    <button
+      onClick={onClick}
+      className="bg-white p-5 text-left hover:bg-gray-50 transition-colors cursor-pointer w-full"
+    >
       <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{label}</p>
       <p className={`font-bold mt-1 tabular-nums ${valueClass}`}>{value}</p>
       <p className="text-xs text-gray-400 mt-1">{sub}</p>
-    </div>
+    </button>
   );
 }
 
