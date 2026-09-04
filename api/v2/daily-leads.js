@@ -9,6 +9,7 @@
  * Response time: <200ms (all from Supabase)
  */
 import supabase from '../_lib/supabase.js';
+import { getDateRange } from '../_lib/sales/periods.js';
 import { getCached, setCached } from '../_lib/cache.js';
 
 const CACHE_TTL = 60;
@@ -19,13 +20,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { date } = req.query;
-    // Default to today in America/Chicago timezone
-    const targetDate = date || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
-    const dayStart = `${targetDate}T00:00:00.000Z`;
-    const dayEnd = `${targetDate}T23:59:59.999Z`;
+    const { period = 'today', start: customStart, end: customEnd } = req.query;
+    const range = getDateRange(period, customStart, customEnd);
+    const dayStart = range.start;
+    const dayEnd = range.end + 'T23:59:59.999Z';
 
-    const cacheKey = `daily-leads:v2:${targetDate}`;
+    const cacheKey = `daily-leads:v2:${period}:${customStart || ''}:${customEnd || ''}`;
     const cached = await getCached(cacheKey);
     if (cached) {
       res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
@@ -126,7 +126,7 @@ export default async function handler(req, res) {
     const result = {
       ok: true,
       data: {
-        date: targetDate,
+        period: { start: range.start, end: range.end, label: range.label },
         generatedAt: new Date().toISOString(),
 
         // Summary

@@ -111,8 +111,8 @@ export default function SalesSection() {
                 Failed to load data: {metrics.error}
               </div>
             )}
-            {/* Daily Leads Module — always visible, independent of period */}
-            <DailyLeads />
+            {/* Leads Module — responds to period selector */}
+            <DailyLeads period={metrics.period} customRange={metrics.customRange} />
 
             {metrics.loading && !metrics.data ? (
               <SectionSkeleton />

@@ -32,7 +32,13 @@ function formatTime(iso) {
   });
 }
 
-export default function DailyLeads() {
+const PERIOD_LABELS = {
+  today: "Today's", yesterday: "Yesterday's", week: "This Week's", lastweek: "Last Week's",
+  month: "This Month's", lastmonth: "Last Month's", quarter: "This Quarter's",
+  q1: "Q1", q2: "Q2", q3: "Q3", q4: "Q4", custom: "Custom Period",
+};
+
+export default function DailyLeads({ period = 'today', customRange = {} }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,7 +46,11 @@ export default function DailyLeads() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch('/api/v2/daily-leads');
+      let url = `/api/v2/daily-leads?period=${period}`;
+      if (period === 'custom' && customRange.start && customRange.end) {
+        url += `&start=${customRange.start}&end=${customRange.end}`;
+      }
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!json.ok) throw new Error(json.error ?? 'API error');
@@ -51,9 +61,9 @@ export default function DailyLeads() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [period, customRange.start, customRange.end]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { setLoading(true); fetchData(); }, [fetchData]);
 
   // Auto-refresh every 2 minutes
   useEffect(() => {
@@ -92,9 +102,9 @@ export default function DailyLeads() {
       {/* ── Header ── */}
       <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Today's Leads</h2>
+          <h2 className="text-lg font-bold text-gray-900">{PERIOD_LABELS[period] || period} Leads</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            All new lead intake · Auto-refreshes every 2 min
+            New lead intake + same-day deal conversions
           </p>
         </div>
         <button
