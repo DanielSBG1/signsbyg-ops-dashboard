@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       .from('openphone_calls')
       .select('*')
       .gte('created_at', range.start)
-      .lte('created_at', range.end + 'T23:59:59.999Z')
+      .lte('created_at', range.end)
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Supabase: ${error.message}`);

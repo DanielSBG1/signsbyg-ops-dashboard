@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const { period = 'today', start: customStart, end: customEnd } = req.query;
     const range = getDateRange(period, customStart, customEnd);
     const dayStart = range.start;
-    const dayEnd = range.end + 'T23:59:59.999Z';
+    const dayEnd = range.end;
 
     const cacheKey = `daily-leads:v3:${period}:${customStart || ''}:${customEnd || ''}`;
     const cached = await getCached(cacheKey);
