@@ -144,7 +144,7 @@ export default async function handler(req, res) {
         // Summary
         totalLeads,
         hubspotLeads: totalHubSpotLeads,
-        callLeads: totalCallLeads,
+        callLeadCount: totalCallLeads,
         fbLeads,
         dealsConverted: convertedDeals.length,
         convertedRevenue,
@@ -155,7 +155,7 @@ export default async function handler(req, res) {
 
         // Detail lists
         contacts,
-        callLeads: uniqueCallLeads,
+        callLeadsList: uniqueCallLeads,
         deals: convertedDeals,
       },
     };

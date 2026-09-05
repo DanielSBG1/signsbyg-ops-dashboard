@@ -98,14 +98,14 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
   if (!data) return null;
 
   const {
-    totalLeads, hubspotLeads, callLeads, fbLeads,
+    totalLeads, hubspotLeads, callLeadCount = 0, fbLeads,
     dealsConverted, convertedRevenue, conversionRate,
-    sourceBreakdown, contacts, callLeads: callLeadsList, deals,
+    sourceBreakdown, contacts, callLeadsList = [], deals,
   } = data;
 
   // Phone leads = HubSpot contacts from phone source + AI-classified OpenPhone calls
   const hubspotPhoneLeads = sourceBreakdown?.['Phone Call'] || 0;
-  const totalPhoneLeads = hubspotPhoneLeads + callLeads;
+  const totalPhoneLeads = hubspotPhoneLeads + callLeadCount;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
@@ -131,14 +131,14 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
           label="TOTAL NEW LEADS"
           value={totalLeads}
           valueClass="text-accent text-4xl"
-          sub={`${hubspotLeads} HubSpot · ${callLeads} calls`}
+          sub={`${hubspotLeads} HubSpot · ${callLeadCount} calls`}
           onClick={() => setExpanded(true)}
         />
         <KpiCard
           label="PHONE CALLS"
           value={totalPhoneLeads}
           valueClass={totalPhoneLeads > 0 ? 'text-cyan-600 text-4xl' : 'text-gray-400 text-4xl'}
-          sub={callLeads > 0 ? `${hubspotPhoneLeads} HubSpot · ${callLeads} AI-classified` : 'From phone inquiries'}
+          sub={callLeadCount > 0 ? `${hubspotPhoneLeads} HubSpot · ${callLeadCount} AI-classified` : 'From phone inquiries'}
           onClick={() => setExpanded(true)}
         />
         <KpiCard
@@ -173,13 +173,13 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
                   title={`${src}: ${count}`}
                 />
               ))}
-            {callLeads > 0 && (
+            {callLeadCount > 0 && (
               <div
                 style={{
-                  width: `${(callLeads / totalLeads) * 100}%`,
+                  width: `${(callLeadCount / totalLeads) * 100}%`,
                   backgroundColor: '#06b6d4',
                 }}
-                title={`Phone Leads: ${callLeads}`}
+                title={`Phone Leads: ${callLeadCount}`}
               />
             )}
           </div>
@@ -192,10 +192,10 @@ export default function DailyLeads({ period = 'today', customRange = {} }) {
                   {src} {count}
                 </span>
               ))}
-            {callLeads > 0 && (
+            {callLeadCount > 0 && (
               <span className="text-[10px] text-gray-500 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full inline-block bg-cyan-500" />
-                Phone Leads {callLeads}
+                Phone Leads {callLeadCount}
               </span>
             )}
           </div>
