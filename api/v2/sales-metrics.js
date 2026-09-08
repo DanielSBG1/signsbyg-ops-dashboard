@@ -1506,7 +1506,7 @@ export default async function handler(req, res) {
       leadsOmitted: !includeDrillDown || skipSourceOverride,
       leadCounts,
       cohortDeals: includeDrillDown ? cohortDeals : [],
-      periodDeals: includeDrillDown ? periodDeals : [],
+      periodDeals,
       dealsSentDeals: includeDrillDown ? dealsSentDeals : [],
       sla: includeDrillDown ? sla : {
         ...sla,
