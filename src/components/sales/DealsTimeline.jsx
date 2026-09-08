@@ -7,10 +7,12 @@ function fmtCurrency(v) {
   return `$${Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
+const TZ = 'America/Chicago';
+
 function fmtShortDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: TZ });
 }
 
 function truncate(str, len = 28) {
@@ -19,11 +21,16 @@ function truncate(str, len = 28) {
 }
 
 function getDayLabel(date) {
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: TZ });
 }
 
 function getMonthLabel(date) {
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: TZ });
+}
+
+/** Get YYYY-MM-DD in CT timezone (not UTC) */
+function getDateKey(date) {
+  return date.toLocaleDateString('en-CA', { timeZone: TZ });
 }
 
 /* ── Status badge ─────────────────────────────────────────── */
@@ -140,7 +147,7 @@ export function groupDealsByPeriod(deals, period) {
   if (period === 'week' || period === 'lastweek') {
     const groups = new Map();
     for (const d of withDates) {
-      const key = d._date.toISOString().slice(0, 10);
+      const key = getDateKey(d._date);
       const label = getDayLabel(d._date);
       if (!groups.has(key)) groups.set(key, { key, label, deals: [], subGroups: null });
       groups.get(key).deals.push(d);
@@ -149,19 +156,21 @@ export function groupDealsByPeriod(deals, period) {
   }
 
   if (period === 'month' || period === 'lastmonth') {
-    // Week 1 = days 1–7, Week 2 = days 8–14, etc.
+    // Week 1 = days 1–7, Week 2 = days 8–14, etc. (in CT timezone)
     const groups = new Map();
     for (const d of withDates) {
-      const dayOfMonth = d._date.getDate();
+      // Get day of month in CT timezone
+      const ctParts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(d._date);
+      const dayOfMonth = parseInt(ctParts.find(p => p.type === 'day').value);
+      const monthNum = parseInt(ctParts.find(p => p.type === 'month').value) - 1;
+      const yearNum = parseInt(ctParts.find(p => p.type === 'year').value);
       const weekNum = Math.ceil(dayOfMonth / 7);
       const key = `week-${weekNum}`;
       if (!groups.has(key)) {
-        const y = d._date.getFullYear();
-        const m = d._date.getMonth();
         const startDay = (weekNum - 1) * 7 + 1;
-        const endDay = Math.min(weekNum * 7, new Date(y, m + 1, 0).getDate());
-        const weekStart = new Date(y, m, startDay);
-        const weekEnd = new Date(y, m, endDay);
+        const endDay = Math.min(weekNum * 7, new Date(yearNum, monthNum + 1, 0).getDate());
+        const weekStart = new Date(yearNum, monthNum, startDay);
+        const weekEnd = new Date(yearNum, monthNum, endDay);
         groups.set(key, {
           key,
           label: `Week ${weekNum}`,
@@ -178,7 +187,8 @@ export function groupDealsByPeriod(deals, period) {
   if (period === 'quarter' || period?.startsWith('q')) {
     const groups = new Map();
     for (const d of withDates) {
-      const key = `${d._date.getFullYear()}-${String(d._date.getMonth() + 1).padStart(2, '0')}`;
+      const ctParts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, month: 'numeric', year: 'numeric' }).formatToParts(d._date);
+      const key = `${ctParts.find(p => p.type === 'year').value}-${ctParts.find(p => p.type === 'month').value.padStart(2, '0')}`;
       const label = getMonthLabel(d._date);
       if (!groups.has(key)) groups.set(key, { key, label, deals: [] });
       groups.get(key).deals.push(d);
@@ -198,7 +208,7 @@ export function groupDealsByPeriod(deals, period) {
       const diffDays = Math.floor((d._date - baseMonday) / (24 * 60 * 60 * 1000));
       const weekNum = Math.floor(diffDays / 7) + 1;
       const weekKey = `week-${weekNum}`;
-      const dayKey = d._date.toISOString().slice(0, 10);
+      const dayKey = getDateKey(d._date);
 
       if (!groups.has(weekKey)) {
         const weekStart = new Date(baseMonday.getTime() + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000);
